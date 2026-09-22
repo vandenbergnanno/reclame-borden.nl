@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
 import { VELDTYPEN, VELDTYPE_LABELS } from "@/lib/types/domain";
 
 type Status = "idle" | "versturen" | "gelukt" | "mislukt";
@@ -9,7 +9,7 @@ export function AanvraagForm() {
   const [status, setStatus] = useState<Status>("idle");
   const [foutmelding, setFoutmelding] = useState<string | null>(null);
 
-  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setStatus("versturen");
     setFoutmelding(null);

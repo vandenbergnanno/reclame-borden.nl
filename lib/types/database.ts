@@ -2,6 +2,10 @@
 // Zodra er een echt Supabase-project gekoppeld is, kan dit bestand vervangen worden door de
 // gegenereerde versie (`supabase gen types typescript --project-id <id> > lib/types/database.ts`).
 // Houd dit bestand tot die tijd in lijn met supabase/migrations/0001_init.sql.
+//
+// De `Relationships`-array per tabel, en de lege `Views`/`Functions`/`Enums`/`CompositeTypes`,
+// zijn nodig omdat @supabase/supabase-js dit exacte vorm verwacht van het `Database`-type
+// (dezelfde vorm als de door de CLI gegenereerde types).
 
 import type { AanvraagStatus, DesignStatus, Veldtype } from "./domain";
 
@@ -26,6 +30,7 @@ export interface Database {
           created_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["klanten"]["Insert"]>;
+        Relationships: [];
       };
       aanvragen: {
         Row: {
@@ -49,6 +54,15 @@ export interface Database {
           updated_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["aanvragen"]["Insert"]>;
+        Relationships: [
+          {
+            foreignKeyName: "aanvragen_klant_id_fkey";
+            columns: ["klant_id"];
+            isOneToOne: false;
+            referencedRelation: "klanten";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       content_checks: {
         Row: {
@@ -68,6 +82,15 @@ export interface Database {
           created_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["content_checks"]["Insert"]>;
+        Relationships: [
+          {
+            foreignKeyName: "content_checks_aanvraag_id_fkey";
+            columns: ["aanvraag_id"];
+            isOneToOne: false;
+            referencedRelation: "aanvragen";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       designs: {
         Row: {
@@ -87,6 +110,15 @@ export interface Database {
           created_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["designs"]["Insert"]>;
+        Relationships: [
+          {
+            foreignKeyName: "designs_aanvraag_id_fkey";
+            columns: ["aanvraag_id"];
+            isOneToOne: false;
+            referencedRelation: "aanvragen";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       designdatabase: {
         Row: {
@@ -106,6 +138,7 @@ export interface Database {
           toegevoegd_op?: string;
         };
         Update: Partial<Database["public"]["Tables"]["designdatabase"]["Insert"]>;
+        Relationships: [];
       };
       feedback: {
         Row: {
@@ -123,7 +156,20 @@ export interface Database {
           created_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["feedback"]["Insert"]>;
+        Relationships: [
+          {
+            foreignKeyName: "feedback_aanvraag_id_fkey";
+            columns: ["aanvraag_id"];
+            isOneToOne: false;
+            referencedRelation: "aanvragen";
+            referencedColumns: ["id"];
+          },
+        ];
       };
     };
+    Views: Record<string, never>;
+    Functions: Record<string, never>;
+    Enums: Record<string, never>;
+    CompositeTypes: Record<string, never>;
   };
 }
