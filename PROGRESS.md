@@ -71,19 +71,37 @@ ontwikkelmachine.
 - Geen client-side validatie verder dan HTML `required`-attributen; geen bestandsgrootte-limiet;
   geen unieke constraint op `klanten.email` (hergebruik gebeurt nu via een losse lookup-query).
 
-## Fase 4 — nog open
+## Fase 4 — Intern overzicht ✅
 
-Zie hieronder / volgende commit.
+- `/intern`-pagina (server component, `app/intern/page.tsx`) die alle aanvragen toont met
+  klantnaam, bedrijf, veldtype, status en tijdstip, gesorteerd op meest recent, plus of er een
+  contentcheck is die geblokkeerd staat.
+- Haalt `aanvragen`, `klanten` en `content_checks` apart op en koppelt ze in JavaScript, zodat de
+  Supabase-typing simpel blijft zolang `lib/types/database.ts` handgeschreven is (nog geen
+  relatie-/embed-typing zoals gegenereerde Supabase-types die hebben).
+- Toont een duidelijke foutmelding in plaats van te crashen als Supabase niet geconfigureerd is
+  of een query faalt.
+- Nog geen login/rechtenbeheer — de pagina is voor iedereen die de URL kent bereikbaar, zoals
+  afgesproken ("dat komt later").
+
+**Bewust nog niet af / placeholder:**
+- Geen acties vanuit dit overzicht (bijv. status handmatig wijzigen, voorstel versturen) — puur
+  ter simulatie van hoe De Mediagraaf dit later zou gebruiken.
+- Geen paginering/filtering; bij weinig testdata niet nodig.
+- Toont nog niet of er een bijlage is meegestuurd of wat de inhoud van de ontwerpwens is
+  (bewust beperkt tot een overzichtstabel).
 
 ## Nog volledig open (bewuste placeholders voor latere sessies)
 
-- Intern overzicht (fase 4).
 - Echte beeldgeneratie-koppeling (Replicate/fal.ai) in `lib/ai/generateDesign.ts`.
 - Echte Claude API-koppeling voor briefanalyse/contentregels in `lib/ai/analyzeRequest.ts`.
 - E-mailverzending (Resend) in `lib/email/sendProposalEmail.ts`.
+- Automatische escalatie (status `geescaleerd`) op basis van een geblokkeerde contentcheck.
 - Login/rechtenbeheer voor het interne overzicht.
-- Echt Supabase-project aanmaken en koppelen (nu alleen migratie-structuur).
+- Echt Supabase-project aanmaken en koppelen (nu alleen migratie-structuur) en de
+  `SUPABASE_STORAGE_BUCKET` daadwerkelijk aanmaken.
 - Vullen van `/docs/reference`, `/assets/brand` en `/assets/mockups` met echt materiaal van
   De Mediagraaf.
 - Lokaal draaien en testen met `npm install` / `npm run dev` (nog niet gedaan in deze sessie
-  door het ontbreken van Node.js in de sandbox-omgeving).
+  door het ontbreken van Node.js in de sandbox-omgeving) — dit is de belangrijkste eerste stap
+  voor een volgende sessie/ontwikkelaar.
