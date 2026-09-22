@@ -46,13 +46,38 @@ ontwikkelmachine.
 - `designdatabase` heeft nog geen invoerscherm — wordt voorlopig handmatig gevuld door
   De Mediagraaf zodra er referentiedesigns zijn.
 
-## Fase 3, 4 — nog open
+## Fase 3 — Klantformulier (frontend) ✅
 
-Zie hieronder / volgende commits.
+- `/aanvraag`-pagina met een formulier (`app/aanvraag/AanvraagForm.tsx`): veldtype-keuze,
+  klantgegevens (naam, bedrijf, e-mail, telefoon), ontwerpwens/tekst, en een optionele
+  bestandsupload.
+- `POST /api/aanvragen` (`app/api/aanvragen/route.ts`) verwerkt de inzending: maakt/hergebruikt
+  een klant op basis van e-mailadres, maakt de aanvraag aan met status `nieuw`, uploadt een
+  eventuele bijlage naar Supabase Storage, en slaat het pad op in `aanvragen.bijlage_pad`.
+- De contentcheck (`analyzeRequest()`, nog een placeholder) wordt bij het indienen uitgevoerd en
+  de resultaten worden weggeschreven in `content_checks`, zodat het datamodel end-to-end werkt.
+- Stijl gebaseerd op de merkkleuren van De Mediagraaf (groen/oranje/zwart), bewust rustig en
+  simpel gehouden — dit is een intern prototype, geen marketingsite.
+
+**Bewust nog niet af / placeholder:**
+- Een gevonden contentcheck-probleem blokkeert de aanvraag in dit fundament nog niet en
+  verandert de status ook nog niet automatisch naar `geescaleerd` — dat hoort bij een latere fase
+  waarin De Mediagraaf ook echt een seintje krijgt.
+- De geüploade bijlage wordt alleen opgeslagen, niet verwerkt of getoond in het interne
+  overzicht (nog geen preview/download-link).
+- `generateDesign()` wordt hier bewust nog **niet** aangeroepen — de aanvraag komt binnen met
+  status `nieuw` en blijft daar staan tot een latere sessie het genereren van een concept-ontwerp
+  daadwerkelijk aan de flow koppelt.
+- Geen client-side validatie verder dan HTML `required`-attributen; geen bestandsgrootte-limiet;
+  geen unieke constraint op `klanten.email` (hergebruik gebeurt nu via een losse lookup-query).
+
+## Fase 4 — nog open
+
+Zie hieronder / volgende commit.
 
 ## Nog volledig open (bewuste placeholders voor latere sessies)
 
-- Klantformulier en intern overzicht (fases 3–4).
+- Intern overzicht (fase 4).
 - Echte beeldgeneratie-koppeling (Replicate/fal.ai) in `lib/ai/generateDesign.ts`.
 - Echte Claude API-koppeling voor briefanalyse/contentregels in `lib/ai/analyzeRequest.ts`.
 - E-mailverzending (Resend) in `lib/email/sendProposalEmail.ts`.
