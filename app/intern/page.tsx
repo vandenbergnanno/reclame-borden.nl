@@ -6,6 +6,11 @@ export const metadata: Metadata = {
   title: "Intern overzicht — Mediagraaf Conceptor",
 };
 
+// Zonder dit rendert Next.js deze pagina als statische HTML tijdens `next build` (met de
+// Supabase-data van dat moment bevroren) in plaats van de aanvragen bij elk bezoek opnieuw op
+// te halen — dat is niet wat je wilt voor een pagina die live aanvraagstatussen toont.
+export const dynamic = "force-dynamic";
+
 // Server component: haalt aanvragen, klanten en contentchecks apart op en koppelt ze in JS.
 // Dat houdt de Supabase-typing eenvoudig, zolang lib/types/database.ts nog handgeschreven is
 // (nog geen relaties/embeds zoals de door de CLI gegenereerde types die kennen).
