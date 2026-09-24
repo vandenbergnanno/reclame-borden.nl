@@ -91,6 +91,32 @@ ontwikkelmachine.
 - Toont nog niet of er een bijlage is meegestuurd of wat de inhoud van de ontwerpwens is
   (bewust beperkt tot een overzichtstabel).
 
+## Update — producttypen naast reclameborden ✅
+
+Eerste feedback na het testen: de tool draaide volledig om reclameborden, terwijl De Mediagraaf
+ook visitekaartjes en borden in afwijkende maten maakt. Uitgebreid met een `producttype`-keuze:
+
+- `lib/types/domain.ts`: `Producttype` (`reclamebord` / `visitekaartje` / `bord-andere-maat`)
+  toegevoegd. Veldtype blijft bestaan, maar is nu alleen relevant bij `reclamebord`.
+- `supabase/migrations/0002_producttypen.sql`: `aanvragen` krijgt een `producttype`-kolom
+  (bestaande rijen krijgen default `reclamebord`), `veldtype` is nullable geworden, en een nieuwe
+  `afmeting`-kolom (vrije tekst) is toegevoegd voor `bord-andere-maat`. Een check-constraint
+  bewaakt dat `veldtype` alleen gezet is bij `reclamebord`.
+- Formulier (`AanvraagForm.tsx`): een productkeuze bovenaan het "ontwerpwens"-blok. Het
+  veldtype-veld verschijnt alleen bij "Reclamebord", een "gewenste afmeting"-veld alleen bij
+  "Bord in een andere maat". De API-route valideert dit ook server-side.
+- Homepage (`app/page.tsx`): omgebouwd van een droge "fundament"-tekst naar drie klikbare
+  kaarten (één per producttype) die direct naar `/aanvraag?type=...` linken met dat product al
+  voorgeselecteerd — vriendelijker en duidelijker dan de vorige versie.
+- `/intern` toont nu een "Product"-kolom (producttype + veldtype of afmeting waar van
+  toepassing) in plaats van alleen veldtype.
+- Geverifieerd met `npm run typecheck`, `npm run build` en handmatig doorlopen van alle drie de
+  productkeuzes in de browser.
+
+**Bewust nog niet af:** geen aparte contentregels of designstijl per producttype (bijv. een
+visitekaartje heeft andere afmetingen/eisen dan een reclamebord) — `analyzeRequest()` en
+`generateDesign()` blijven voorlopig generieke placeholders ongeacht het gekozen producttype.
+
 ## Nog volledig open (bewuste placeholders voor latere sessies)
 
 - Echte beeldgeneratie-koppeling (Replicate/fal.ai) in `lib/ai/generateDesign.ts`.

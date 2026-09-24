@@ -1,7 +1,20 @@
 // Domeintypes die in de hele applicatie worden hergebruikt (frontend, API-routes, placeholders).
 // Dit is de bron van waarheid voor de toegestane waarden — de database-CHECK-constraints
-// in supabase/migrations/0001_init.sql moeten hiermee in lijn blijven.
+// in supabase/migrations moeten hiermee in lijn blijven.
 
+export const PRODUCTTYPEN = ["reclamebord", "visitekaartje", "bord-andere-maat"] as const;
+
+export type Producttype = (typeof PRODUCTTYPEN)[number];
+
+export const PRODUCTTYPE_LABELS: Record<Producttype, string> = {
+  reclamebord: "Reclamebord",
+  visitekaartje: "Visitekaartje",
+  "bord-andere-maat": "Bord in een andere maat",
+};
+
+// Veldtypen zijn alleen van toepassing als producttype "reclamebord" is (borden langs een
+// voetbal-/hockeyveld, scorebord of plattegrond). Bij "visitekaartje" en "bord-andere-maat"
+// blijft dit veld leeg.
 export const VELDTYPEN = [
   "voetbal-zijlijn",
   "hockeyveld",

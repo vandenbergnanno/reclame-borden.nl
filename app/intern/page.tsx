@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import { AANVRAAG_STATUS_LABELS, VELDTYPE_LABELS } from "@/lib/types/domain";
+import { AANVRAAG_STATUS_LABELS, PRODUCTTYPE_LABELS, VELDTYPE_LABELS } from "@/lib/types/domain";
 
 export const metadata: Metadata = {
   title: "Intern overzicht — Mediagraaf Conceptor",
@@ -20,7 +20,7 @@ export default async function InternPage() {
     aanvraagId: string;
     klantNaam: string;
     bedrijf: string | null;
-    veldtype: string;
+    product: string;
     status: string;
     ingediendOp: string;
     heeftGeblokkeerdeCheck: boolean;
@@ -47,11 +47,16 @@ export default async function InternPage() {
 
     rijen = (aanvragen ?? []).map((aanvraag) => {
       const klant = klantenById.get(aanvraag.klant_id);
+      const productLabel = PRODUCTTYPE_LABELS[aanvraag.producttype] ?? aanvraag.producttype;
+      const detail = aanvraag.veldtype
+        ? VELDTYPE_LABELS[aanvraag.veldtype] ?? aanvraag.veldtype
+        : aanvraag.afmeting;
+
       return {
         aanvraagId: aanvraag.id,
         klantNaam: klant?.naam ?? "Onbekende klant",
         bedrijf: klant?.bedrijf ?? null,
-        veldtype: VELDTYPE_LABELS[aanvraag.veldtype] ?? aanvraag.veldtype,
+        product: detail ? `${productLabel} — ${detail}` : productLabel,
         status: AANVRAAG_STATUS_LABELS[aanvraag.status] ?? aanvraag.status,
         ingediendOp: new Date(aanvraag.created_at).toLocaleString("nl-NL"),
         heeftGeblokkeerdeCheck: geblokkeerdeAanvraagIds.has(aanvraag.id),
@@ -88,7 +93,7 @@ export default async function InternPage() {
               <tr>
                 <th className="px-4 py-2 font-semibold">Klant</th>
                 <th className="px-4 py-2 font-semibold">Bedrijf</th>
-                <th className="px-4 py-2 font-semibold">Veldtype</th>
+                <th className="px-4 py-2 font-semibold">Product</th>
                 <th className="px-4 py-2 font-semibold">Status</th>
                 <th className="px-4 py-2 font-semibold">Ingediend op</th>
                 <th className="px-4 py-2 font-semibold">Contentcheck</th>
@@ -99,7 +104,7 @@ export default async function InternPage() {
                 <tr key={rij.aanvraagId} className="border-t border-neutral-200">
                   <td className="px-4 py-2">{rij.klantNaam}</td>
                   <td className="px-4 py-2">{rij.bedrijf ?? "—"}</td>
-                  <td className="px-4 py-2">{rij.veldtype}</td>
+                  <td className="px-4 py-2">{rij.product}</td>
                   <td className="px-4 py-2">
                     <span className="rounded-full bg-neutral-100 px-2 py-0.5 text-xs font-medium text-brand-zwart">
                       {rij.status}

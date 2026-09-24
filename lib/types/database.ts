@@ -1,13 +1,13 @@
 // Handgeschreven equivalent van de types die `supabase gen types typescript` zou genereren.
 // Zodra er een echt Supabase-project gekoppeld is, kan dit bestand vervangen worden door de
 // gegenereerde versie (`supabase gen types typescript --project-id <id> > lib/types/database.ts`).
-// Houd dit bestand tot die tijd in lijn met supabase/migrations/0001_init.sql.
+// Houd dit bestand tot die tijd in lijn met supabase/migrations/*.sql.
 //
 // De `Relationships`-array per tabel, en de lege `Views`/`Functions`/`Enums`/`CompositeTypes`,
 // zijn nodig omdat @supabase/supabase-js dit exacte vorm verwacht van het `Database`-type
 // (dezelfde vorm als de door de CLI gegenereerde types).
 
-import type { AanvraagStatus, DesignStatus, Veldtype } from "./domain";
+import type { AanvraagStatus, DesignStatus, Producttype, Veldtype } from "./domain";
 
 export interface Database {
   public: {
@@ -36,7 +36,9 @@ export interface Database {
         Row: {
           id: string;
           klant_id: string;
-          veldtype: Veldtype;
+          producttype: Producttype;
+          veldtype: Veldtype | null;
+          afmeting: string | null;
           wens: string;
           status: AanvraagStatus;
           bijlage_pad: string | null;
@@ -46,7 +48,9 @@ export interface Database {
         Insert: {
           id?: string;
           klant_id: string;
-          veldtype: Veldtype;
+          producttype: Producttype;
+          veldtype?: Veldtype | null;
+          afmeting?: string | null;
           wens: string;
           status?: AanvraagStatus;
           bijlage_pad?: string | null;

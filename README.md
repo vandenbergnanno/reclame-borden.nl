@@ -53,8 +53,9 @@ Zie [`PROGRESS.md`](PROGRESS.md) voor de actuele status per fase.
 - **Tailwind CSS** met de merkkleuren van De Mediagraaf (`brand.groen` `#5FB238`,
   `brand.oranje` `#E8792A`, `brand.zwart` `#111111`) als theme-extensie in
   [`tailwind.config.ts`](tailwind.config.ts).
-- **Domeintypes centraal** in [`lib/types/domain.ts`](lib/types/domain.ts) (veldtypen,
-  aanvraagstatussen, designstatussen) — zowel de frontend als de databasetypes in
+- **Domeintypes centraal** in [`lib/types/domain.ts`](lib/types/domain.ts) (producttypen —
+  reclamebord, visitekaartje, bord in een andere maat — veldtypen, aanvraagstatussen,
+  designstatussen) — zowel de frontend als de databasetypes in
   [`lib/types/database.ts`](lib/types/database.ts) verwijzen hiernaar, zodat er één bron van
   waarheid is voor toegestane waarden. Houd dit in lijn met de CHECK-constraints in de
   SQL-migratie.
