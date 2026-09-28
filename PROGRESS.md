@@ -216,6 +216,30 @@ Geverifieerd met `npm run typecheck`, een schone `npm run build`, en de hele inl
 doorlopen in de browser (fout wachtwoord → foutmelding; juist wachtwoord → toegang; uitloggen →
 weer afgeschermd; rechtstreeks naar `/intern/<id>` zonder login → ook geredirect).
 
+## Update — Klanten-sectie, statusfilters en sub-navigatie in /intern ✅
+
+Het interne overzicht was één platte tabel; nu is het opgedeeld in twee secties met een
+duidelijke sub-navigatie:
+
+- De afgeschermde /intern-pagina's zijn verplaatst naar een route group
+  `app/intern/(besloten)/` met een gedeelde `layout.tsx` (sub-nav "Aanvragen" / "Klanten" +
+  de "Uitloggen"-knop). De inlogpagina zelf (`/intern/login`) valt hier bewust buiten. De URL's
+  blijven ongewijzigd (`/intern`, `/intern/[id]`) — een route group is onzichtbaar in het pad.
+- **Aanvragen** (`/intern`): statustabbladen bovenaan ("Alle", "Nieuw", "In behandeling",
+  "Voorstel verstuurd", "Goedgekeurd", "Afgewezen", "Geëscaleerd") met een teller per status, als
+  link naar `/intern?status=...`. "Goedgekeurd" is bijvoorbeeld meteen de "orders die klaar
+  zijn"-weergave.
+- **Klanten** (`/intern/klanten`, nieuw): overzicht van alle klanten met contactgegevens en het
+  aantal aanvragen (met een oranje badge voor het aantal nog lopende aanvragen). Een link per
+  klant filtert de aanvragen-pagina op die klant (`/intern?klant=<id>`).
+- Geverifieerd met `npm run typecheck`, een schone `npm run build`, en handmatig doorlopen in de
+  browser (sub-nav, statustabbladen met tellingen, Klanten-pagina, detailpagina — allemaal nog
+  met de bekende nette foutmelding zolang er geen echt Supabase-project is).
+
+**Bewust nog niet af:** de status- en klantfilters werken nu los van elkaar (kiezen van een
+status-tab reset een actief klantfilter, en andersom) — prima voor dit stadium, maar geen
+combinatie van beide filters tegelijk.
+
 ## Nog volledig open (bewuste placeholders voor latere sessies)
 
 - Scheduler koppelen (Vercel Cron / Supabase `pg_cron`) die
