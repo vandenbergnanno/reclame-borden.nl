@@ -14,7 +14,7 @@ values
     'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
     '11111111-1111-1111-1111-111111111111',
     'voetbal-zijlijn',
-    null,
+    '300 x 100 cm',
     'Reclamebord met onze clublogo in groen/wit, tekst "Trots hoofdsponsor van VV Oudewater".',
     'nieuw'
   ),
@@ -22,16 +22,16 @@ values
     'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
     '22222222-2222-2222-2222-222222222222',
     'scorebord',
-    null,
+    '200 x 100 cm',
     'Strak scorebord-ontwerp passend bij onze clubkleuren blauw en geel.',
     'voorstel_verstuurd'
   ),
   (
     'cccccccc-cccc-cccc-cccc-cccccccccccc',
     '33333333-3333-3333-3333-333333333333',
-    'andere-maat',
+    'voetbal-zijlijn',
     '450 x 90 cm',
-    'Groot spandoek-achtig bord voor aan de gevel van ons kantoor, met logo en pand-adres.',
+    'Groot bord voor aan onze gevel bij het veld, met logo en pand-adres.',
     'nieuw'
   )
 on conflict (id) do nothing;

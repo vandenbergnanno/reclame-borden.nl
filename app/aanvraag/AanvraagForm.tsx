@@ -1,7 +1,13 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { VELDTYPEN, VELDTYPE_LABELS, type Veldtype } from "@/lib/types/domain";
+import {
+  AFMETING_ANDERS,
+  STANDAARD_AFMETINGEN,
+  VELDTYPEN,
+  VELDTYPE_LABELS,
+  type Veldtype,
+} from "@/lib/types/domain";
 
 type Status = "idle" | "versturen" | "gelukt" | "mislukt";
 
@@ -9,6 +15,7 @@ export function AanvraagForm() {
   const [status, setStatus] = useState<Status>("idle");
   const [foutmelding, setFoutmelding] = useState<string | null>(null);
   const [veldtype, setVeldtype] = useState<Veldtype | "">("");
+  const [afmetingKeuze, setAfmetingKeuze] = useState<string>("");
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -16,6 +23,13 @@ export function AanvraagForm() {
     setFoutmelding(null);
 
     const formData = new FormData(event.currentTarget);
+
+    // De select stuurt bij "Anders, namelijk..." de sentinel-waarde mee; die vervangen we hier
+    // door wat de klant in het vrije-tekstveld heeft ingevuld, zodat de server altijd gewoon een
+    // leesbare afmeting binnenkrijgt.
+    if (formData.get("afmeting") === AFMETING_ANDERS) {
+      formData.set("afmeting", formData.get("afmeting_anders") ?? "");
+    }
 
     try {
       const response = await fetch("/api/aanvragen", {
@@ -32,6 +46,7 @@ export function AanvraagForm() {
       setStatus("gelukt");
       event.currentTarget.reset();
       setVeldtype("");
+      setAfmetingKeuze("");
     } catch (error) {
       setStatus("mislukt");
       setFoutmelding(error instanceof Error ? error.message : "Onbekende fout.");
@@ -95,8 +110,32 @@ export function AanvraagForm() {
           </select>
         </div>
 
-        {veldtype === "andere-maat" && (
-          <Veld label="Gewenste afmeting" name="afmeting" placeholder="Bijv. 200 x 100 cm" required />
+        <div>
+          <label htmlFor="afmeting" className="mb-1 block text-sm font-medium text-brand-zwart">
+            Gewenste afmeting
+          </label>
+          <select
+            id="afmeting"
+            name="afmeting"
+            required
+            value={afmetingKeuze}
+            onChange={(event) => setAfmetingKeuze(event.target.value)}
+            className="w-full rounded border border-neutral-300 px-3 py-2 focus:border-brand-groen focus:outline-none"
+          >
+            <option value="" disabled>
+              Kies een afmeting
+            </option>
+            {STANDAARD_AFMETINGEN.map((optie) => (
+              <option key={optie} value={optie}>
+                {optie}
+              </option>
+            ))}
+            <option value={AFMETING_ANDERS}>Anders, namelijk...</option>
+          </select>
+        </div>
+
+        {afmetingKeuze === AFMETING_ANDERS && (
+          <Veld label="Eigen afmeting" name="afmeting_anders" placeholder="Bijv. 250 x 120 cm" required />
         )}
 
         <div>

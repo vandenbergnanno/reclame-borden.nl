@@ -133,8 +133,33 @@ Er is nog geen logo-bestand van De Mediagraaf aangeleverd (komt later). Om niet 
 - Geverifieerd met `npm run typecheck`, een schone `npm run build`, en visueel gecontroleerd in
   de browser op zowel de homepage als de header van de andere pagina's.
 
+## Update — afmeting kiezen uit lijst óf zelf invullen ✅
+
+Bij "Jouw ontwerpwens" kan de klant nu een afmeting kiezen uit een lijst met veelvoorkomende
+maten, of via "Anders, namelijk..." zelf een maat intypen:
+
+- `lib/types/domain.ts`: `STANDAARD_AFMETINGEN` toegevoegd — **placeholder-waarden** (200/300/
+  400/600 x 100 cm), duidelijk gemarkeerd met een TODO. **De stagebegeleider bepaalt nog de
+  daadwerkelijke standaardmaten van De Mediagraaf — deze lijst moet dan bijgewerkt worden.**
+  Ook `AFMETING_ANDERS` toegevoegd (sentinel-waarde voor de "Anders, namelijk..."-optie).
+- Het losse veldtype "andere-maat" is vervallen (overbodig geworden nu elke aanvraag sowieso een
+  afmeting heeft) — `VELDTYPEN` bevat weer de originele 4 waarden.
+- `aanvragen.afmeting` is nu verplicht (`not null`) in plaats van optioneel, zowel in de
+  migratie, de TypeScript-types als de API-validatie.
+- Formulier: een select met de standaardmaten + "Anders, namelijk...", die bij die laatste keuze
+  een extra tekstveld toont. Vóór het versturen wordt de sentinel-waarde in JS vervangen door de
+  ingevulde eigen maat, zodat de server altijd gewoon een leesbare afmeting binnenkrijgt.
+- `/intern` toont veldtype + afmeting altijd samen (bijv. "Scorebord (200 x 100 cm)").
+- Geverifieerd met `npm run typecheck`, een schone `npm run build`, en handmatig getest
+  (inclusief de "Anders, namelijk..."-flow) in de browser.
+
+**TODO (staat ook hieronder in de open lijst):** vervang de placeholder-standaardmaten door de
+daadwerkelijke maten zodra de stagebegeleider die heeft vastgesteld.
+
 ## Nog volledig open (bewuste placeholders voor latere sessies)
 
+- **TODO van de stagebegeleider:** de daadwerkelijke standaard-afmetingen van De Mediagraaf
+  bepalen en `STANDAARD_AFMETINGEN` in `lib/types/domain.ts` bijwerken (nu placeholder-waarden).
 - Echte beeldgeneratie-koppeling (Replicate/fal.ai) in `lib/ai/generateDesign.ts`.
 - Echte Claude API-koppeling voor briefanalyse/contentregels in `lib/ai/analyzeRequest.ts`.
 - E-mailverzending (Resend) in `lib/email/sendProposalEmail.ts`.

@@ -2,16 +2,8 @@
 // Dit is de bron van waarheid voor de toegestane waarden — de database-CHECK-constraints
 // in supabase/migrations moeten hiermee in lijn blijven.
 
-// Focus van de tool is puur reclameborden (beslissing van de stagebegeleider). "andere-maat" is
-// geen apart product, maar een reclamebord dat niet in de standaardmaten van de andere opties
-// past — bij die keuze vult de klant zelf een gewenste afmeting in (zie `afmeting` op aanvragen).
-export const VELDTYPEN = [
-  "voetbal-zijlijn",
-  "hockeyveld",
-  "scorebord",
-  "plattegrond",
-  "andere-maat",
-] as const;
+// Focus van de tool is puur reclameborden (beslissing van de stagebegeleider).
+export const VELDTYPEN = ["voetbal-zijlijn", "hockeyveld", "scorebord", "plattegrond"] as const;
 
 export type Veldtype = (typeof VELDTYPEN)[number];
 
@@ -20,8 +12,16 @@ export const VELDTYPE_LABELS: Record<Veldtype, string> = {
   hockeyveld: "Hockeyveld",
   scorebord: "Scorebord",
   plattegrond: "Plattegrond",
-  "andere-maat": "Andere maat",
 };
+
+// TODO: dit zijn placeholder-afmetingen — de stagebegeleider bepaalt nog welke maten De
+// Mediagraaf daadwerkelijk als standaard voert. Vervang deze lijst zodra dat bekend is.
+// De klant kan in het formulier altijd ook zelf een afmeting intypen via "Anders, namelijk...".
+export const STANDAARD_AFMETINGEN = ["200 x 100 cm", "300 x 100 cm", "400 x 100 cm", "600 x 100 cm"] as const;
+
+// Sentinel-waarde voor de "Anders, namelijk..."-optie in het formulier. Wordt nooit als
+// zodanig opgeslagen: bij deze keuze vult de klant zelf de vrije tekst in `afmeting` in.
+export const AFMETING_ANDERS = "anders" as const;
 
 export const AANVRAAG_STATUSSEN = [
   "nieuw",

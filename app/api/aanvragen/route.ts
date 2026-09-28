@@ -36,6 +36,9 @@ export async function POST(request: Request) {
   if (!isVeldtype(veldtype)) {
     return NextResponse.json({ ok: false, error: "Kies een geldig veldtype." }, { status: 400 });
   }
+  if (typeof afmeting !== "string" || afmeting.trim() === "") {
+    return NextResponse.json({ ok: false, error: "Kies of vul een afmeting in." }, { status: 400 });
+  }
   if (typeof wens !== "string" || wens.trim() === "") {
     return NextResponse.json({ ok: false, error: "Beschrijf je ontwerpwens." }, { status: 400 });
   }
@@ -90,7 +93,7 @@ export async function POST(request: Request) {
     .insert({
       klant_id: klantId,
       veldtype,
-      afmeting: typeof afmeting === "string" && afmeting.trim() !== "" ? afmeting.trim() : null,
+      afmeting: afmeting.trim(),
       wens: wens.trim(),
       status: "nieuw",
     })

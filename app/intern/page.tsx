@@ -53,7 +53,7 @@ export default async function InternPage() {
         aanvraagId: aanvraag.id,
         klantNaam: klant?.naam ?? "Onbekende klant",
         bedrijf: klant?.bedrijf ?? null,
-        veldtype: aanvraag.afmeting ? `${veldtypeLabel} (${aanvraag.afmeting})` : veldtypeLabel,
+        veldtype: `${veldtypeLabel} (${aanvraag.afmeting})`,
         status: AANVRAAG_STATUS_LABELS[aanvraag.status] ?? aanvraag.status,
         ingediendOp: new Date(aanvraag.created_at).toLocaleString("nl-NL"),
         heeftGeblokkeerdeCheck: geblokkeerdeAanvraagIds.has(aanvraag.id),

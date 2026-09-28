@@ -37,7 +37,7 @@ export interface Database {
           id: string;
           klant_id: string;
           veldtype: Veldtype;
-          afmeting: string | null;
+          afmeting: string;
           wens: string;
           status: AanvraagStatus;
           bijlage_pad: string | null;
@@ -48,7 +48,7 @@ export interface Database {
           id?: string;
           klant_id: string;
           veldtype: Veldtype;
-          afmeting?: string | null;
+          afmeting: string;
           wens: string;
           status?: AanvraagStatus;
           bijlage_pad?: string | null;
