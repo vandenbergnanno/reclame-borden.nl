@@ -41,7 +41,7 @@ export async function POST() {
     try {
       const { data: klant } = await supabase
         .from("klanten")
-        .select("email")
+        .select("naam, email")
         .eq("id", aanvraag.klant_id)
         .maybeSingle();
 
@@ -61,7 +61,10 @@ export async function POST() {
       if (klant?.email) {
         sendProposalEmail({
           klantEmail: klant.email,
+          klantNaam: klant.naam,
           aanvraagId: aanvraag.id,
+          veldtype: aanvraag.veldtype,
+          afmeting: aanvraag.afmeting,
           designUrl: design.opslaglocatie,
         });
       }

@@ -150,10 +150,18 @@ export default async function AanvraagDetailPage({ params }: { params: { id: str
         {!designs || designs.length === 0 ? (
           <p className="text-sm text-neutral-500">Nog geen ontwerp gegenereerd.</p>
         ) : (
-          <ul className="space-y-1 text-sm">
+          <ul className="space-y-3 text-sm">
             {designs.map((design) => (
-              <li key={design.id}>
-                Versie {design.versienummer} — {design.status} — {design.opslaglocatie}
+              <li key={design.id} className="flex items-center gap-3">
+                {/* eslint-disable-next-line @next/next/no-img-element -- extern/placeholder pad */}
+                <img
+                  src={design.opslaglocatie}
+                  alt={`Ontwerp versie ${design.versienummer}`}
+                  className="h-14 w-24 shrink-0 rounded border border-neutral-200 object-cover"
+                />
+                <span>
+                  Versie {design.versienummer} — {design.status} — {design.opslaglocatie}
+                </span>
               </li>
             ))}
           </ul>

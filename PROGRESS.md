@@ -297,6 +297,35 @@ Wel de structuur alvast klaargezet zodat het invullen van een key straks voldoen
   browser (inclusief een volledige testinzending van het formulier en tijdelijke voorbeelddata
   om de statuskleuren te controleren, daarna weer teruggedraaid).
 
+## Update — voorstel-e-mail en publieke reactiepagina ✅
+
+De "mail-opbouw" die de klant krijgt, plus de pagina waar de knoppen in die e-mail naartoe
+moeten linken (zonder die pagina had de e-mail nog geen werkende call-to-action):
+
+- `lib/email/voorstelEmailTemplate.ts`: `bouwVoorstelEmail()` bouwt een volledige HTML-e-mail
+  (tabellen + inline styles, zoals gebruikelijk voor e-mailclients) met het ontwerp, een korte
+  tekst, en een knop "Bekijk en reageer op je voorstel". Ook een platte-tekstversie.
+- `lib/email/sendProposalEmail.ts` gebruikt dit sjabloon nu en logt de opgebouwde e-mail
+  (onderwerp + platte tekst) naar de console — nog steeds geen echte verzending (Resend), maar de
+  inhoud staat nu klaar.
+- Nieuwe publieke pagina `/voorstel/[id]` (geen `/intern`-login nodig, de klant komt hier via de
+  link in de e-mail): toont het ontwerp, de ontwerpwens, en twee acties — "Ontwerp goedkeuren" of
+  "Feedback geven" (met tekstveld). Toont ook nette tussenstatussen: nog geen ontwerp klaar, of al
+  eerder gereageerd (goedgekeurd/afgewezen, met de gegeven feedback erbij).
+- Nieuwe publieke route `POST /api/aanvragen/[id]/feedback`: slaat de reactie op in `feedback` en
+  zet de status op `goedgekeurd` of `afgewezen`. Weigert een tweede reactie als er al een besluit
+  ligt.
+- `public/placeholder-ontwerp.svg` toegevoegd: een echte (placeholder) afbeelding in de
+  merkkleuren, zodat de e-mail en voorstelpagina ook echt iets tonen in plaats van een kapotte
+  afbeeldingslink. `generateDesign()` en de seed-data verwijzen hier nu naar.
+- `.env.example`: `APP_URL` toegevoegd (basis-URL om volledige links in de e-mail te bouwen —
+  e-mailclients laden geen relatieve paden; valt terug op `http://localhost:3000`).
+- Intern detailpagina toont nu ook een kleine miniatuur van elk gegenereerd ontwerp.
+- Geverifieerd met `npm run typecheck`, een schone `npm run build`, en handmatig getest in de
+  browser: de HTML-e-mail zelf bekeken (via een tijdelijke debug-route, weer verwijderd), en de
+  volledige voorstelpagina inclusief het feedbackformulier doorlopen met tijdelijke voorbeelddata
+  (daarna teruggedraaid).
+
 ## Nog volledig open (bewuste placeholders voor latere sessies)
 
 - Open ontwerpvraag: hoe wordt de vrije tekst uit de ontwerpwens (sponsornaam, slogan, ...)
@@ -315,7 +344,8 @@ Wel de structuur alvast klaargezet zodat het invullen van een key straks voldoen
   bepalen en `STANDAARD_AFMETINGEN` in `lib/types/domain.ts` bijwerken (nu placeholder-waarden).
 - Echte beeldgeneratie-koppeling (Replicate/fal.ai) in `lib/ai/generateDesign.ts`.
 - Echte Claude API-koppeling voor briefanalyse/contentregels in `lib/ai/analyzeRequest.ts`.
-- E-mailverzending (Resend) in `lib/email/sendProposalEmail.ts`.
+- Echte e-mailverzending (Resend) in `lib/email/sendProposalEmail.ts` — de inhoud (onderwerp,
+  HTML, platte tekst) staat al klaar via `bouwVoorstelEmail()`, alleen het versturen zelf nog niet.
 - Echt Supabase-project aanmaken en koppelen (nu alleen migratie-structuur) en de
   `SUPABASE_STORAGE_BUCKET` daadwerkelijk aanmaken.
 - Vullen van `/docs/reference`, `/assets/brand` en `/assets/mockups` met echt materiaal van

@@ -26,8 +26,11 @@ export async function generateDesign(input: GenerateDesignInput): Promise<Genera
   const replicateToken = process.env.REPLICATE_API_TOKEN;
 
   if (!replicateToken) {
+    // Root-relative pad naar /public/placeholder-ontwerp.svg — direct bruikbaar in <img src="">
+    // op de site zelf, en wordt in sendProposalEmail() met APP_URL tot een volledige URL gemaakt
+    // (e-mailclients kunnen geen relatieve paden laden).
     return {
-      opslaglocatie: "placeholder/testafbeelding.png",
+      opslaglocatie: "/placeholder-ontwerp.svg",
       status: "concept",
     };
   }

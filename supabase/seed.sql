@@ -58,6 +58,6 @@ values
     'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
     1,
     'concept',
-    'placeholder/testafbeelding.png'
+    '/placeholder-ontwerp.svg'
   )
 on conflict do nothing;
