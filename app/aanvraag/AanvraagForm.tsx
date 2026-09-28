@@ -151,7 +151,7 @@ export function AanvraagForm() {
             ))}
           </div>
           <p className="mt-1 text-xs text-neutral-500">
-            Let op: bij een nieuw bord komen er uiteraard extra kosten bij (materiaal + montage).
+            Let op: bij een nieuw bord komen er uiteraard extra kosten bij.
           </p>
         </div>
 
