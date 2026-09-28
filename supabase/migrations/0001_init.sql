@@ -38,6 +38,7 @@ create table if not exists aanvragen (
   klant_id uuid not null references klanten (id) on delete cascade,
   veldtype text not null check (veldtype in ('voetbal-zijlijn', 'hockeyveld', 'scorebord', 'plattegrond')),
   afmeting text not null,
+  bord_aanschaf text not null check (bord_aanschaf in ('hergebruiken', 'nieuw')),
   wens text not null,
   status text not null default 'nieuw' check (
     status in ('nieuw', 'in_behandeling', 'voorstel_verstuurd', 'goedgekeurd', 'afgewezen', 'geescaleerd')
@@ -49,6 +50,7 @@ create table if not exists aanvragen (
 
 comment on table aanvragen is 'Eén ontwerpaanvraag van een klant voor een specifiek veldtype reclamebord.';
 comment on column aanvragen.afmeting is 'Gewenste afmeting van het bord: gekozen uit de standaardmaten of vrije tekst via "Anders, namelijk...".';
+comment on column aanvragen.bord_aanschaf is 'Hergebruikt de klant een bestaand bord, of moet er een nieuw bord komen (nieuw bord = extra kosten).';
 comment on column aanvragen.bijlage_pad is 'Pad in Supabase Storage naar een eventueel meegestuurd voorbeeld/document van de klant.';
 
 create index if not exists aanvragen_klant_id_idx on aanvragen (klant_id);

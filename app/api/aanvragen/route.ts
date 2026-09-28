@@ -1,13 +1,17 @@
 import { NextResponse } from "next/server";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { analyzeRequest } from "@/lib/ai/analyzeRequest";
-import { VELDTYPEN, type Veldtype } from "@/lib/types/domain";
+import { BORD_AANSCHAF_OPTIES, VELDTYPEN, type BordAanschaf, type Veldtype } from "@/lib/types/domain";
 
 // Bestandsuploads vragen om de Node.js-runtime (niet de edge-runtime).
 export const runtime = "nodejs";
 
 function isVeldtype(waarde: FormDataEntryValue | null): waarde is Veldtype {
   return typeof waarde === "string" && (VELDTYPEN as readonly string[]).includes(waarde);
+}
+
+function isBordAanschaf(waarde: FormDataEntryValue | null): waarde is BordAanschaf {
+  return typeof waarde === "string" && (BORD_AANSCHAF_OPTIES as readonly string[]).includes(waarde);
 }
 
 export async function POST(request: Request) {
@@ -24,6 +28,7 @@ export async function POST(request: Request) {
   const telefoon = formData.get("telefoon");
   const veldtype = formData.get("veldtype");
   const afmeting = formData.get("afmeting");
+  const bordAanschaf = formData.get("bord_aanschaf");
   const wens = formData.get("wens");
   const bijlage = formData.get("bijlage");
 
@@ -38,6 +43,12 @@ export async function POST(request: Request) {
   }
   if (typeof afmeting !== "string" || afmeting.trim() === "") {
     return NextResponse.json({ ok: false, error: "Kies of vul een afmeting in." }, { status: 400 });
+  }
+  if (!isBordAanschaf(bordAanschaf)) {
+    return NextResponse.json(
+      { ok: false, error: "Geef aan of je een bestaand bord hergebruikt of een nieuw bord wilt." },
+      { status: 400 }
+    );
   }
   if (typeof wens !== "string" || wens.trim() === "") {
     return NextResponse.json({ ok: false, error: "Beschrijf je ontwerpwens." }, { status: 400 });
@@ -94,6 +105,7 @@ export async function POST(request: Request) {
       klant_id: klantId,
       veldtype,
       afmeting: afmeting.trim(),
+      bord_aanschaf: bordAanschaf,
       wens: wens.trim(),
       status: "nieuw",
     })

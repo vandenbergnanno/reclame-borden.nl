@@ -23,6 +23,17 @@ export const STANDAARD_AFMETINGEN = ["200 x 100 cm", "300 x 100 cm", "400 x 100 
 // zodanig opgeslagen: bij deze keuze vult de klant zelf de vrije tekst in `afmeting` in.
 export const AFMETING_ANDERS = "anders" as const;
 
+// Heeft de klant zelf al een bruikbaar bord staan, of moet er een nieuwe komen? Relevant voor
+// De Mediagraaf omdat een nieuw bord (materiaal + montage) extra kosten met zich meebrengt.
+export const BORD_AANSCHAF_OPTIES = ["hergebruiken", "nieuw"] as const;
+
+export type BordAanschaf = (typeof BORD_AANSCHAF_OPTIES)[number];
+
+export const BORD_AANSCHAF_LABELS: Record<BordAanschaf, string> = {
+  hergebruiken: "Ik heb al een bruikbaar bord — hergebruiken",
+  nieuw: "Ik wil een nieuw bord aanschaffen",
+};
+
 export const AANVRAAG_STATUSSEN = [
   "nieuw",
   "in_behandeling",

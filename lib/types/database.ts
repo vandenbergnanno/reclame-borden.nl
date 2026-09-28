@@ -7,7 +7,7 @@
 // zijn nodig omdat @supabase/supabase-js dit exacte vorm verwacht van het `Database`-type
 // (dezelfde vorm als de door de CLI gegenereerde types).
 
-import type { AanvraagStatus, DesignStatus, Veldtype } from "./domain";
+import type { AanvraagStatus, BordAanschaf, DesignStatus, Veldtype } from "./domain";
 
 export interface Database {
   public: {
@@ -38,6 +38,7 @@ export interface Database {
           klant_id: string;
           veldtype: Veldtype;
           afmeting: string;
+          bord_aanschaf: BordAanschaf;
           wens: string;
           status: AanvraagStatus;
           bijlage_pad: string | null;
@@ -49,6 +50,7 @@ export interface Database {
           klant_id: string;
           veldtype: Veldtype;
           afmeting: string;
+          bord_aanschaf: BordAanschaf;
           wens: string;
           status?: AanvraagStatus;
           bijlage_pad?: string | null;

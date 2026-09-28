@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import { AANVRAAG_STATUS_LABELS, VELDTYPE_LABELS } from "@/lib/types/domain";
+import { AANVRAAG_STATUS_LABELS, BORD_AANSCHAF_LABELS, VELDTYPE_LABELS } from "@/lib/types/domain";
 
 export const metadata: Metadata = {
   title: "Intern overzicht — Mediagraaf Conceptor",
@@ -21,6 +21,8 @@ export default async function InternPage() {
     klantNaam: string;
     bedrijf: string | null;
     veldtype: string;
+    bordAanschaf: string;
+    nieuwBord: boolean;
     status: string;
     ingediendOp: string;
     heeftGeblokkeerdeCheck: boolean;
@@ -54,6 +56,8 @@ export default async function InternPage() {
         klantNaam: klant?.naam ?? "Onbekende klant",
         bedrijf: klant?.bedrijf ?? null,
         veldtype: `${veldtypeLabel} (${aanvraag.afmeting})`,
+        bordAanschaf: BORD_AANSCHAF_LABELS[aanvraag.bord_aanschaf] ?? aanvraag.bord_aanschaf,
+        nieuwBord: aanvraag.bord_aanschaf === "nieuw",
         status: AANVRAAG_STATUS_LABELS[aanvraag.status] ?? aanvraag.status,
         ingediendOp: new Date(aanvraag.created_at).toLocaleString("nl-NL"),
         heeftGeblokkeerdeCheck: geblokkeerdeAanvraagIds.has(aanvraag.id),
@@ -91,6 +95,7 @@ export default async function InternPage() {
                 <th className="px-4 py-2 font-semibold">Klant</th>
                 <th className="px-4 py-2 font-semibold">Bedrijf</th>
                 <th className="px-4 py-2 font-semibold">Veldtype</th>
+                <th className="px-4 py-2 font-semibold">Bord</th>
                 <th className="px-4 py-2 font-semibold">Status</th>
                 <th className="px-4 py-2 font-semibold">Ingediend op</th>
                 <th className="px-4 py-2 font-semibold">Contentcheck</th>
@@ -102,6 +107,15 @@ export default async function InternPage() {
                   <td className="px-4 py-2">{rij.klantNaam}</td>
                   <td className="px-4 py-2">{rij.bedrijf ?? "—"}</td>
                   <td className="px-4 py-2">{rij.veldtype}</td>
+                  <td className="px-4 py-2">
+                    {rij.nieuwBord ? (
+                      <span className="rounded-full bg-brand-oranje/10 px-2 py-0.5 text-xs font-medium text-brand-oranje">
+                        {rij.bordAanschaf}
+                      </span>
+                    ) : (
+                      rij.bordAanschaf
+                    )}
+                  </td>
                   <td className="px-4 py-2">
                     <span className="rounded-full bg-neutral-100 px-2 py-0.5 text-xs font-medium text-brand-zwart">
                       {rij.status}

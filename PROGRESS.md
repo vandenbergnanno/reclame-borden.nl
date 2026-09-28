@@ -156,6 +156,21 @@ maten, of via "Anders, namelijk..." zelf een maat intypen:
 **TODO (staat ook hieronder in de open lijst):** vervang de placeholder-standaardmaten door de
 daadwerkelijke maten zodra de stagebegeleider die heeft vastgesteld.
 
+## Update — hergebruiken of nieuw bord aanschaffen ✅
+
+Extra keuze toegevoegd bij "Jouw ontwerpwens": heeft de klant al een bruikbaar bord, of moet er
+een nieuw bord komen? Relevant voor De Mediagraaf omdat een nieuw bord (materiaal + montage)
+extra kosten met zich meebrengt.
+
+- `lib/types/domain.ts`: `BordAanschaf` (`hergebruiken` / `nieuw`) toegevoegd.
+- `supabase/migrations/0001_init.sql`: nieuwe verplichte kolom `aanvragen.bord_aanschaf`.
+- Formulier: twee radiobuttons, met een kleine toelichting eronder dat een nieuw bord extra
+  kosten met zich meebrengt.
+- `/intern` toont een "Bord"-kolom; bij "nieuw" een oranje badge zodat dit in één oogopslag
+  opvalt (kostenimplicatie).
+- Geverifieerd met `npm run typecheck`, een schone `npm run build`, en handmatig getest in de
+  browser.
+
 ## Nog volledig open (bewuste placeholders voor latere sessies)
 
 - **TODO van de stagebegeleider:** de daadwerkelijke standaard-afmetingen van De Mediagraaf

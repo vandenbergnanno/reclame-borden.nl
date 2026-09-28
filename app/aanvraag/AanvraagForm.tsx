@@ -3,6 +3,8 @@
 import { useState, type FormEvent } from "react";
 import {
   AFMETING_ANDERS,
+  BORD_AANSCHAF_LABELS,
+  BORD_AANSCHAF_OPTIES,
   STANDAARD_AFMETINGEN,
   VELDTYPEN,
   VELDTYPE_LABELS,
@@ -137,6 +139,21 @@ export function AanvraagForm() {
         {afmetingKeuze === AFMETING_ANDERS && (
           <Veld label="Eigen afmeting" name="afmeting_anders" placeholder="Bijv. 250 x 120 cm" required />
         )}
+
+        <div>
+          <span className="mb-1 block text-sm font-medium text-brand-zwart">Bord</span>
+          <div className="space-y-2">
+            {BORD_AANSCHAF_OPTIES.map((optie) => (
+              <label key={optie} className="flex items-center gap-2 text-sm text-neutral-700">
+                <input type="radio" name="bord_aanschaf" value={optie} required className="accent-brand-groen" />
+                {BORD_AANSCHAF_LABELS[optie]}
+              </label>
+            ))}
+          </div>
+          <p className="mt-1 text-xs text-neutral-500">
+            Let op: bij een nieuw bord komen er uiteraard extra kosten bij (materiaal + montage).
+          </p>
+        </div>
 
         <div>
           <label htmlFor="wens" className="mb-1 block text-sm font-medium text-brand-zwart">
