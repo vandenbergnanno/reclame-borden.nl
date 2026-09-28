@@ -44,6 +44,7 @@ create table if not exists aanvragen (
     status in ('nieuw', 'in_behandeling', 'voorstel_verstuurd', 'goedgekeurd', 'afgewezen', 'geescaleerd')
   ),
   bijlage_pad text,
+  voorstel_gepland_op timestamptz not null,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -52,9 +53,11 @@ comment on table aanvragen is 'Eén ontwerpaanvraag van een klant voor een speci
 comment on column aanvragen.afmeting is 'Gewenste afmeting van het bord: gekozen uit de standaardmaten of vrije tekst via "Anders, namelijk...".';
 comment on column aanvragen.bord_aanschaf is 'Hergebruikt de klant een bestaand bord, of moet er een nieuw bord komen (nieuw bord = extra kosten).';
 comment on column aanvragen.bijlage_pad is 'Pad in Supabase Storage naar een eventueel meegestuurd voorbeeld/document van de klant.';
+comment on column aanvragen.voorstel_gepland_op is 'Vroegste moment waarop het voorstel naar de klant mag gaan (bewuste vertraging van 45-60 min na indienen, zie lib/planning/voorstelPlanning.ts) — voorkomt dat een reactie binnen een minuut meteen verraadt dat het een AI-proces is.';
 
 create index if not exists aanvragen_klant_id_idx on aanvragen (klant_id);
 create index if not exists aanvragen_status_idx on aanvragen (status);
+create index if not exists aanvragen_voorstel_gepland_op_idx on aanvragen (voorstel_gepland_op);
 
 drop trigger if exists aanvragen_set_updated_at on aanvragen;
 create trigger aanvragen_set_updated_at

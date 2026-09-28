@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { analyzeRequest } from "@/lib/ai/analyzeRequest";
+import { berekenVoorstelGeplandOp } from "@/lib/planning/voorstelPlanning";
 import { BORD_AANSCHAF_OPTIES, VELDTYPEN, type BordAanschaf, type Veldtype } from "@/lib/types/domain";
 
 // Bestandsuploads vragen om de Node.js-runtime (niet de edge-runtime).
@@ -108,6 +109,7 @@ export async function POST(request: Request) {
       bord_aanschaf: bordAanschaf,
       wens: wens.trim(),
       status: "nieuw",
+      voorstel_gepland_op: berekenVoorstelGeplandOp().toISOString(),
     })
     .select("id")
     .single();

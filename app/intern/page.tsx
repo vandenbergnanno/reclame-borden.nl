@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { AANVRAAG_STATUS_LABELS, BORD_AANSCHAF_LABELS, VELDTYPE_LABELS } from "@/lib/types/domain";
+import { VerwerkGeplandeVoorstellenKnop } from "./VerwerkGeplandeVoorstellenKnop";
 
 export const metadata: Metadata = {
   title: "Intern overzicht — Mediagraaf Conceptor",
@@ -25,6 +26,7 @@ export default async function InternPage() {
     nieuwBord: boolean;
     status: string;
     ingediendOp: string;
+    voorstelGeplandOp: string;
     heeftGeblokkeerdeCheck: boolean;
   }[] = [];
 
@@ -60,6 +62,7 @@ export default async function InternPage() {
         nieuwBord: aanvraag.bord_aanschaf === "nieuw",
         status: AANVRAAG_STATUS_LABELS[aanvraag.status] ?? aanvraag.status,
         ingediendOp: new Date(aanvraag.created_at).toLocaleString("nl-NL"),
+        voorstelGeplandOp: new Date(aanvraag.voorstel_gepland_op).toLocaleString("nl-NL"),
         heeftGeblokkeerdeCheck: geblokkeerdeAanvraagIds.has(aanvraag.id),
       };
     });
@@ -76,6 +79,8 @@ export default async function InternPage() {
           volgt in een latere fase.
         </p>
       </div>
+
+      <VerwerkGeplandeVoorstellenKnop />
 
       {foutmelding && (
         <p className="rounded border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700">
@@ -98,6 +103,7 @@ export default async function InternPage() {
                 <th className="px-4 py-2 font-semibold">Bord</th>
                 <th className="px-4 py-2 font-semibold">Status</th>
                 <th className="px-4 py-2 font-semibold">Ingediend op</th>
+                <th className="px-4 py-2 font-semibold">Voorstel gepland op</th>
                 <th className="px-4 py-2 font-semibold">Contentcheck</th>
               </tr>
             </thead>
@@ -122,6 +128,7 @@ export default async function InternPage() {
                     </span>
                   </td>
                   <td className="px-4 py-2 text-neutral-600">{rij.ingediendOp}</td>
+                  <td className="px-4 py-2 text-neutral-600">{rij.voorstelGeplandOp}</td>
                   <td className="px-4 py-2">
                     {rij.heeftGeblokkeerdeCheck ? (
                       <span className="rounded-full bg-brand-oranje/10 px-2 py-0.5 text-xs font-medium text-brand-oranje">

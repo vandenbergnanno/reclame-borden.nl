@@ -171,8 +171,35 @@ extra kosten met zich meebrengt.
 - Geverifieerd met `npm run typecheck`, een schone `npm run build`, en handmatig getest in de
   browser.
 
+## Update — bewuste vertraging vóór het voorstel (voelt menselijker) ✅
+
+Expliciete wens: een klant mag niet binnen een minuut een voorstel terugkrijgen, want dat
+verraadt meteen dat het AI is. Er zit nu altijd 45-60 minuten tussen het indienen en het (nog
+placeholder) voorstel:
+
+- `lib/planning/voorstelPlanning.ts`: `berekenVoorstelGeplandOp()` bepaalt bij het indienen een
+  willekeurig tijdstip 45-60 minuten later. De bandbreedte staat in `VOORSTEL_VERTRAGING_MINUTEN`
+  (makkelijk aan te passen).
+- `aanvragen.voorstel_gepland_op` (nieuwe verplichte kolom) legt dat tijdstip vast.
+- Nieuwe route `POST /api/aanvragen/verwerk-geplande-voorstellen`: verwerkt alle aanvragen met
+  status `nieuw` waarvan dat tijdstip inmiddels verstreken is — roept de placeholders
+  `generateDesign()` en `sendProposalEmail()` aan, slaat het ontwerp op, en zet de status op
+  `voorstel_verstuurd`.
+- `/intern` toont een "Voorstel gepland op"-kolom, plus een testknop
+  ("Verwerk geplande voorstellen") die deze route handmatig aanroept — puur om lokaal te kunnen
+  testen zolang er geen echte scheduler draait.
+
+**Bewust nog niet af:** dit endpoint wordt nu alleen handmatig (via de testknop) of los
+aangeroepen; het moet in productie periodiek en automatisch draaien via een echte scheduler
+(Vercel Cron of Supabase `pg_cron`), en dan ook beveiligd worden met een secret zodat niet
+zomaar iedereen het kan aanroepen. Zie de TODO-comment in
+`app/api/aanvragen/verwerk-geplande-voorstellen/route.ts`.
+
 ## Nog volledig open (bewuste placeholders voor latere sessies)
 
+- Scheduler koppelen (Vercel Cron / Supabase `pg_cron`) die
+  `POST /api/aanvragen/verwerk-geplande-voorstellen` automatisch en beveiligd aanroept, in plaats
+  van de handmatige testknop op `/intern`.
 - **TODO van de stagebegeleider:** de daadwerkelijke standaard-afmetingen van De Mediagraaf
   bepalen en `STANDAARD_AFMETINGEN` in `lib/types/domain.ts` bijwerken (nu placeholder-waarden).
 - Echte beeldgeneratie-koppeling (Replicate/fal.ai) in `lib/ai/generateDesign.ts`.

@@ -42,6 +42,7 @@ export interface Database {
           wens: string;
           status: AanvraagStatus;
           bijlage_pad: string | null;
+          voorstel_gepland_op: string;
           created_at: string;
           updated_at: string;
         };
@@ -54,6 +55,7 @@ export interface Database {
           wens: string;
           status?: AanvraagStatus;
           bijlage_pad?: string | null;
+          voorstel_gepland_op: string;
           created_at?: string;
           updated_at?: string;
         };

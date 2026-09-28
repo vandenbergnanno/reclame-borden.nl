@@ -8,7 +8,7 @@ values
   ('33333333-3333-3333-3333-333333333333', 'Tom Bakker', 'Bakker Makelaardij', 'tom@bakkermakelaardij.nl', '0611223344')
 on conflict (id) do nothing;
 
-insert into aanvragen (id, klant_id, veldtype, afmeting, bord_aanschaf, wens, status)
+insert into aanvragen (id, klant_id, veldtype, afmeting, bord_aanschaf, wens, status, voorstel_gepland_op)
 values
   (
     'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
@@ -17,7 +17,8 @@ values
     '300 x 100 cm',
     'hergebruiken',
     'Reclamebord met onze clublogo in groen/wit, tekst "Trots hoofdsponsor van VV Oudewater".',
-    'nieuw'
+    'nieuw',
+    now() - interval '5 minutes' -- al verstreken, zodat de testknop meteen iets te verwerken heeft
   ),
   (
     'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
@@ -26,7 +27,8 @@ values
     '200 x 100 cm',
     'nieuw',
     'Strak scorebord-ontwerp passend bij onze clubkleuren blauw en geel.',
-    'voorstel_verstuurd'
+    'voorstel_verstuurd',
+    now() - interval '2 hours' -- voorstel is al verstuurd
   ),
   (
     'cccccccc-cccc-cccc-cccc-cccccccccccc',
@@ -35,7 +37,8 @@ values
     '450 x 90 cm',
     'nieuw',
     'Groot bord voor aan onze gevel bij het veld, met logo en pand-adres.',
-    'nieuw'
+    'nieuw',
+    now() + interval '50 minutes' -- nog niet verstreken, blijft op 'nieuw' staan
   )
 on conflict (id) do nothing;
 
