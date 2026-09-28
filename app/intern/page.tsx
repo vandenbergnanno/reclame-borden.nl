@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { AANVRAAG_STATUS_LABELS, BORD_AANSCHAF_LABELS, VELDTYPE_LABELS } from "@/lib/types/domain";
 import { VerwerkGeplandeVoorstellenKnop } from "./VerwerkGeplandeVoorstellenKnop";
+import { UitloggenKnop } from "./UitloggenKnop";
 
 export const metadata: Metadata = {
   title: "Intern overzicht — Mediagraaf Conceptor",
@@ -72,12 +73,14 @@ export default async function InternPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold text-brand-zwart">Intern overzicht</h1>
-        <p className="mt-1 text-sm text-neutral-600">
-          Alle ingediende aanvragen, met hun huidige status. Nog zonder login/rechtenbeheer — dat
-          volgt in een latere fase.
-        </p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold text-brand-zwart">Intern overzicht</h1>
+          <p className="mt-1 text-sm text-neutral-600">
+            Alle ingediende aanvragen, met hun huidige status.
+          </p>
+        </div>
+        <UitloggenKnop />
       </div>
 
       <VerwerkGeplandeVoorstellenKnop />
@@ -105,6 +108,7 @@ export default async function InternPage() {
                 <th className="px-4 py-2 font-semibold">Ingediend op</th>
                 <th className="px-4 py-2 font-semibold">Voorstel gepland op</th>
                 <th className="px-4 py-2 font-semibold">Contentcheck</th>
+                <th className="px-4 py-2 font-semibold"></th>
               </tr>
             </thead>
             <tbody>
@@ -137,6 +141,14 @@ export default async function InternPage() {
                     ) : (
                       <span className="text-xs text-neutral-400">—</span>
                     )}
+                  </td>
+                  <td className="px-4 py-2">
+                    <a
+                      href={`/intern/${rij.aanvraagId}`}
+                      className="font-medium text-brand-groen hover:underline"
+                    >
+                      Bekijken →
+                    </a>
                   </td>
                 </tr>
               ))}

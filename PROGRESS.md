@@ -195,22 +195,42 @@ aangeroepen; het moet in productie periodiek en automatisch draaien via een echt
 zomaar iedereen het kan aanroepen. Zie de TODO-comment in
 `app/api/aanvragen/verwerk-geplande-voorstellen/route.ts`.
 
+## Update — interne pagina: login, detailweergave, status aanpassen ✅
+
+Drie verbeteringen aan het interne overzicht tegelijk opgepakt:
+
+- **Login/rechtenbeheer**: `/intern` (en alle sub-pagina's) zijn nu afgeschermd met een
+  gedeeld-wachtwoord-poort. `middleware.ts` stuurt niet-ingelogde bezoekers naar `/intern/login`;
+  na een correct wachtwoord (uit de env-variabele `INTERN_WACHTWOORD`) wordt een httpOnly cookie
+  gezet (`lib/auth/internSessie.ts`, 12 uur geldig). Een "Uitloggen"-knop staat rechtsboven op
+  `/intern`. **Dit is bewust een simpele, gedeelde poort — geen individuele medewerkersaccounts.**
+  Vervang dit door Supabase Auth zodra er een project gekoppeld is.
+- **Detailweergave per aanvraag** (`/intern/[id]`): toont alle klant- en bordgegevens, de volledige
+  ontwerpwens, bijlage-pad (nog geen downloadlink — wacht op een echt Supabase Storage-project),
+  contentcheck-resultaten, gegenereerde ontwerpen en klantfeedback. Elke rij in het overzicht
+  linkt hiernaartoe via "Bekijken →".
+- **Status handmatig aanpassen**: op de detailpagina kan een medewerker de status van een
+  aanvraag wijzigen via `PATCH /api/aanvragen/[id]/status` (ook beveiligd door de middleware).
+
+Geverifieerd met `npm run typecheck`, een schone `npm run build`, en de hele inlogflow handmatig
+doorlopen in de browser (fout wachtwoord → foutmelding; juist wachtwoord → toegang; uitloggen →
+weer afgeschermd; rechtstreeks naar `/intern/<id>` zonder login → ook geredirect).
+
 ## Nog volledig open (bewuste placeholders voor latere sessies)
 
 - Scheduler koppelen (Vercel Cron / Supabase `pg_cron`) die
   `POST /api/aanvragen/verwerk-geplande-voorstellen` automatisch en beveiligd aanroept, in plaats
   van de handmatige testknop op `/intern`.
+- Individuele medewerkersaccounts (Supabase Auth) in plaats van de huidige gedeelde-
+  wachtwoord-poort voor `/intern`.
+- Downloadlink voor bijlagen op de detailpagina (`/intern/[id]`) zodra Supabase Storage echt werkt.
 - **TODO van de stagebegeleider:** de daadwerkelijke standaard-afmetingen van De Mediagraaf
   bepalen en `STANDAARD_AFMETINGEN` in `lib/types/domain.ts` bijwerken (nu placeholder-waarden).
 - Echte beeldgeneratie-koppeling (Replicate/fal.ai) in `lib/ai/generateDesign.ts`.
 - Echte Claude API-koppeling voor briefanalyse/contentregels in `lib/ai/analyzeRequest.ts`.
 - E-mailverzending (Resend) in `lib/email/sendProposalEmail.ts`.
 - Automatische escalatie (status `geescaleerd`) op basis van een geblokkeerde contentcheck.
-- Login/rechtenbeheer voor het interne overzicht.
 - Echt Supabase-project aanmaken en koppelen (nu alleen migratie-structuur) en de
   `SUPABASE_STORAGE_BUCKET` daadwerkelijk aanmaken.
 - Vullen van `/docs/reference`, `/assets/brand` en `/assets/mockups` met echt materiaal van
   De Mediagraaf.
-- Lokaal draaien en testen met `npm install` / `npm run dev` (nog niet gedaan in deze sessie
-  door het ontbreken van Node.js in de sandbox-omgeving) — dit is de belangrijkste eerste stap
-  voor een volgende sessie/ontwikkelaar.

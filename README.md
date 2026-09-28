@@ -83,18 +83,19 @@ assets/mockups/          Later te vullen met eigen veldfoto's per veldtype
 
 ## Lokaal draaien
 
-Deze code is in een sandbox-omgeving zonder Node.js geschreven en dus **nog niet lokaal getest**.
-Draai het als volgt op een machine met Node.js 18+ geïnstalleerd:
-
 ```bash
 npm install
 cp .env.example .env.local
-# vul .env.local met de gegevens van een Supabase-project
+# vul .env.local aan (zie hieronder)
 npm run dev
 ```
 
 Zonder ingevulde Supabase-omgevingsvariabelen geven de formulierpagina en het interne overzicht
-een duidelijke foutmelding in plaats van een crash.
+een duidelijke foutmelding in plaats van een crash — handig om de rest van de app alvast te
+bekijken voordat er een Supabase-project is.
+
+Vul in `.env.local` ook `INTERN_WACHTWOORD` in (een zelfgekozen wachtwoord) om bij `/intern` te
+kunnen inloggen — zonder deze waarde geeft de inlogpagina een duidelijke foutmelding.
 
 ### Supabase opzetten
 
