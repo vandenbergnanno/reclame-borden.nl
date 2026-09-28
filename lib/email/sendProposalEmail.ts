@@ -1,3 +1,4 @@
+import { Resend } from "resend";
 import type { Veldtype } from "@/lib/types/domain";
 import { bouwVoorstelEmail } from "./voorstelEmailTemplate";
 
@@ -24,11 +25,13 @@ function volledigeUrl(pad: string): string {
   return new URL(pad, basis).toString();
 }
 
-// TODO: vervang dit door een echte koppeling met Resend (of een vergelijkbare e-maildienst) om
-// de klant de hieronder opgebouwde e-mail daadwerkelijk te sturen. De inhoud (bouwVoorstelEmail)
-// staat al klaar — deze placeholder logt 'm alleen naar de console.
-export function sendProposalEmail(input: SendProposalEmailInput): SendProposalEmailResult {
-  const { onderwerp, text } = bouwVoorstelEmail({
+// Nog geen Resend-account/API-key (stand: zie PROGRESS.md). Zolang RESEND_API_KEY ontbreekt,
+// logt deze functie de opgebouwde e-mail naar de console in plaats van 'm te versturen — de
+// rest van de flow (aanvraag -> voorstel -> klant reageert) blijft zo gewoon te testen.
+// Zodra er een key is: vul `.env.local` in (RESEND_API_KEY en RESEND_AFZENDER) en er wordt
+// automatisch echt verstuurd, zonder verdere codewijziging nodig.
+export async function sendProposalEmail(input: SendProposalEmailInput): Promise<SendProposalEmailResult> {
+  const { onderwerp, html, text } = bouwVoorstelEmail({
     klantNaam: input.klantNaam,
     veldtype: input.veldtype,
     afmeting: input.afmeting,
@@ -36,12 +39,34 @@ export function sendProposalEmail(input: SendProposalEmailInput): SendProposalEm
     voorstelUrl: volledigeUrl(`/voorstel/${input.aanvraagId}`),
   });
 
-  console.log(
-    `[placeholder] sendProposalEmail: zou deze e-mail sturen naar ${input.klantEmail}\nOnderwerp: ${onderwerp}\n\n${text}`
-  );
+  const resendApiKey = process.env.RESEND_API_KEY;
 
-  return {
-    verzonden: false,
-    reden: "sendProposalEmail is nog een placeholder; er is nog geen e-maildienst gekoppeld.",
-  };
+  if (!resendApiKey) {
+    console.log(
+      `[placeholder] sendProposalEmail: zou deze e-mail sturen naar ${input.klantEmail}\nOnderwerp: ${onderwerp}\n\n${text}`
+    );
+
+    return {
+      verzonden: false,
+      reden: "sendProposalEmail is nog een placeholder; RESEND_API_KEY ontbreekt (zie .env.example).",
+    };
+  }
+
+  const afzender = process.env.RESEND_AFZENDER ?? "De Mediagraaf <onboarding@resend.dev>";
+  const resend = new Resend(resendApiKey);
+
+  const { error } = await resend.emails.send({
+    from: afzender,
+    to: input.klantEmail,
+    subject: onderwerp,
+    html,
+    text,
+  });
+
+  if (error) {
+    console.error(`[sendProposalEmail] Resend gaf een fout voor aanvraag ${input.aanvraagId}:`, error);
+    return { verzonden: false, reden: error.message };
+  }
+
+  return { verzonden: true, reden: "Verstuurd via Resend." };
 }

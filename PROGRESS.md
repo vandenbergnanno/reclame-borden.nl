@@ -326,6 +326,22 @@ moeten linken (zonder die pagina had de e-mail nog geen werkende call-to-action)
   volledige voorstelpagina inclusief het feedbackformulier doorlopen met tijdelijke voorbeelddata
   (daarna teruggedraaid).
 
+## Update — Resend-koppeling klaargezet ✅
+
+Zelfde aanpak als bij `generateDesign()`/Replicate: nog geen Resend-account, dus de structuur
+staat klaar zodat het invullen van een key straks voldoende is.
+
+- `resend` npm-package toegevoegd.
+- `lib/email/sendProposalEmail.ts` is nu async en checkt `RESEND_API_KEY`. Zonder key (huidige
+  situatie) verandert er niks — logt nog steeds naar de console. Mét key roept het echt
+  `resend.emails.send()` aan met de al opgebouwde HTML/tekst uit `bouwVoorstelEmail()`, en stuurt
+  vanaf de afzender in `RESEND_AFZENDER` (standaard `onboarding@resend.dev`, Resend's
+  testadres — werkt zonder een geverifieerd eigen domein).
+- `.env.example` uitgebreid met `RESEND_API_KEY` en `RESEND_AFZENDER`.
+- `verwerk-geplande-voorstellen/route.ts` await't `sendProposalEmail()` nu.
+- Geverifieerd met `npm run typecheck`, een schone `npm run build`, en de testknop op `/intern` —
+  gedrag zonder key is ongewijzigd (nog steeds console-log, geen crash).
+
 ## Nog volledig open (bewuste placeholders voor latere sessies)
 
 - Open ontwerpvraag: hoe wordt de vrije tekst uit de ontwerpwens (sponsornaam, slogan, ...)
@@ -333,6 +349,7 @@ moeten linken (zonder die pagina had de e-mail nog geen werkende call-to-action)
   een medewerker, of een latere geautomatiseerde stap?
 - `genereerAchtergrondMetReplicate()` in `lib/ai/generateDesign.ts` echt implementeren zodra er
   een Replicate-account/API-key is.
+- `RESEND_API_KEY` invullen zodra er een Resend-account is — de koppeling zelf staat al klaar.
 
 - Scheduler koppelen (Vercel Cron / Supabase `pg_cron`) die
   `POST /api/aanvragen/verwerk-geplande-voorstellen` automatisch en beveiligd aanroept, in plaats
@@ -344,8 +361,6 @@ moeten linken (zonder die pagina had de e-mail nog geen werkende call-to-action)
   bepalen en `STANDAARD_AFMETINGEN` in `lib/types/domain.ts` bijwerken (nu placeholder-waarden).
 - Echte beeldgeneratie-koppeling (Replicate/fal.ai) in `lib/ai/generateDesign.ts`.
 - Echte Claude API-koppeling voor briefanalyse/contentregels in `lib/ai/analyzeRequest.ts`.
-- Echte e-mailverzending (Resend) in `lib/email/sendProposalEmail.ts` — de inhoud (onderwerp,
-  HTML, platte tekst) staat al klaar via `bouwVoorstelEmail()`, alleen het versturen zelf nog niet.
 - Echt Supabase-project aanmaken en koppelen (nu alleen migratie-structuur) en de
   `SUPABASE_STORAGE_BUCKET` daadwerkelijk aanmaken.
 - Vullen van `/docs/reference`, `/assets/brand` en `/assets/mockups` met echt materiaal van

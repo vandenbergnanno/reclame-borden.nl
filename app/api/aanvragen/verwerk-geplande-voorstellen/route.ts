@@ -59,7 +59,7 @@ export async function POST() {
       });
 
       if (klant?.email) {
-        sendProposalEmail({
+        await sendProposalEmail({
           klantEmail: klant.email,
           klantNaam: klant.naam,
           aanvraagId: aanvraag.id,
