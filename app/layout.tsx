@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
+import { MediagraafLogo } from "@/components/MediagraafLogo";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -14,8 +15,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <div className="min-h-screen flex flex-col">
           <header className="bg-brand-zwart text-white px-6 py-4">
             <nav className="mx-auto flex max-w-4xl items-center justify-between">
-              <a href="/" className="font-semibold tracking-tight">
-                De Mediagraaf <span className="text-brand-groen">Conceptor</span>
+              <a href="/" className="flex items-center gap-2">
+                <MediagraafLogo size="sm" donkereAchtergrond />
+                <span className="text-sm text-neutral-400">· Conceptor</span>
               </a>
               <div className="flex gap-4 text-sm">
                 <a href="/aanvraag" className="hover:text-brand-oranje">

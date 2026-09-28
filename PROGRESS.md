@@ -117,6 +117,22 @@ een omslachtige revert-migratie overheen te zetten:
   "Andere maat").
 - Geverifieerd met `npm run typecheck`, `npm run build` en handmatig getest in de browser.
 
+## Update — tijdelijk beeldmerk en levendigere homepage ✅
+
+Er is nog geen logo-bestand van De Mediagraaf aangeleverd (komt later). Om niet te wachten:
+
+- `components/MediagraafLogo.tsx`: een simpel, herbruikbaar beeldmerk (groen vierkant met "M" +
+  oranje accentstip) in de merkkleuren, met een `donkereAchtergrond`-variant voor op de zwarte
+  header. Duidelijk gemarkeerd als tijdelijk — vervang de inhoud van dit ene component door het
+  echte logo zodra dat er is, de rest van de app hoeft niet aangepast te worden.
+- Header (`app/layout.tsx`) gebruikt nu dit component in plaats van platte tekst.
+- Homepage (`app/page.tsx`) opnieuw ingericht: een hero-sectie met zachte kleurverloop-achtergrond
+  en het grote beeldmerk, plus een korte "hoe werkt het"-uitleg in 3 stappen (wens vertellen →
+  wij ontwerpen → jij keurt goed) voor wat meer leven zonder overdreven te worden — dit blijft
+  een intern prototype.
+- Geverifieerd met `npm run typecheck`, een schone `npm run build`, en visueel gecontroleerd in
+  de browser op zowel de homepage als de header van de andere pagina's.
+
 ## Nog volledig open (bewuste placeholders voor latere sessies)
 
 - Echte beeldgeneratie-koppeling (Replicate/fal.ai) in `lib/ai/generateDesign.ts`.

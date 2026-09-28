@@ -19,3 +19,10 @@ Alleen de basiskleuren zijn nu vastgelegd (ook toegepast in `tailwind.config.ts`
 - Eventuele bestaande huisstijlgids van De Mediagraaf
 
 Plaats nieuwe bestanden hier zodra ze beschikbaar zijn vanuit De Mediagraaf.
+
+## Tijdelijk logo
+
+Zolang het echte logo er nog niet is, gebruikt de app een placeholder-beeldmerk:
+[`components/MediagraafLogo.tsx`](../../components/MediagraafLogo.tsx). Zet het echte logo hier
+in deze map en pas daarna alleen dat ene component aan (bijv. met een `<img>` naar het nieuwe
+bestand) — de header en homepage hoeven zelf niet gewijzigd te worden.
