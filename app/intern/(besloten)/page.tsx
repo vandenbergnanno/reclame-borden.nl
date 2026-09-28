@@ -195,7 +195,7 @@ export default async function InternPage({
                   <td className="px-4 py-2">
                     {rij.heeftGeblokkeerdeCheck ? (
                       <span className="rounded-full bg-brand-oranje/10 px-2 py-0.5 text-xs font-medium text-brand-oranje">
-                        Geblokkeerd probleem
+                        Overleg met klant
                       </span>
                     ) : (
                       <span className="text-xs text-neutral-400">—</span>

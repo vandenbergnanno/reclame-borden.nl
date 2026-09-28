@@ -120,7 +120,7 @@ export default async function AanvraagDetailPage({ params }: { params: { id: str
               <li key={check.id} className="flex items-start gap-2">
                 {check.geblokkeerd ? (
                   <span className="mt-0.5 shrink-0 rounded-full bg-brand-oranje/10 px-2 py-0.5 text-xs font-medium text-brand-oranje">
-                    Geblokkeerd
+                    Overleg met klant
                   </span>
                 ) : (
                   <span className="mt-0.5 shrink-0 rounded-full bg-neutral-100 px-2 py-0.5 text-xs font-medium text-neutral-600">

@@ -240,6 +240,23 @@ duidelijke sub-navigatie:
 status-tab reset een actief klantfilter, en andersom) — prima voor dit stadium, maar geen
 combinatie van beide filters tegelijk.
 
+## Update — contentcheck escaleert i.p.v. verbiedt ✅
+
+Discussie: sommige klanten willen bewust hun telefoonnummer op het bord, en de tool moet niet
+voor iedereen hard bepalen dat dit niet mag. Aangepast:
+
+- `app/api/aanvragen/route.ts`: `analyzeRequest()` wordt nu vóór het opslaan van de aanvraag
+  uitgevoerd. Vindt de check een contactgegeven, dan krijgt de aanvraag meteen status
+  `geescaleerd` in plaats van `nieuw` — De Mediagraaf krijgt het dus te zien en beslist zelf, in
+  overleg met de klant, of het akkoord is. Geen automatische afwijzing van de klant.
+- Omdat `verwerk-geplande-voorstellen` alleen aanvragen met status `nieuw` oppakt, wordt er voor
+  een geëscaleerde aanvraag ook geen voorstel automatisch gegenereerd/verstuurd totdat een
+  medewerker de status zelf verzet (via de detailpagina).
+- Labels op `/intern` en de detailpagina aangepast van "Geblokkeerd (probleem)" naar
+  "Overleg met klant" — minder alsof het verboden is, meer een seintje om het te bespreken.
+- `lib/ai/analyzeRequest.ts`: toelichtingsteksten en commentaar aangepast in dezelfde geest.
+- Geverifieerd met `npm run typecheck` en een schone `npm run build`.
+
 ## Nog volledig open (bewuste placeholders voor latere sessies)
 
 - Scheduler koppelen (Vercel Cron / Supabase `pg_cron`) die
@@ -253,7 +270,6 @@ combinatie van beide filters tegelijk.
 - Echte beeldgeneratie-koppeling (Replicate/fal.ai) in `lib/ai/generateDesign.ts`.
 - Echte Claude API-koppeling voor briefanalyse/contentregels in `lib/ai/analyzeRequest.ts`.
 - E-mailverzending (Resend) in `lib/email/sendProposalEmail.ts`.
-- Automatische escalatie (status `geescaleerd`) op basis van een geblokkeerde contentcheck.
 - Echt Supabase-project aanmaken en koppelen (nu alleen migratie-structuur) en de
   `SUPABASE_STORAGE_BUCKET` daadwerkelijk aanmaken.
 - Vullen van `/docs/reference`, `/assets/brand` en `/assets/mockups` met echt materiaal van

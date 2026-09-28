@@ -100,6 +100,13 @@ export async function POST(request: Request) {
     klantId = nieuweKlant.id;
   }
 
+  // Placeholder-contentcheck, vooraf uitgevoerd zodat we meteen de juiste beginstatus kunnen
+  // zetten. Geen automatische afkeuring: een gevonden contactgegeven escaleert de aanvraag naar
+  // De Mediagraaf voor overleg met de klant (sommige klanten willen dat bewust), in plaats van
+  // dat de tool het zelf verbiedt.
+  const checkResultaten = analyzeRequest(wens);
+  const heeftGeblokkeerdProbleem = checkResultaten.some((resultaat) => resultaat.geblokkeerd);
+
   const { data: aanvraag, error: aanvraagInsertFout } = await supabase
     .from("aanvragen")
     .insert({
@@ -108,7 +115,7 @@ export async function POST(request: Request) {
       afmeting: afmeting.trim(),
       bord_aanschaf: bordAanschaf,
       wens: wens.trim(),
-      status: "nieuw",
+      status: heeftGeblokkeerdProbleem ? "geescaleerd" : "nieuw",
       voorstel_gepland_op: berekenVoorstelGeplandOp().toISOString(),
     })
     .select("id")
@@ -141,9 +148,6 @@ export async function POST(request: Request) {
     await supabase.from("aanvragen").update({ bijlage_pad: pad }).eq("id", aanvraag.id);
   }
 
-  // Placeholder-contentcheck: registreert eventuele gevonden problemen, blokkeert de
-  // aanvraag in dit fundament nog niet. Escalatie op basis hiervan hoort bij een latere fase.
-  const checkResultaten = analyzeRequest(wens);
   await supabase.from("content_checks").insert(
     checkResultaten.map((resultaat) => ({
       aanvraag_id: aanvraag.id,
