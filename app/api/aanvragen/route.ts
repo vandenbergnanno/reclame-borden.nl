@@ -1,14 +1,10 @@
 import { NextResponse } from "next/server";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { analyzeRequest } from "@/lib/ai/analyzeRequest";
-import { PRODUCTTYPEN, VELDTYPEN, type Producttype, type Veldtype } from "@/lib/types/domain";
+import { VELDTYPEN, type Veldtype } from "@/lib/types/domain";
 
 // Bestandsuploads vragen om de Node.js-runtime (niet de edge-runtime).
 export const runtime = "nodejs";
-
-function isProducttype(waarde: FormDataEntryValue | null): waarde is Producttype {
-  return typeof waarde === "string" && (PRODUCTTYPEN as readonly string[]).includes(waarde);
-}
 
 function isVeldtype(waarde: FormDataEntryValue | null): waarde is Veldtype {
   return typeof waarde === "string" && (VELDTYPEN as readonly string[]).includes(waarde);
@@ -26,7 +22,6 @@ export async function POST(request: Request) {
   const bedrijf = formData.get("bedrijf");
   const email = formData.get("email");
   const telefoon = formData.get("telefoon");
-  const producttype = formData.get("producttype");
   const veldtype = formData.get("veldtype");
   const afmeting = formData.get("afmeting");
   const wens = formData.get("wens");
@@ -38,12 +33,7 @@ export async function POST(request: Request) {
   if (typeof email !== "string" || email.trim() === "") {
     return NextResponse.json({ ok: false, error: "E-mailadres is verplicht." }, { status: 400 });
   }
-  if (!isProducttype(producttype)) {
-    return NextResponse.json({ ok: false, error: "Kies een geldig producttype." }, { status: 400 });
-  }
-  // Veldtype is alleen verplicht (en alleen toegestaan) bij een reclamebord — zie de
-  // check-constraint `aanvragen_veldtype_bij_reclamebord` in de migratie.
-  if (producttype === "reclamebord" && !isVeldtype(veldtype)) {
+  if (!isVeldtype(veldtype)) {
     return NextResponse.json({ ok: false, error: "Kies een geldig veldtype." }, { status: 400 });
   }
   if (typeof wens !== "string" || wens.trim() === "") {
@@ -99,8 +89,7 @@ export async function POST(request: Request) {
     .from("aanvragen")
     .insert({
       klant_id: klantId,
-      producttype,
-      veldtype: producttype === "reclamebord" && isVeldtype(veldtype) ? veldtype : null,
+      veldtype,
       afmeting: typeof afmeting === "string" && afmeting.trim() !== "" ? afmeting.trim() : null,
       wens: wens.trim(),
       status: "nieuw",

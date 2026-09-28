@@ -1,22 +1,11 @@
 import type { Metadata } from "next";
 import { AanvraagForm } from "./AanvraagForm";
-import { PRODUCTTYPEN, type Producttype } from "@/lib/types/domain";
 
 export const metadata: Metadata = {
   title: "Nieuwe aanvraag — Mediagraaf Conceptor",
 };
 
-function isProducttype(waarde: string | undefined): waarde is Producttype {
-  return typeof waarde === "string" && (PRODUCTTYPEN as readonly string[]).includes(waarde);
-}
-
-export default function AanvraagPage({
-  searchParams,
-}: {
-  searchParams: { type?: string };
-}) {
-  const initieelProducttype = isProducttype(searchParams.type) ? searchParams.type : undefined;
-
+export default function AanvraagPage() {
   return (
     <div className="space-y-6">
       <div>
@@ -26,7 +15,7 @@ export default function AanvraagPage({
           terug dat je kunt goedkeuren of van feedback kunt voorzien.
         </p>
       </div>
-      <AanvraagForm initieelProducttype={initieelProducttype} />
+      <AanvraagForm />
     </div>
   );
 }

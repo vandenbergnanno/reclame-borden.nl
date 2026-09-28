@@ -1,20 +1,14 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import {
-  PRODUCTTYPEN,
-  PRODUCTTYPE_LABELS,
-  VELDTYPEN,
-  VELDTYPE_LABELS,
-  type Producttype,
-} from "@/lib/types/domain";
+import { VELDTYPEN, VELDTYPE_LABELS, type Veldtype } from "@/lib/types/domain";
 
 type Status = "idle" | "versturen" | "gelukt" | "mislukt";
 
-export function AanvraagForm({ initieelProducttype }: { initieelProducttype?: Producttype }) {
+export function AanvraagForm() {
   const [status, setStatus] = useState<Status>("idle");
   const [foutmelding, setFoutmelding] = useState<string | null>(null);
-  const [producttype, setProducttype] = useState<Producttype | "">(initieelProducttype ?? "");
+  const [veldtype, setVeldtype] = useState<Veldtype | "">("");
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -37,7 +31,7 @@ export function AanvraagForm({ initieelProducttype }: { initieelProducttype?: Pr
 
       setStatus("gelukt");
       event.currentTarget.reset();
-      setProducttype("");
+      setVeldtype("");
     } catch (error) {
       setStatus("mislukt");
       setFoutmelding(error instanceof Error ? error.message : "Onbekende fout.");
@@ -79,67 +73,35 @@ export function AanvraagForm({ initieelProducttype }: { initieelProducttype?: Pr
         <legend className="text-sm font-semibold text-brand-zwart">Jouw ontwerpwens</legend>
 
         <div>
-          <span className="mb-2 block text-sm font-medium text-brand-zwart">Wat wil je laten maken?</span>
-          <div className="grid gap-3 sm:grid-cols-3">
-            {PRODUCTTYPEN.map((optie) => (
-              <label
-                key={optie}
-                className={`cursor-pointer rounded border px-3 py-3 text-center text-sm font-medium transition ${
-                  producttype === optie
-                    ? "border-brand-groen bg-green-50 text-brand-zwart"
-                    : "border-neutral-300 text-neutral-700 hover:border-brand-groen"
-                }`}
-              >
-                <input
-                  type="radio"
-                  name="producttype"
-                  value={optie}
-                  required
-                  checked={producttype === optie}
-                  onChange={() => setProducttype(optie)}
-                  className="sr-only"
-                />
-                {PRODUCTTYPE_LABELS[optie]}
-              </label>
+          <label htmlFor="veldtype" className="mb-1 block text-sm font-medium text-brand-zwart">
+            Voor welk type veld?
+          </label>
+          <select
+            id="veldtype"
+            name="veldtype"
+            required
+            value={veldtype}
+            onChange={(event) => setVeldtype(event.target.value as Veldtype)}
+            className="w-full rounded border border-neutral-300 px-3 py-2 focus:border-brand-groen focus:outline-none"
+          >
+            <option value="" disabled>
+              Kies een veldtype
+            </option>
+            {VELDTYPEN.map((optie) => (
+              <option key={optie} value={optie}>
+                {VELDTYPE_LABELS[optie]}
+              </option>
             ))}
-          </div>
+          </select>
         </div>
 
-        {producttype === "reclamebord" && (
-          <div>
-            <label htmlFor="veldtype" className="mb-1 block text-sm font-medium text-brand-zwart">
-              Voor welk type veld?
-            </label>
-            <select
-              id="veldtype"
-              name="veldtype"
-              required
-              defaultValue=""
-              className="w-full rounded border border-neutral-300 px-3 py-2 focus:border-brand-groen focus:outline-none"
-            >
-              <option value="" disabled>
-                Kies een veldtype
-              </option>
-              {VELDTYPEN.map((veldtype) => (
-                <option key={veldtype} value={veldtype}>
-                  {VELDTYPE_LABELS[veldtype]}
-                </option>
-              ))}
-            </select>
-          </div>
-        )}
-
-        {producttype === "bord-andere-maat" && (
-          <Veld
-            label="Gewenste afmeting"
-            name="afmeting"
-            placeholder="Bijv. 200 x 100 cm"
-          />
+        {veldtype === "andere-maat" && (
+          <Veld label="Gewenste afmeting" name="afmeting" placeholder="Bijv. 200 x 100 cm" required />
         )}
 
         <div>
           <label htmlFor="wens" className="mb-1 block text-sm font-medium text-brand-zwart">
-            Beschrijf wat er op moet komen
+            Beschrijf wat er op het bord moet komen
           </label>
           <textarea
             id="wens"

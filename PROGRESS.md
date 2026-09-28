@@ -91,31 +91,31 @@ ontwikkelmachine.
 - Toont nog niet of er een bijlage is meegestuurd of wat de inhoud van de ontwerpwens is
   (bewust beperkt tot een overzichtstabel).
 
-## Update — producttypen naast reclameborden ✅
+## Update — producttypen toegevoegd, daarna weer teruggedraaid ✅
 
-Eerste feedback na het testen: de tool draaide volledig om reclameborden, terwijl De Mediagraaf
-ook visitekaartjes en borden in afwijkende maten maakt. Uitgebreid met een `producttype`-keuze:
+Na testen eerst uitgebreid met een `producttype`-keuze (reclamebord / visitekaartje / bord in
+een andere maat), inclusief een aparte migratie, drie klikbare kaarten op de homepage en
+conditionele formuliervelden. Na overleg met de stagebegeleider is de scope weer teruggebracht:
+**de tool focust puur op reclameborden**, visitekaartjes vervallen volledig.
 
-- `lib/types/domain.ts`: `Producttype` (`reclamebord` / `visitekaartje` / `bord-andere-maat`)
-  toegevoegd. Veldtype blijft bestaan, maar is nu alleen relevant bij `reclamebord`.
-- `supabase/migrations/0002_producttypen.sql`: `aanvragen` krijgt een `producttype`-kolom
-  (bestaande rijen krijgen default `reclamebord`), `veldtype` is nullable geworden, en een nieuwe
-  `afmeting`-kolom (vrije tekst) is toegevoegd voor `bord-andere-maat`. Een check-constraint
-  bewaakt dat `veldtype` alleen gezet is bij `reclamebord`.
-- Formulier (`AanvraagForm.tsx`): een productkeuze bovenaan het "ontwerpwens"-blok. Het
-  veldtype-veld verschijnt alleen bij "Reclamebord", een "gewenste afmeting"-veld alleen bij
-  "Bord in een andere maat". De API-route valideert dit ook server-side.
-- Homepage (`app/page.tsx`): omgebouwd van een droge "fundament"-tekst naar drie klikbare
-  kaarten (één per producttype) die direct naar `/aanvraag?type=...` linken met dat product al
-  voorgeselecteerd — vriendelijker en duidelijker dan de vorige versie.
-- `/intern` toont nu een "Product"-kolom (producttype + veldtype of afmeting waar van
-  toepassing) in plaats van alleen veldtype.
-- Geverifieerd met `npm run typecheck`, `npm run build` en handmatig doorlopen van alle drie de
-  productkeuzes in de browser.
+Omdat er nog nooit een echt Supabase-project gekoppeld is geweest (dus de eerdere migratie ook
+nergens daadwerkelijk is uitgevoerd), is het schema rechtstreeks teruggebracht in plaats van er
+een omslachtige revert-migratie overheen te zetten:
 
-**Bewust nog niet af:** geen aparte contentregels of designstijl per producttype (bijv. een
-visitekaartje heeft andere afmetingen/eisen dan een reclamebord) — `analyzeRequest()` en
-`generateDesign()` blijven voorlopig generieke placeholders ongeacht het gekozen producttype.
+- `lib/types/domain.ts`: `Producttype` verwijderd. `andere-maat` is toegevoegd als vijfde
+  waarde van `Veldtype` zelf — geen apart product, gewoon een reclamebord dat niet in de
+  standaardmaten past.
+- `supabase/migrations/0001_init.sql`: rechtstreeks aangepast (geen aparte
+  `0002_producttypen.sql` meer) — `aanvragen.veldtype` staat weer `not null`, met `'andere-maat'`
+  als extra toegestane waarde, en een nieuwe nullable `aanvragen.afmeting`-kolom voor die keuze.
+- Formulier (`AanvraagForm.tsx`): weer één simpele veldtype-select (nu met 5 opties); het
+  "gewenste afmeting"-veld verschijnt alleen bij "Andere maat".
+- Homepage (`app/page.tsx`): teruggebracht naar één duidelijk welkomstbericht met één
+  call-to-action ("Nieuwe aanvraag indienen") — de maatkeuze zit in het formulier, niet meer op
+  de homepage.
+- `/intern` toont weer een "Veldtype"-kolom (met de ingevulde afmeting erbij tussen haakjes bij
+  "Andere maat").
+- Geverifieerd met `npm run typecheck`, `npm run build` en handmatig getest in de browser.
 
 ## Nog volledig open (bewuste placeholders voor latere sessies)
 

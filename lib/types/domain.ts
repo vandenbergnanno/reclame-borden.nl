@@ -2,24 +2,15 @@
 // Dit is de bron van waarheid voor de toegestane waarden — de database-CHECK-constraints
 // in supabase/migrations moeten hiermee in lijn blijven.
 
-export const PRODUCTTYPEN = ["reclamebord", "visitekaartje", "bord-andere-maat"] as const;
-
-export type Producttype = (typeof PRODUCTTYPEN)[number];
-
-export const PRODUCTTYPE_LABELS: Record<Producttype, string> = {
-  reclamebord: "Reclamebord",
-  visitekaartje: "Visitekaartje",
-  "bord-andere-maat": "Bord in een andere maat",
-};
-
-// Veldtypen zijn alleen van toepassing als producttype "reclamebord" is (borden langs een
-// voetbal-/hockeyveld, scorebord of plattegrond). Bij "visitekaartje" en "bord-andere-maat"
-// blijft dit veld leeg.
+// Focus van de tool is puur reclameborden (beslissing van de stagebegeleider). "andere-maat" is
+// geen apart product, maar een reclamebord dat niet in de standaardmaten van de andere opties
+// past — bij die keuze vult de klant zelf een gewenste afmeting in (zie `afmeting` op aanvragen).
 export const VELDTYPEN = [
   "voetbal-zijlijn",
   "hockeyveld",
   "scorebord",
   "plattegrond",
+  "andere-maat",
 ] as const;
 
 export type Veldtype = (typeof VELDTYPEN)[number];
@@ -29,6 +20,7 @@ export const VELDTYPE_LABELS: Record<Veldtype, string> = {
   hockeyveld: "Hockeyveld",
   scorebord: "Scorebord",
   plattegrond: "Plattegrond",
+  "andere-maat": "Andere maat",
 };
 
 export const AANVRAAG_STATUSSEN = [
