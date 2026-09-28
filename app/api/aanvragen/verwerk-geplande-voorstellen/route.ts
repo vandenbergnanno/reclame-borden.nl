@@ -35,38 +35,45 @@ export async function POST() {
   }
 
   const verwerkt: string[] = [];
+  const mislukt: { aanvraagId: string; fout: string }[] = [];
 
   for (const aanvraag of aanvragen ?? []) {
-    const { data: klant } = await supabase
-      .from("klanten")
-      .select("email")
-      .eq("id", aanvraag.klant_id)
-      .maybeSingle();
+    try {
+      const { data: klant } = await supabase
+        .from("klanten")
+        .select("email")
+        .eq("id", aanvraag.klant_id)
+        .maybeSingle();
 
-    const design = generateDesign({
-      aanvraagId: aanvraag.id,
-      veldtype: aanvraag.veldtype,
-      wens: aanvraag.wens,
-    });
-
-    await supabase.from("designs").insert({
-      aanvraag_id: aanvraag.id,
-      versienummer: 1,
-      status: design.status,
-      opslaglocatie: design.opslaglocatie,
-    });
-
-    if (klant?.email) {
-      sendProposalEmail({
-        klantEmail: klant.email,
+      const design = await generateDesign({
         aanvraagId: aanvraag.id,
-        designUrl: design.opslaglocatie,
+        veldtype: aanvraag.veldtype,
+        wens: aanvraag.wens,
       });
-    }
 
-    await supabase.from("aanvragen").update({ status: "voorstel_verstuurd" }).eq("id", aanvraag.id);
-    verwerkt.push(aanvraag.id);
+      await supabase.from("designs").insert({
+        aanvraag_id: aanvraag.id,
+        versienummer: 1,
+        status: design.status,
+        opslaglocatie: design.opslaglocatie,
+      });
+
+      if (klant?.email) {
+        sendProposalEmail({
+          klantEmail: klant.email,
+          aanvraagId: aanvraag.id,
+          designUrl: design.opslaglocatie,
+        });
+      }
+
+      await supabase.from("aanvragen").update({ status: "voorstel_verstuurd" }).eq("id", aanvraag.id);
+      verwerkt.push(aanvraag.id);
+    } catch (error) {
+      // Eén mislukte aanvraag (bijv. generateDesign() die nog niet echt geïmplementeerd is)
+      // mag de rest van de batch niet blokkeren.
+      mislukt.push({ aanvraagId: aanvraag.id, fout: error instanceof Error ? error.message : "Onbekende fout." });
+    }
   }
 
-  return NextResponse.json({ ok: true, verwerkt: verwerkt.length, aanvraagIds: verwerkt });
+  return NextResponse.json({ ok: true, verwerkt: verwerkt.length, aanvraagIds: verwerkt, mislukt });
 }

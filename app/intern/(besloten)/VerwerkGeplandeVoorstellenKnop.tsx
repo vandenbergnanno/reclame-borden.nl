@@ -23,12 +23,14 @@ export function VerwerkGeplandeVoorstellenKnop() {
         throw new Error(data.error ?? "Onbekende fout.");
       }
 
-      setMelding(
+      const aantalMislukt = Array.isArray(data.mislukt) ? data.mislukt.length : 0;
+      const basisMelding =
         data.verwerkt === 0
           ? "Geen aanvragen waarvan het geplande tijdstip al verstreken is."
-          : `${data.verwerkt} aanvraag/aanvragen verwerkt.`
-      );
-      setStatus("idle");
+          : `${data.verwerkt} aanvraag/aanvragen verwerkt.`;
+
+      setMelding(aantalMislukt > 0 ? `${basisMelding} (${aantalMislukt} mislukt — zie serverlogs)` : basisMelding);
+      setStatus(aantalMislukt > 0 ? "fout" : "idle");
       router.refresh();
     } catch (error) {
       setStatus("fout");

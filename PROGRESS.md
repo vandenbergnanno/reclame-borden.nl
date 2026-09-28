@@ -257,7 +257,34 @@ voor iedereen hard bepalen dat dit niet mag. Aangepast:
 - `lib/ai/analyzeRequest.ts`: toelichtingsteksten en commentaar aangepast in dezelfde geest.
 - Geverifieerd met `npm run typecheck` en een schone `npm run build`.
 
+## Update — generateDesign() klaargezet voor een echte koppeling ✅
+
+Nog geen account/API-key bij een beeldgeneratie-dienst, dus nog geen echte generatie mogelijk.
+Wel de structuur alvast klaargezet zodat het invullen van een key straks voldoende is:
+
+- `lib/ai/generateDesign.ts` is nu async en checkt `REPLICATE_API_TOKEN`. Zonder token (huidige
+  situatie) blijft het gewoon de vaste testafbeelding teruggeven — niks verandert voor wie er nu
+  mee test. Mét token zou het `genereerAchtergrondMetReplicate()` aanroepen — die functie gooit nu
+  bewust een duidelijke "nog niet geïmplementeerd"-foutmelding, met TODO's over de opzet (prompt
+  bouwen uit veldtype/wens, idealiter gestuurd door de `designdatabase`-referentiedesigns, dan de
+  Replicate API aanroepen).
+- Nogmaals expliciet vastgelegd in commentaar: het model tekent alleen de achtergrond/stijl, nooit
+  tekst/logo/contactgegevens — die blijven apart en volgens vaste regels geplaatst. Hoe de vrije
+  tekst uit de ontwerpwens straks omgezet wordt naar die exacte tekstvelden is nog een open
+  ontwerpvraag (staat hieronder in de open lijst).
+- `app/api/aanvragen/verwerk-geplande-voorstellen/route.ts` await't `generateDesign()` nu, en
+  vangt per aanvraag fouten op (één mislukte aanvraag mag de rest van de batch niet blokkeren).
+- `.env.example` uitgebreid met `REPLICATE_API_TOKEN` (optioneel, nog leeg).
+- Geverifieerd met `npm run typecheck` en een schone `npm run build` — het gedrag met lege
+  `REPLICATE_API_TOKEN` (de huidige situatie) is ongewijzigd getest via de bestaande testknop.
+
 ## Nog volledig open (bewuste placeholders voor latere sessies)
+
+- Open ontwerpvraag: hoe wordt de vrije tekst uit de ontwerpwens (sponsornaam, slogan, ...)
+  omgezet naar de exacte tekstvelden die apart op het ontwerp geplaatst worden? Handmatig door
+  een medewerker, of een latere geautomatiseerde stap?
+- `genereerAchtergrondMetReplicate()` in `lib/ai/generateDesign.ts` echt implementeren zodra er
+  een Replicate-account/API-key is.
 
 - Scheduler koppelen (Vercel Cron / Supabase `pg_cron`) die
   `POST /api/aanvragen/verwerk-geplande-voorstellen` automatisch en beveiligd aanroept, in plaats
