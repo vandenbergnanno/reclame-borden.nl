@@ -342,6 +342,25 @@ staat klaar zodat het invullen van een key straks voldoende is.
 - Geverifieerd met `npm run typecheck`, een schone `npm run build`, en de testknop op `/intern` —
   gedrag zonder key is ongewijzigd (nog steeds console-log, geen crash).
 
+## Update — algemene polish: favicon, laadstatussen, mobiel gefixt ✅
+
+Brede kwaliteitsronde over de hele site:
+
+- **Favicon** (`app/icon.svg`): het beeldmerk (groen vierkant met "M" + oranje stip) als browser-
+  tabblad-icoon, via Next.js' automatische `app/icon.svg`-conventie.
+- **Laadstatussen**: nieuwe `components/LaadIndicator.tsx` (spinner + tekst) en `loading.tsx` op
+  `/intern`, `/intern/klanten`, `/intern/[id]` en `/voorstel/[id]` — deze pagina's halen data op
+  bij Supabase, en toonden daarvoor een blanco scherm tijdens het laden. Nu een nette spinner.
+- **Selectie-vinkje**: keuzekaarten in het aanvraagformulier tonen nu een klein groen vinkje
+  rechtsboven zodra ze geselecteerd zijn — duidelijker dan alleen een kleurverschil.
+- **Mobiel gefixt (echte bug)**: de header knalde op smalle schermen — "De Mediagraaf" en
+  "· Conceptor" braken onhandig af naast de menulinks. Op mobiel toont de header nu alleen het
+  logo-icoon (tekst verschijnt vanaf `sm:`), en de menulinks zijn iets kleiner/compacter. Getest
+  op 375px breed op alle pagina's (homepage, formulier, intern, voorstelpagina) — ziet er nu
+  overal netjes uit.
+- Geverifieerd met `npm run typecheck`, een schone `npm run build`, en handmatig doorlopen zowel
+  op desktop- als mobiel-breedte in de browser.
+
 ## Nog volledig open (bewuste placeholders voor latere sessies)
 
 - Open ontwerpvraag: hoe wordt de vrije tekst uit de ontwerpwens (sponsornaam, slogan, ...)

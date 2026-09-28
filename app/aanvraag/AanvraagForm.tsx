@@ -239,7 +239,7 @@ function KaartOptie({
 }) {
   return (
     <label
-      className={`cursor-pointer rounded-lg border px-3 py-2.5 text-center text-sm font-medium transition ${
+      className={`relative cursor-pointer rounded-lg border px-3 py-2.5 text-center text-sm font-medium transition ${
         geselecteerd
           ? "border-brand-groen bg-green-50 text-brand-zwart"
           : "border-neutral-300 text-neutral-700 hover:border-brand-groen"
@@ -254,6 +254,11 @@ function KaartOptie({
         onChange={onSelecteer}
         className="sr-only"
       />
+      {geselecteerd && (
+        <span className="absolute -right-1.5 -top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-brand-groen text-[10px] text-white">
+          ✓
+        </span>
+      )}
       {label}
     </label>
   );
