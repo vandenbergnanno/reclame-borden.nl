@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import {
+  AANVRAAG_STATUS_KLEUREN,
   AANVRAAG_STATUS_LABELS,
   BORD_AANSCHAF_LABELS,
   VELDTYPE_LABELS,
@@ -58,21 +59,28 @@ export default async function AanvraagDetailPage({ params }: { params: { id: str
         <a href="/intern" className="text-sm text-neutral-500 hover:text-brand-zwart">
           ← Terug naar overzicht
         </a>
-        <h1 className="mt-2 text-2xl font-semibold text-brand-zwart">
-          Aanvraag van {klant?.naam ?? "onbekende klant"}
-        </h1>
+        <div className="mt-2 flex flex-wrap items-center gap-3">
+          <h1 className="text-2xl font-semibold text-brand-zwart">
+            Aanvraag van {klant?.naam ?? "onbekende klant"}
+          </h1>
+          <span
+            className={`rounded-full px-2.5 py-1 text-xs font-medium ${AANVRAAG_STATUS_KLEUREN[aanvraag.status]}`}
+          >
+            {AANVRAAG_STATUS_LABELS[aanvraag.status]}
+          </span>
+        </div>
         <p className="mt-1 text-sm text-neutral-600">
           Ingediend op {new Date(aanvraag.created_at).toLocaleString("nl-NL")}
         </p>
       </div>
 
-      <section className="rounded border border-neutral-200 bg-white p-4">
-        <h2 className="mb-3 font-semibold text-brand-zwart">Status</h2>
+      <section className="rounded-xl border border-neutral-200 bg-white p-5 shadow-sm">
+        <h2 className="mb-3 font-semibold text-brand-zwart">Status wijzigen</h2>
         <StatusWijzigen aanvraagId={aanvraag.id} huidigeStatus={aanvraag.status} />
       </section>
 
       <section className="grid gap-4 sm:grid-cols-2">
-        <div className="rounded border border-neutral-200 bg-white p-4">
+        <div className="rounded-xl border border-neutral-200 bg-white p-5 shadow-sm">
           <h2 className="mb-2 font-semibold text-brand-zwart">Klantgegevens</h2>
           <dl className="space-y-1 text-sm">
             <Rij label="Naam" waarde={klant?.naam} />
@@ -82,7 +90,7 @@ export default async function AanvraagDetailPage({ params }: { params: { id: str
           </dl>
         </div>
 
-        <div className="rounded border border-neutral-200 bg-white p-4">
+        <div className="rounded-xl border border-neutral-200 bg-white p-5 shadow-sm">
           <h2 className="mb-2 font-semibold text-brand-zwart">Bord</h2>
           <dl className="space-y-1 text-sm">
             <Rij label="Veldtype" waarde={VELDTYPE_LABELS[aanvraag.veldtype] ?? aanvraag.veldtype} />
@@ -99,7 +107,7 @@ export default async function AanvraagDetailPage({ params }: { params: { id: str
         </div>
       </section>
 
-      <section className="rounded border border-neutral-200 bg-white p-4">
+      <section className="rounded-xl border border-neutral-200 bg-white p-5 shadow-sm">
         <h2 className="mb-2 font-semibold text-brand-zwart">Ontwerpwens</h2>
         <p className="whitespace-pre-wrap text-sm text-neutral-700">{aanvraag.wens}</p>
         {aanvraag.bijlage_pad && (
@@ -110,7 +118,7 @@ export default async function AanvraagDetailPage({ params }: { params: { id: str
         )}
       </section>
 
-      <section className="rounded border border-neutral-200 bg-white p-4">
+      <section className="rounded-xl border border-neutral-200 bg-white p-5 shadow-sm">
         <h2 className="mb-2 font-semibold text-brand-zwart">Contentchecks</h2>
         {!contentChecks || contentChecks.length === 0 ? (
           <p className="text-sm text-neutral-500">Nog geen contentcheck uitgevoerd.</p>
@@ -137,7 +145,7 @@ export default async function AanvraagDetailPage({ params }: { params: { id: str
         )}
       </section>
 
-      <section className="rounded border border-neutral-200 bg-white p-4">
+      <section className="rounded-xl border border-neutral-200 bg-white p-5 shadow-sm">
         <h2 className="mb-2 font-semibold text-brand-zwart">Ontwerpen</h2>
         {!designs || designs.length === 0 ? (
           <p className="text-sm text-neutral-500">Nog geen ontwerp gegenereerd.</p>
@@ -152,7 +160,7 @@ export default async function AanvraagDetailPage({ params }: { params: { id: str
         )}
       </section>
 
-      <section className="rounded border border-neutral-200 bg-white p-4">
+      <section className="rounded-xl border border-neutral-200 bg-white p-5 shadow-sm">
         <h2 className="mb-2 font-semibold text-brand-zwart">Feedback van de klant</h2>
         {!feedback || feedback.length === 0 ? (
           <p className="text-sm text-neutral-500">Nog geen feedback ontvangen.</p>

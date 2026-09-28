@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import {
+  AANVRAAG_STATUS_KLEUREN,
   AANVRAAG_STATUS_LABELS,
   AANVRAAG_STATUSSEN,
   BORD_AANSCHAF_LABELS,
@@ -42,6 +43,7 @@ export default async function InternPage({
     bordAanschaf: string;
     nieuwBord: boolean;
     status: string;
+    statusWaarde: AanvraagStatus;
     ingediendOp: string;
     voorstelGeplandOp: string;
     heeftGeblokkeerdeCheck: boolean;
@@ -101,6 +103,7 @@ export default async function InternPage({
         bordAanschaf: BORD_AANSCHAF_LABELS[aanvraag.bord_aanschaf] ?? aanvraag.bord_aanschaf,
         nieuwBord: aanvraag.bord_aanschaf === "nieuw",
         status: AANVRAAG_STATUS_LABELS[aanvraag.status] ?? aanvraag.status,
+        statusWaarde: aanvraag.status,
         ingediendOp: new Date(aanvraag.created_at).toLocaleString("nl-NL"),
         voorstelGeplandOp: new Date(aanvraag.voorstel_gepland_op).toLocaleString("nl-NL"),
         heeftGeblokkeerdeCheck: geblokkeerdeAanvraagIds.has(aanvraag.id),
@@ -155,44 +158,46 @@ export default async function InternPage({
       )}
 
       {!foutmelding && rijen.length > 0 && (
-        <div className="overflow-x-auto rounded border border-neutral-200">
+        <div className="overflow-x-auto rounded-xl border border-neutral-200 bg-white shadow-sm">
           <table className="w-full text-left text-sm">
-            <thead className="bg-neutral-100 text-brand-zwart">
+            <thead className="bg-neutral-50 text-xs uppercase tracking-wide text-neutral-500">
               <tr>
-                <th className="px-4 py-2 font-semibold">Klant</th>
-                <th className="px-4 py-2 font-semibold">Bedrijf</th>
-                <th className="px-4 py-2 font-semibold">Veldtype</th>
-                <th className="px-4 py-2 font-semibold">Bord</th>
-                <th className="px-4 py-2 font-semibold">Status</th>
-                <th className="px-4 py-2 font-semibold">Ingediend op</th>
-                <th className="px-4 py-2 font-semibold">Voorstel gepland op</th>
-                <th className="px-4 py-2 font-semibold">Contentcheck</th>
-                <th className="px-4 py-2 font-semibold"></th>
+                <th className="px-4 py-3 font-semibold">Klant</th>
+                <th className="px-4 py-3 font-semibold">Bedrijf</th>
+                <th className="px-4 py-3 font-semibold">Veldtype</th>
+                <th className="px-4 py-3 font-semibold">Bord</th>
+                <th className="px-4 py-3 font-semibold">Status</th>
+                <th className="px-4 py-3 font-semibold">Ingediend op</th>
+                <th className="px-4 py-3 font-semibold">Voorstel gepland op</th>
+                <th className="px-4 py-3 font-semibold">Contentcheck</th>
+                <th className="px-4 py-3 font-semibold"></th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-neutral-100">
               {rijen.map((rij) => (
-                <tr key={rij.aanvraagId} className="border-t border-neutral-200">
-                  <td className="px-4 py-2">{rij.klantNaam}</td>
-                  <td className="px-4 py-2">{rij.bedrijf ?? "—"}</td>
-                  <td className="px-4 py-2">{rij.veldtype}</td>
-                  <td className="px-4 py-2">
+                <tr key={rij.aanvraagId} className="transition hover:bg-neutral-50">
+                  <td className="px-4 py-3 font-medium text-brand-zwart">{rij.klantNaam}</td>
+                  <td className="px-4 py-3 text-neutral-600">{rij.bedrijf ?? "—"}</td>
+                  <td className="px-4 py-3 text-neutral-600">{rij.veldtype}</td>
+                  <td className="px-4 py-3">
                     {rij.nieuwBord ? (
                       <span className="rounded-full bg-brand-oranje/10 px-2 py-0.5 text-xs font-medium text-brand-oranje">
                         {rij.bordAanschaf}
                       </span>
                     ) : (
-                      rij.bordAanschaf
+                      <span className="text-neutral-600">{rij.bordAanschaf}</span>
                     )}
                   </td>
-                  <td className="px-4 py-2">
-                    <span className="rounded-full bg-neutral-100 px-2 py-0.5 text-xs font-medium text-brand-zwart">
+                  <td className="px-4 py-3">
+                    <span
+                      className={`rounded-full px-2 py-0.5 text-xs font-medium ${AANVRAAG_STATUS_KLEUREN[rij.statusWaarde]}`}
+                    >
                       {rij.status}
                     </span>
                   </td>
-                  <td className="px-4 py-2 text-neutral-600">{rij.ingediendOp}</td>
-                  <td className="px-4 py-2 text-neutral-600">{rij.voorstelGeplandOp}</td>
-                  <td className="px-4 py-2">
+                  <td className="px-4 py-3 text-neutral-500">{rij.ingediendOp}</td>
+                  <td className="px-4 py-3 text-neutral-500">{rij.voorstelGeplandOp}</td>
+                  <td className="px-4 py-3">
                     {rij.heeftGeblokkeerdeCheck ? (
                       <span className="rounded-full bg-brand-oranje/10 px-2 py-0.5 text-xs font-medium text-brand-oranje">
                         Overleg met klant
@@ -201,7 +206,7 @@ export default async function InternPage({
                       <span className="text-xs text-neutral-400">—</span>
                     )}
                   </td>
-                  <td className="px-4 py-2">
+                  <td className="px-4 py-3">
                     <a
                       href={`/intern/${rij.aanvraagId}`}
                       className="font-medium text-brand-groen hover:underline"

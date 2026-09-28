@@ -54,6 +54,17 @@ export const AANVRAAG_STATUS_LABELS: Record<AanvraagStatus, string> = {
   geescaleerd: "Geëscaleerd",
 };
 
+// Eén plek voor de statuskleuren, zodat de statustabbladen, tabelbadges en detailpagina er
+// allemaal hetzelfde uitzien.
+export const AANVRAAG_STATUS_KLEUREN: Record<AanvraagStatus, string> = {
+  nieuw: "bg-blue-100 text-blue-700",
+  in_behandeling: "bg-amber-100 text-amber-700",
+  voorstel_verstuurd: "bg-purple-100 text-purple-700",
+  goedgekeurd: "bg-green-100 text-green-700",
+  afgewezen: "bg-red-100 text-red-700",
+  geescaleerd: "bg-orange-100 text-orange-700",
+};
+
 export const DESIGN_STATUSSEN = ["concept", "definitief", "vervangen"] as const;
 
 export type DesignStatus = (typeof DESIGN_STATUSSEN)[number];

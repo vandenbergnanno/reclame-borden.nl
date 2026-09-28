@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useState, type FormEvent, type ReactNode } from "react";
 import {
   AFMETING_ANDERS,
   BORD_AANSCHAF_LABELS,
@@ -8,6 +8,7 @@ import {
   STANDAARD_AFMETINGEN,
   VELDTYPEN,
   VELDTYPE_LABELS,
+  type BordAanschaf,
   type Veldtype,
 } from "@/lib/types/domain";
 
@@ -18,6 +19,7 @@ export function AanvraagForm() {
   const [foutmelding, setFoutmelding] = useState<string | null>(null);
   const [veldtype, setVeldtype] = useState<Veldtype | "">("");
   const [afmetingKeuze, setAfmetingKeuze] = useState<string>("");
+  const [bordAanschaf, setBordAanschaf] = useState<BordAanschaf | "">("");
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -26,9 +28,9 @@ export function AanvraagForm() {
 
     const formData = new FormData(event.currentTarget);
 
-    // De select stuurt bij "Anders, namelijk..." de sentinel-waarde mee; die vervangen we hier
-    // door wat de klant in het vrije-tekstveld heeft ingevuld, zodat de server altijd gewoon een
-    // leesbare afmeting binnenkrijgt.
+    // De keuzekaart stuurt bij "Anders, namelijk..." de sentinel-waarde mee; die vervangen we
+    // hier door wat de klant in het vrije-tekstveld heeft ingevuld, zodat de server altijd
+    // gewoon een leesbare afmeting binnenkrijgt.
     if (formData.get("afmeting") === AFMETING_ANDERS) {
       formData.set("afmeting", formData.get("afmeting_anders") ?? "");
     }
@@ -49,6 +51,7 @@ export function AanvraagForm() {
       event.currentTarget.reset();
       setVeldtype("");
       setAfmetingKeuze("");
+      setBordAanschaf("");
     } catch (error) {
       setStatus("mislukt");
       setFoutmelding(error instanceof Error ? error.message : "Onbekende fout.");
@@ -57,16 +60,19 @@ export function AanvraagForm() {
 
   if (status === "gelukt") {
     return (
-      <div className="rounded border border-brand-groen bg-green-50 p-6 text-brand-zwart">
-        <h2 className="font-semibold">Aanvraag ontvangen</h2>
-        <p className="mt-2 text-sm">
+      <div className="rounded-xl border border-brand-groen bg-green-50 p-8 text-center text-brand-zwart">
+        <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-brand-groen text-2xl text-white">
+          ✓
+        </div>
+        <h2 className="text-lg font-semibold">Aanvraag ontvangen!</h2>
+        <p className="mx-auto mt-2 max-w-sm text-sm text-neutral-700">
           Bedankt voor je aanvraag. De Mediagraaf gaat hiermee aan de slag en neemt contact met je
           op zodra er een concept-ontwerp klaarstaat.
         </p>
         <button
           type="button"
           onClick={() => setStatus("idle")}
-          className="mt-4 rounded border border-brand-zwart px-3 py-1.5 text-sm hover:bg-white"
+          className="mt-5 rounded border border-brand-zwart px-4 py-2 text-sm font-medium hover:bg-white"
         >
           Nog een aanvraag indienen
         </button>
@@ -76,78 +82,79 @@ export function AanvraagForm() {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      <fieldset className="space-y-4">
-        <legend className="text-sm font-semibold text-brand-zwart">Jouw gegevens</legend>
+      <Sectie stap={1} titel="Jouw gegevens">
         <div className="grid gap-4 sm:grid-cols-2">
-          <Veld label="Naam" name="naam" required />
-          <Veld label="Bedrijf / vereniging" name="bedrijf" />
-          <Veld label="E-mailadres" name="email" type="email" required />
-          <Veld label="Telefoonnummer" name="telefoon" type="tel" />
-        </div>
-      </fieldset>
-
-      <fieldset className="space-y-4">
-        <legend className="text-sm font-semibold text-brand-zwart">Jouw ontwerpwens</legend>
-
-        <div>
-          <label htmlFor="veldtype" className="mb-1 block text-sm font-medium text-brand-zwart">
-            Voor welk type veld?
-          </label>
-          <select
-            id="veldtype"
-            name="veldtype"
+          <Veld label="Naam" name="naam" required autoComplete="name" />
+          <Veld label="Bedrijf / vereniging" name="bedrijf" autoComplete="organization" />
+          <Veld
+            label="E-mailadres"
+            name="email"
+            type="email"
             required
-            value={veldtype}
-            onChange={(event) => setVeldtype(event.target.value as Veldtype)}
-            className="w-full rounded border border-neutral-300 px-3 py-2 focus:border-brand-groen focus:outline-none"
-          >
-            <option value="" disabled>
-              Kies een veldtype
-            </option>
+            autoComplete="email"
+            hint="Hierop nemen we contact met je op."
+          />
+          <Veld label="Telefoonnummer" name="telefoon" type="tel" autoComplete="tel" />
+        </div>
+      </Sectie>
+
+      <Sectie stap={2} titel="Jouw ontwerpwens">
+        <div>
+          <span className="mb-2 block text-sm font-medium text-brand-zwart">Voor welk type veld? *</span>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
             {VELDTYPEN.map((optie) => (
-              <option key={optie} value={optie}>
-                {VELDTYPE_LABELS[optie]}
-              </option>
+              <KaartOptie
+                key={optie}
+                naam="veldtype"
+                waarde={optie}
+                label={VELDTYPE_LABELS[optie]}
+                geselecteerd={veldtype === optie}
+                onSelecteer={() => setVeldtype(optie)}
+              />
             ))}
-          </select>
+          </div>
         </div>
 
         <div>
-          <label htmlFor="afmeting" className="mb-1 block text-sm font-medium text-brand-zwart">
-            Gewenste afmeting
-          </label>
-          <select
-            id="afmeting"
-            name="afmeting"
-            required
-            value={afmetingKeuze}
-            onChange={(event) => setAfmetingKeuze(event.target.value)}
-            className="w-full rounded border border-neutral-300 px-3 py-2 focus:border-brand-groen focus:outline-none"
-          >
-            <option value="" disabled>
-              Kies een afmeting
-            </option>
+          <span className="mb-2 block text-sm font-medium text-brand-zwart">Gewenste afmeting *</span>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
             {STANDAARD_AFMETINGEN.map((optie) => (
-              <option key={optie} value={optie}>
-                {optie}
-              </option>
+              <KaartOptie
+                key={optie}
+                naam="afmeting"
+                waarde={optie}
+                label={optie}
+                geselecteerd={afmetingKeuze === optie}
+                onSelecteer={() => setAfmetingKeuze(optie)}
+              />
             ))}
-            <option value={AFMETING_ANDERS}>Anders, namelijk...</option>
-          </select>
+            <KaartOptie
+              naam="afmeting"
+              waarde={AFMETING_ANDERS}
+              label="Anders, namelijk..."
+              geselecteerd={afmetingKeuze === AFMETING_ANDERS}
+              onSelecteer={() => setAfmetingKeuze(AFMETING_ANDERS)}
+            />
+          </div>
+          {afmetingKeuze === AFMETING_ANDERS && (
+            <div className="mt-3">
+              <Veld label="Eigen afmeting" name="afmeting_anders" placeholder="Bijv. 250 x 120 cm" required />
+            </div>
+          )}
         </div>
 
-        {afmetingKeuze === AFMETING_ANDERS && (
-          <Veld label="Eigen afmeting" name="afmeting_anders" placeholder="Bijv. 250 x 120 cm" required />
-        )}
-
         <div>
-          <span className="mb-1 block text-sm font-medium text-brand-zwart">Bord</span>
-          <div className="space-y-2">
+          <span className="mb-2 block text-sm font-medium text-brand-zwart">Bord *</span>
+          <div className="grid gap-2 sm:grid-cols-2">
             {BORD_AANSCHAF_OPTIES.map((optie) => (
-              <label key={optie} className="flex items-center gap-2 text-sm text-neutral-700">
-                <input type="radio" name="bord_aanschaf" value={optie} required className="accent-brand-groen" />
-                {BORD_AANSCHAF_LABELS[optie]}
-              </label>
+              <KaartOptie
+                key={optie}
+                naam="bord_aanschaf"
+                waarde={optie}
+                label={BORD_AANSCHAF_LABELS[optie]}
+                geselecteerd={bordAanschaf === optie}
+                onSelecteer={() => setBordAanschaf(optie)}
+              />
             ))}
           </div>
           <p className="mt-1 text-xs text-neutral-500">
@@ -157,7 +164,7 @@ export function AanvraagForm() {
 
         <div>
           <label htmlFor="wens" className="mb-1 block text-sm font-medium text-brand-zwart">
-            Beschrijf wat er op het bord moet komen
+            Beschrijf wat er op het bord moet komen *
           </label>
           <textarea
             id="wens"
@@ -165,7 +172,7 @@ export function AanvraagForm() {
             required
             rows={5}
             placeholder="Bijv. onze clublogo, tekst 'Trots hoofdsponsor van...', in onze clubkleuren groen en wit."
-            className="w-full rounded border border-neutral-300 px-3 py-2 focus:border-brand-groen focus:outline-none"
+            className="w-full rounded-lg border border-neutral-300 px-3 py-2.5 focus:border-brand-groen focus:outline-none focus:ring-1 focus:ring-brand-groen"
           />
         </div>
 
@@ -177,14 +184,14 @@ export function AanvraagForm() {
             id="bijlage"
             name="bijlage"
             type="file"
-            className="w-full rounded border border-neutral-300 px-3 py-2 text-sm"
+            className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm file:mr-3 file:rounded file:border-0 file:bg-neutral-100 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-brand-zwart hover:file:bg-neutral-200"
           />
           <p className="mt-1 text-xs text-neutral-500">
             Wordt nu alleen opgeslagen — er vindt nog geen automatische verwerking van dit bestand
             plaats.
           </p>
         </div>
-      </fieldset>
+      </Sectie>
 
       {status === "mislukt" && foutmelding && (
         <p className="rounded border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700">
@@ -195,11 +202,60 @@ export function AanvraagForm() {
       <button
         type="submit"
         disabled={status === "versturen"}
-        className="rounded bg-brand-groen px-4 py-2 font-medium text-white hover:opacity-90 disabled:opacity-50"
+        className="w-full rounded-lg bg-brand-groen px-4 py-3 font-medium text-white shadow-sm hover:opacity-90 disabled:opacity-50 sm:w-auto"
       >
         {status === "versturen" ? "Versturen..." : "Aanvraag indienen"}
       </button>
     </form>
+  );
+}
+
+function Sectie({ stap, titel, children }: { stap: number; titel: string; children: ReactNode }) {
+  return (
+    <div className="rounded-xl border border-neutral-200 bg-white p-5 shadow-sm sm:p-6">
+      <div className="mb-4 flex items-center gap-2">
+        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-brand-groen text-xs font-semibold text-white">
+          {stap}
+        </span>
+        <h2 className="font-semibold text-brand-zwart">{titel}</h2>
+      </div>
+      <div className="space-y-4">{children}</div>
+    </div>
+  );
+}
+
+function KaartOptie({
+  naam,
+  waarde,
+  label,
+  geselecteerd,
+  onSelecteer,
+}: {
+  naam: string;
+  waarde: string;
+  label: string;
+  geselecteerd: boolean;
+  onSelecteer: () => void;
+}) {
+  return (
+    <label
+      className={`cursor-pointer rounded-lg border px-3 py-2.5 text-center text-sm font-medium transition ${
+        geselecteerd
+          ? "border-brand-groen bg-green-50 text-brand-zwart"
+          : "border-neutral-300 text-neutral-700 hover:border-brand-groen"
+      }`}
+    >
+      <input
+        type="radio"
+        name={naam}
+        value={waarde}
+        required
+        checked={geselecteerd}
+        onChange={onSelecteer}
+        className="sr-only"
+      />
+      {label}
+    </label>
   );
 }
 
@@ -209,12 +265,16 @@ function Veld({
   type = "text",
   required = false,
   placeholder,
+  autoComplete,
+  hint,
 }: {
   label: string;
   name: string;
   type?: string;
   required?: boolean;
   placeholder?: string;
+  autoComplete?: string;
+  hint?: string;
 }) {
   return (
     <div>
@@ -228,8 +288,10 @@ function Veld({
         type={type}
         required={required}
         placeholder={placeholder}
-        className="w-full rounded border border-neutral-300 px-3 py-2 focus:border-brand-groen focus:outline-none"
+        autoComplete={autoComplete}
+        className="w-full rounded-lg border border-neutral-300 px-3 py-2.5 focus:border-brand-groen focus:outline-none focus:ring-1 focus:ring-brand-groen"
       />
+      {hint && <p className="mt-1 text-xs text-neutral-500">{hint}</p>}
     </div>
   );
 }

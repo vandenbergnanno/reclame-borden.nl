@@ -51,11 +51,19 @@ export default async function KlantenPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold text-brand-zwart">Klanten</h1>
-        <p className="mt-1 text-sm text-neutral-600">
-          Alle klanten die een aanvraag hebben ingediend.
-        </p>
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold text-brand-zwart">Klanten</h1>
+          <p className="mt-1 text-sm text-neutral-600">
+            Alle klanten die een aanvraag hebben ingediend.
+          </p>
+        </div>
+        {!foutmelding && (
+          <div className="rounded-lg border border-neutral-200 bg-white px-4 py-2 text-sm shadow-sm">
+            <span className="font-semibold text-brand-zwart">{rijen.length}</span>{" "}
+            <span className="text-neutral-500">{rijen.length === 1 ? "klant" : "klanten"}</span>
+          </div>
+        )}
       </div>
 
       {foutmelding && (
@@ -69,34 +77,34 @@ export default async function KlantenPage() {
       )}
 
       {!foutmelding && rijen.length > 0 && (
-        <div className="overflow-x-auto rounded border border-neutral-200">
+        <div className="overflow-x-auto rounded-xl border border-neutral-200 bg-white shadow-sm">
           <table className="w-full text-left text-sm">
-            <thead className="bg-neutral-100 text-brand-zwart">
+            <thead className="bg-neutral-50 text-xs uppercase tracking-wide text-neutral-500">
               <tr>
-                <th className="px-4 py-2 font-semibold">Naam</th>
-                <th className="px-4 py-2 font-semibold">Bedrijf</th>
-                <th className="px-4 py-2 font-semibold">E-mail</th>
-                <th className="px-4 py-2 font-semibold">Telefoon</th>
-                <th className="px-4 py-2 font-semibold">Aanvragen</th>
-                <th className="px-4 py-2 font-semibold"></th>
+                <th className="px-4 py-3 font-semibold">Naam</th>
+                <th className="px-4 py-3 font-semibold">Bedrijf</th>
+                <th className="px-4 py-3 font-semibold">E-mail</th>
+                <th className="px-4 py-3 font-semibold">Telefoon</th>
+                <th className="px-4 py-3 font-semibold">Aanvragen</th>
+                <th className="px-4 py-3 font-semibold"></th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-neutral-100">
               {rijen.map((rij) => (
-                <tr key={rij.klantId} className="border-t border-neutral-200">
-                  <td className="px-4 py-2">{rij.naam}</td>
-                  <td className="px-4 py-2">{rij.bedrijf ?? "—"}</td>
-                  <td className="px-4 py-2">{rij.email}</td>
-                  <td className="px-4 py-2">{rij.telefoon ?? "—"}</td>
-                  <td className="px-4 py-2">
-                    {rij.aantalAanvragen}
+                <tr key={rij.klantId} className="transition hover:bg-neutral-50">
+                  <td className="px-4 py-3 font-medium text-brand-zwart">{rij.naam}</td>
+                  <td className="px-4 py-3 text-neutral-600">{rij.bedrijf ?? "—"}</td>
+                  <td className="px-4 py-3 text-neutral-600">{rij.email}</td>
+                  <td className="px-4 py-3 text-neutral-600">{rij.telefoon ?? "—"}</td>
+                  <td className="px-4 py-3">
+                    <span className="text-neutral-600">{rij.aantalAanvragen}</span>
                     {rij.aantalOpen > 0 && (
                       <span className="ml-2 rounded-full bg-brand-oranje/10 px-2 py-0.5 text-xs font-medium text-brand-oranje">
                         {rij.aantalOpen} lopend
                       </span>
                     )}
                   </td>
-                  <td className="px-4 py-2">
+                  <td className="px-4 py-3">
                     <a
                       href={`/intern?klant=${rij.klantId}`}
                       className="font-medium text-brand-groen hover:underline"

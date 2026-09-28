@@ -278,6 +278,25 @@ Wel de structuur alvast klaargezet zodat het invullen van een key straks voldoen
 - Geverifieerd met `npm run typecheck` en een schone `npm run build` — het gedrag met lege
   `REPLICATE_API_TOKEN` (de huidige situatie) is ongewijzigd getest via de bestaande testknop.
 
+## Update — klantformulier en interne pagina's visueel opgefrist ✅
+
+- **Klantformulier** (`AanvraagForm.tsx`): elke sectie ("Jouw gegevens", "Jouw ontwerpwens") is nu
+  een genummerde kaart. Veldtype, afmeting en "Bord" zijn omgezet van dropdown/radio's naar
+  klikbare keuzekaarten (`KaartOptie`) — grotere tikvlakken, prettiger op mobiel, en je ziet in
+  één oogopslag wat je al gekozen hebt. Bestandsupload-knop en het successcherm (met vinkje) zijn
+  ook opgefrist. Functioneel ongewijzigd: dezelfde velden, dezelfde validatie, dezelfde
+  `/api/aanvragen`-aanroep.
+- **Interne pagina's**: `AANVRAAG_STATUS_KLEUREN` toegevoegd in `lib/types/domain.ts` — één plek
+  die bepaalt welke kleur bij welke status hoort (blauw voor nieuw, paars voor voorstel
+  verstuurd, groen voor goedgekeurd, rood voor afgewezen, oranje voor geëscaleerd, amber voor in
+  behandeling). Gebruikt op zowel `/intern` (tabelbadges) als de detailpagina (badge naast de
+  titel). Tabellen op `/intern` en `/intern/klanten` hebben nu een kaart-uiterlijk
+  (`rounded-xl`, `shadow-sm`), een hover-effect per rij, en een kleine "X klanten"-teller
+  bovenaan de klantenpagina. Detailpagina-secties zijn in dezelfde kaartstijl gezet.
+- Geverifieerd met `npm run typecheck`, een schone `npm run build`, en handmatig doorlopen in de
+  browser (inclusief een volledige testinzending van het formulier en tijdelijke voorbeelddata
+  om de statuskleuren te controleren, daarna weer teruggedraaid).
+
 ## Nog volledig open (bewuste placeholders voor latere sessies)
 
 - Open ontwerpvraag: hoe wordt de vrije tekst uit de ontwerpwens (sponsornaam, slogan, ...)
