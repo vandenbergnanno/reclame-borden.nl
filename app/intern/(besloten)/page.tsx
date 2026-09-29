@@ -169,7 +169,7 @@ export default async function InternPage({
                 <th className="px-4 py-3 font-semibold">Status</th>
                 <th className="px-4 py-3 font-semibold">Ingediend op</th>
                 <th className="px-4 py-3 font-semibold">Voorstel gepland op</th>
-                <th className="px-4 py-3 font-semibold">Contentcheck</th>
+                <th className="px-4 py-3 font-semibold">Checks</th>
                 <th className="px-4 py-3 font-semibold"></th>
               </tr>
             </thead>
@@ -200,7 +200,7 @@ export default async function InternPage({
                   <td className="px-4 py-3">
                     {rij.heeftGeblokkeerdeCheck ? (
                       <span className="rounded-full bg-brand-oranje/10 px-2 py-0.5 text-xs font-medium text-brand-oranje">
-                        Overleg met klant
+                        Te controleren
                       </span>
                     ) : (
                       <span className="text-xs text-neutral-400">—</span>

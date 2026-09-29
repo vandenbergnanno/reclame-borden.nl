@@ -119,7 +119,7 @@ export default async function AanvraagDetailPage({ params }: { params: { id: str
       </section>
 
       <section className="rounded-xl border border-neutral-200 bg-white p-5 shadow-sm">
-        <h2 className="mb-2 font-semibold text-brand-zwart">Contentchecks</h2>
+        <h2 className="mb-2 font-semibold text-brand-zwart">Checks</h2>
         {!contentChecks || contentChecks.length === 0 ? (
           <p className="text-sm text-neutral-500">Nog geen contentcheck uitgevoerd.</p>
         ) : (
@@ -128,7 +128,7 @@ export default async function AanvraagDetailPage({ params }: { params: { id: str
               <li key={check.id} className="flex items-start gap-2">
                 {check.geblokkeerd ? (
                   <span className="mt-0.5 shrink-0 rounded-full bg-brand-oranje/10 px-2 py-0.5 text-xs font-medium text-brand-oranje">
-                    Overleg met klant
+                    Te controleren
                   </span>
                 ) : (
                   <span className="mt-0.5 shrink-0 rounded-full bg-neutral-100 px-2 py-0.5 text-xs font-medium text-neutral-600">

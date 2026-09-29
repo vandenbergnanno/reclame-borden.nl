@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { analyzeRequest } from "@/lib/ai/analyzeRequest";
+import { controleerAfmetingBeschikbaarheid } from "@/lib/ai/controleerAfmetingBeschikbaarheid";
 import { berekenVoorstelGeplandOp } from "@/lib/planning/voorstelPlanning";
 import { BORD_AANSCHAF_OPTIES, VELDTYPEN, type BordAanschaf, type Veldtype } from "@/lib/types/domain";
 
@@ -100,11 +101,14 @@ export async function POST(request: Request) {
     klantId = nieuweKlant.id;
   }
 
-  // Placeholder-contentcheck, vooraf uitgevoerd zodat we meteen de juiste beginstatus kunnen
-  // zetten. Geen automatische afkeuring: een gevonden contactgegeven escaleert de aanvraag naar
-  // De Mediagraaf voor overleg met de klant (sommige klanten willen dat bewust), in plaats van
-  // dat de tool het zelf verbiedt.
-  const checkResultaten = analyzeRequest(wens);
+  // Placeholder-checks, vooraf uitgevoerd zodat we meteen de juiste beginstatus kunnen zetten.
+  // Geen automatische afkeuring: dit escaleert de aanvraag naar De Mediagraaf voor handmatige
+  // controle, in plaats van dat de tool zelf iets verbiedt of belooft.
+  // - analyzeRequest: gevonden contactgegevens (sommige klanten willen dat bewust op het bord).
+  // - controleerAfmetingBeschikbaarheid: een nieuw bord in een afwijkende maat moet eerst
+  //   gecheckt worden bij de leverancier voordat we het voorstel versturen.
+  const afmetingCheck = controleerAfmetingBeschikbaarheid(bordAanschaf, afmeting.trim());
+  const checkResultaten = [...analyzeRequest(wens), ...(afmetingCheck ? [afmetingCheck] : [])];
   const heeftGeblokkeerdProbleem = checkResultaten.some((resultaat) => resultaat.geblokkeerd);
 
   const { data: aanvraag, error: aanvraagInsertFout } = await supabase

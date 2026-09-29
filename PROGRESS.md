@@ -361,6 +361,26 @@ Brede kwaliteitsronde over de hele site:
 - Geverifieerd met `npm run typecheck`, een schone `npm run build`, en handmatig doorlopen zowel
   op desktop- als mobiel-breedte in de browser.
 
+## Update — check op besteldbaarheid bij afwijkende maat ✅
+
+Extra risico gesignaleerd: bij een **nieuw** bord in een **afwijkende maat** (niet een van de
+standaardmaten, via "Anders, namelijk...") weet de tool niet of De Mediagraaf zo'n bord
+daadwerkelijk bij de leverancier kan bestellen. Dat mag niet zomaar automatisch doorlopen.
+
+- Nieuwe functie `controleerAfmetingBeschikbaarheid()` in
+  `lib/ai/controleerAfmetingBeschikbaarheid.ts`: vlagt de aanvraag alleen bij de combinatie
+  "nieuw bord" + niet-standaardmaat (bij "hergebruiken" is dit nooit een probleem, de klant heeft
+  het bord al).
+- `app/api/aanvragen/route.ts` combineert dit met de bestaande contentcheck; bij een gevonden
+  probleem (van beide soorten) krijgt de aanvraag meteen status `geescaleerd`, zodat een
+  medewerker het eerst bekijkt voordat het voorstel automatisch naar de klant gaat.
+- Label op `/intern` en de detailpagina hernoemd van "Overleg met klant"/"Contentcheck(s)" naar
+  het neutralere "Te controleren"/"Checks" — dekt nu zowel "overleg met de klant nodig" als
+  "check bij de leverancier nodig".
+- Geverifieerd met `npm run typecheck`, een schone `npm run build`, en de functie zelf getest via
+  een tijdelijke debug-route (nieuw bord + standaardmaat → geen check; nieuw bord + afwijkende
+  maat → gevlagd; hergebruiken + afwijkende maat → geen check) — route daarna verwijderd.
+
 ## Nog volledig open (bewuste placeholders voor latere sessies)
 
 - Open ontwerpvraag: hoe wordt de vrije tekst uit de ontwerpwens (sponsornaam, slogan, ...)
