@@ -24,7 +24,7 @@ export async function POST() {
     );
   }
 
-  const { data: aanvragen, error: aanvragenFout } = await supabase
+  const { data: kandidaten, error: aanvragenFout } = await supabase
     .from("aanvragen")
     .select("*")
     .eq("status", "nieuw")
@@ -34,10 +34,21 @@ export async function POST() {
     return NextResponse.json({ ok: false, error: aanvragenFout.message }, { status: 500 });
   }
 
+  // "nieuw" is ook de status waar een door de klant al goedgekeurde aanvraag naar terugkeert (zie
+  // app/api/aanvragen/[id]/feedback/route.ts) — die moet hier niet nóg een keer als gloednieuwe
+  // aanvraag een voorstel krijgen. Een aanvraag die al minstens één design heeft, is al een keer
+  // door deze flow heen geweest en wordt overgeslagen.
+  const kandidaatIds = (kandidaten ?? []).map((aanvraag) => aanvraag.id);
+  const { data: bestaandeDesigns } = kandidaatIds.length
+    ? await supabase.from("designs").select("aanvraag_id").in("aanvraag_id", kandidaatIds)
+    : { data: [] };
+  const aanvraagIdsMetDesign = new Set((bestaandeDesigns ?? []).map((design) => design.aanvraag_id));
+  const aanvragen = (kandidaten ?? []).filter((aanvraag) => !aanvraagIdsMetDesign.has(aanvraag.id));
+
   const verwerkt: string[] = [];
   const mislukt: { aanvraagId: string; fout: string }[] = [];
 
-  for (const aanvraag of aanvragen ?? []) {
+  for (const aanvraag of aanvragen) {
     try {
       const { data: klant } = await supabase
         .from("klanten")

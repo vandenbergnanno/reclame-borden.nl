@@ -63,29 +63,15 @@ export default async function VoorstelPage({ params }: { params: { id: string } 
   const veldtypeLabel = VELDTYPE_LABELS[aanvraag.veldtype] ?? aanvraag.veldtype;
   const klantNaam = klant?.naam ?? "";
 
-  if (aanvraag.status === "goedgekeurd") {
+  // Bij goedkeuring gaat de aanvraag direct door naar "nieuw" (de productieflow) — die status
+  // zegt dus niets meer over of de klant al gereageerd heeft. De laatste feedback-rij wel.
+  if (laatsteFeedback?.goedgekeurd === true) {
     return (
       <Kader titel="Bedankt voor je goedkeuring!">
         <p className="text-sm text-neutral-700">
           Je hebt het concept-ontwerp voor je {veldtypeLabel.toLowerCase()} goedgekeurd. De
           Mediagraaf gaat ermee verder — je hoort van ons zodra het bord klaar is.
         </p>
-      </Kader>
-    );
-  }
-
-  if (aanvraag.status === "afgewezen") {
-    return (
-      <Kader titel="Bedankt voor je feedback!">
-        <p className="text-sm text-neutral-700">
-          We hebben je feedback ontvangen en gaan ermee aan de slag. Je krijgt zo snel mogelijk
-          een nieuw voorstel.
-        </p>
-        {laatsteFeedback?.feedbacktekst && (
-          <p className="mt-3 rounded-lg bg-neutral-50 p-3 text-sm text-neutral-600">
-            Jouw feedback: “{laatsteFeedback.feedbacktekst}”
-          </p>
-        )}
       </Kader>
     );
   }
@@ -109,6 +95,13 @@ export default async function VoorstelPage({ params }: { params: { id: string } 
           Hier is het concept-ontwerp voor jouw {veldtypeLabel.toLowerCase()} ({aanvraag.afmeting}).
         </p>
       </div>
+
+      {laatsteFeedback?.goedgekeurd === false && (
+        <p className="rounded-lg border border-neutral-200 bg-neutral-50 p-3 text-sm text-neutral-600">
+          We hebben je eerdere feedback verwerkt in dit nieuwe concept.
+          {laatsteFeedback.feedbacktekst && <> Jouw feedback was: “{laatsteFeedback.feedbacktekst}”</>}
+        </p>
+      )}
 
       <div className="overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-sm">
         {/* eslint-disable-next-line @next/next/no-img-element -- extern/placeholder pad, geen vaste breedte/hoogte nodig */}

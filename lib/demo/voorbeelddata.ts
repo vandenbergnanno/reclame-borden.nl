@@ -141,7 +141,8 @@ export const VOORBEELD_AANVRAGEN: AanvraagRow[] = [
     afmeting: "200 x 100 cm",
     bord_aanschaf: "nieuw",
     wens: "Scorebord in onze huisstijl, geel/zwart, met ons logo bovenaan.",
-    status: "goedgekeurd",
+    // Goedgekeurd door de klant — gaat daarom direct terug naar "nieuw" (de productieflow).
+    status: "nieuw",
     bijlage_pad: null,
     voorstel_gepland_op: dagenGeleden(1),
     created_at: dagenGeleden(2),
@@ -154,7 +155,9 @@ export const VOORBEELD_AANVRAGEN: AanvraagRow[] = [
     afmeting: "300 x 100 cm",
     bord_aanschaf: "hergebruiken",
     wens: 'Bord met ons logo en de tekst "Tennisclub Smash - nieuwe leden welkom".',
-    status: "afgewezen",
+    // Afgewezen door de klant — de AI heeft automatisch een herzien concept gemaild, dus de
+    // aanvraag blijft gewoon "voorstel_verstuurd" in afwachting van een nieuwe reactie.
+    status: "voorstel_verstuurd",
     bijlage_pad: null,
     voorstel_gepland_op: dagenGeleden(2),
     created_at: dagenGeleden(3),
@@ -167,7 +170,9 @@ export const VOORBEELD_AANVRAGEN: AanvraagRow[] = [
     afmeting: "300 x 100 cm",
     bord_aanschaf: "nieuw",
     wens: "Bord met ons logo en telefoonnummer 0591234567 zodat mensen ons direct kunnen bellen.",
-    status: "geescaleerd",
+    // Content-check vond een telefoonnummer, maar dat escaleert niet meer naar een aparte status —
+    // gewoon "nieuw", met de check zichtbaar als "Te controleren"-signaal.
+    status: "nieuw",
     bijlage_pad: null,
     voorstel_gepland_op: minutenGeleden(360),
     created_at: dagenGeleden(1),
@@ -218,6 +223,14 @@ export const VOORBEELD_DESIGNS: DesignRow[] = [
     status: "vervangen",
     opslaglocatie: "/placeholder-ontwerp.svg",
     created_at: dagenGeleden(2),
+  },
+  {
+    id: "f7777777-f777-f777-f777-f77777777777",
+    aanvraag_id: "ffffffff-ffff-ffff-ffff-ffffffffffff",
+    versienummer: 2,
+    status: "concept",
+    opslaglocatie: "/placeholder-ontwerp.svg",
+    created_at: dagenGeleden(1),
   },
 ];
 

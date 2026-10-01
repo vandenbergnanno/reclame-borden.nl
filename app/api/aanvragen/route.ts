@@ -117,15 +117,15 @@ export async function POST(request: Request) {
     klantId = nieuweKlant.id;
   }
 
-  // Placeholder-checks, vooraf uitgevoerd zodat we meteen de juiste beginstatus kunnen zetten.
-  // Geen automatische afkeuring: dit escaleert de aanvraag naar De Mediagraaf voor handmatige
-  // controle, in plaats van dat de tool zelf iets verbiedt of belooft.
+  // Placeholder-checks: puur informatief. Een aanvraag start altijd gewoon op "nieuw" — de tool
+  // verbiedt of belooft zelf niets. Een gevonden probleem wordt als "Te controleren" getoond op
+  // het interne overzicht (zie content_checks hieronder), zodat De Mediagraaf het kan bekijken
+  // zonder dat de klant hoeft te wachten op een aparte beoordeling.
   // - analyzeRequest: gevonden contactgegevens (sommige klanten willen dat bewust op het bord).
   // - controleerAfmetingBeschikbaarheid: een nieuw bord in een afwijkende maat moet eerst
   //   gecheckt worden bij de leverancier voordat we het voorstel versturen.
   const afmetingCheck = controleerAfmetingBeschikbaarheid(bordAanschaf, afmeting.trim());
   const checkResultaten = [...analyzeRequest(wens), ...(afmetingCheck ? [afmetingCheck] : [])];
-  const heeftGeblokkeerdProbleem = checkResultaten.some((resultaat) => resultaat.geblokkeerd);
 
   const { data: aanvraag, error: aanvraagInsertFout } = await supabase
     .from("aanvragen")
@@ -135,7 +135,7 @@ export async function POST(request: Request) {
       afmeting: afmeting.trim(),
       bord_aanschaf: bordAanschaf,
       wens: wens.trim(),
-      status: heeftGeblokkeerdProbleem ? "geescaleerd" : "nieuw",
+      status: "nieuw",
       voorstel_gepland_op: berekenVoorstelGeplandOp().toISOString(),
     })
     .select("id")

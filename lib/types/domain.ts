@@ -34,15 +34,14 @@ export const BORD_AANSCHAF_LABELS: Record<BordAanschaf, string> = {
   nieuw: "Ik wil een nieuw bord aanschaffen",
 };
 
-export const AANVRAAG_STATUSSEN = [
-  "nieuw",
-  "in_behandeling",
-  "voorstel_verstuurd",
-  "goedgekeurd",
-  "afgewezen",
-  "geescaleerd",
-  "gemaakt",
-] as const;
+// Bewust geen aparte "goedgekeurd"/"afgewezen"/"geëscaleerd"-statussen meer: een contentcheck
+// escaleert niet langer naar een apart wachtvakje (de check blijft gewoon zichtbaar als "Te
+// controleren"-signaal, zie content_checks), en de klantreactie op een voorstel is geen
+// doodlopend eindpunt meer — goedkeuring stuurt de aanvraag direct door naar "nieuw" (de
+// productieflow), afwijzing laat de AI automatisch een herzien concept terugmailen terwijl de
+// aanvraag gewoon "voorstel_verstuurd" blijft. De klantreactie zelf blijft wel bewaard, als rij
+// in de `feedback`-tabel (zie `feedback.goedgekeurd`).
+export const AANVRAAG_STATUSSEN = ["nieuw", "in_behandeling", "voorstel_verstuurd", "gemaakt"] as const;
 
 export type AanvraagStatus = (typeof AANVRAAG_STATUSSEN)[number];
 
@@ -50,9 +49,6 @@ export const AANVRAAG_STATUS_LABELS: Record<AanvraagStatus, string> = {
   nieuw: "Nieuw",
   in_behandeling: "In behandeling",
   voorstel_verstuurd: "Voorstel verstuurd",
-  goedgekeurd: "Goedgekeurd",
-  afgewezen: "Afgewezen",
-  geescaleerd: "Geëscaleerd",
   gemaakt: "Klaar voor levering",
 };
 
@@ -62,30 +58,21 @@ export const AANVRAAG_STATUS_KLEUREN: Record<AanvraagStatus, string> = {
   nieuw: "bg-blue-100 text-blue-700",
   in_behandeling: "bg-amber-100 text-amber-700",
   voorstel_verstuurd: "bg-purple-100 text-purple-700",
-  goedgekeurd: "bg-green-100 text-green-700",
-  afgewezen: "bg-red-100 text-red-700",
-  geescaleerd: "bg-orange-100 text-orange-700",
   gemaakt: "bg-teal-100 text-teal-700",
 };
 
 // /intern (Aanvragen) toont alleen de fysieke productieflow als vakjes: tegen de tijd dat een
-// aanvraag hier binnenkomt, is het voorstel door de klant al goedgekeurd. De klant-
-// goedkeuringsflow zelf (versturen, wachten op reactie, afwijzen/escaleren) staat apart op
-// /intern/concepten.
+// aanvraag hier binnenkomt, is het voorstel door de klant al goedgekeurd. De klant-mailflow zelf
+// (voorstel versturen, wachten op reactie, eventueel herzien) staat apart op /intern/concepten.
 export const PRODUCTIE_STATUSSEN: readonly AanvraagStatus[] = ["nieuw", "in_behandeling", "gemaakt"];
 
-// /intern/concepten toont de klant-goedkeuringsflow als vakjes: hierin zie je welke voorstellen
-// (automatisch gegenereerd en gemaild) nog open staan, en hoe de klant erop gereageerd heeft.
-export const CONCEPT_STATUSSEN: readonly AanvraagStatus[] = [
-  "voorstel_verstuurd",
-  "goedgekeurd",
-  "afgewezen",
-  "geescaleerd",
-];
+// /intern/concepten toont de aanvragen die nog in de klant-mailflow zitten: een voorstel is
+// gegenereerd en verstuurd, en er wordt gewacht op (of gereageerd op) een klantreactie.
+export const CONCEPT_STATUSSEN: readonly AanvraagStatus[] = ["voorstel_verstuurd"];
 
 // Simpel, apart doorstuur-pad voor de productiekant ("inkomend" -> "in behandeling" ->
-// "gemaakt"), los van de klant-goedkeuringsflow (voorstel_verstuurd/goedgekeurd/afgewezen). Elke
-// status hier heeft een knoplabel voor de eenknops-doorstuuractie in het interne overzicht.
+// "gemaakt"), los van de klant-mailflow (voorstel_verstuurd). Elke status hier heeft een
+// knoplabel voor de eenknops-doorstuuractie in het interne overzicht.
 export const VOLGENDE_PRODUCTIESTATUS: Partial<Record<AanvraagStatus, { status: AanvraagStatus; label: string }>> = {
   nieuw: { status: "in_behandeling", label: "Start behandeling" },
   in_behandeling: { status: "gemaakt", label: "Markeer als klaar voor levering" },

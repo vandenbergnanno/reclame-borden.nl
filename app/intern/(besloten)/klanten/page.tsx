@@ -56,9 +56,7 @@ export default async function KlantenPage() {
         telefoon: klant.telefoon,
         provincie: klant.provincie,
         aantalAanvragen: aanvragenVanKlant.length,
-        aantalOpen: aanvragenVanKlant.filter(
-          (aanvraag) => aanvraag.status !== "goedgekeurd" && aanvraag.status !== "afgewezen"
-        ).length,
+        aantalOpen: aanvragenVanKlant.filter((aanvraag) => aanvraag.status !== "gemaakt").length,
       };
     });
   } catch (error) {

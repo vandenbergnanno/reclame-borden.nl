@@ -7,13 +7,7 @@ import {
   VOORBEELD_FEEDBACK,
   VOORBEELD_KLANTEN,
 } from "@/lib/demo/voorbeelddata";
-import {
-  AANVRAAG_STATUS_KLEUREN,
-  AANVRAAG_STATUS_LABELS,
-  CONCEPT_STATUSSEN,
-  VELDTYPE_LABELS,
-  type AanvraagStatus,
-} from "@/lib/types/domain";
+import { CONCEPT_STATUSSEN, VELDTYPE_LABELS } from "@/lib/types/domain";
 import { VerwerkGeplandeVoorstellenKnop } from "../VerwerkGeplandeVoorstellenKnop";
 
 export const metadata: Metadata = {
@@ -23,8 +17,14 @@ export const metadata: Metadata = {
 // Zelfde reden als /intern: live data, dus niet statisch prerenderen.
 export const dynamic = "force-dynamic";
 
-function isConceptStatus(waarde: string | undefined): waarde is AanvraagStatus {
-  return typeof waarde === "string" && (CONCEPT_STATUSSEN as readonly string[]).includes(waarde);
+interface TijdlijnItem {
+  soort: "concept" | "klantreactie";
+  op: string;
+  opSorteerwaarde: string;
+  omschrijving: string;
+  details?: string;
+  thumbnail?: string;
+  kleur: string;
 }
 
 interface ConceptKaart {
@@ -33,24 +33,16 @@ interface ConceptKaart {
   bedrijf: string | null;
   provincie: string;
   veldtype: string;
-  statusWaarde: AanvraagStatus;
   voorstelGeplandOp: string;
-  laatsteDesign: { versienummer: number; status: string; opslaglocatie: string } | null;
-  laatsteFeedback: { goedgekeurd: boolean; feedbacktekst: string | null } | null;
+  tijdlijn: TijdlijnItem[];
   geblokkeerdeCheck: { probleem: string; toelichting: string | null } | null;
 }
 
-// Toont de klant-goedkeuringsflow: welke voorstellen de AI gegenereerd en gemaild heeft, en hoe
-// de klant daarop gereageerd heeft. Dit is bewust gescheiden van /intern (de fysieke
-// productieflow van al goedgekeurde borden) — zie PRODUCTIE_STATUSSEN/CONCEPT_STATUSSEN in
-// lib/types/domain.ts.
-export default async function ConceptenPage({
-  searchParams,
-}: {
-  searchParams: { status?: string };
-}) {
-  const actieveStatus: AanvraagStatus = isConceptStatus(searchParams.status) ? searchParams.status : "voorstel_verstuurd";
-
+// Toont de klant-mailflow: welke voorstellen de AI gegenereerd en gemaild heeft, en hoe de klant
+// daarop gereageerd heeft (inclusief een eventuele afwijzing-en-herziening-heen-en-weer). Dit is
+// bewust gescheiden van /intern (de fysieke productieflow van al goedgekeurde borden) — zie
+// PRODUCTIE_STATUSSEN/CONCEPT_STATUSSEN in lib/types/domain.ts.
+export default async function ConceptenPage() {
   let foutmelding: string | null = null;
   let kaarten: ConceptKaart[] = [];
   const toontVoorbeelddata = !isSupabaseGeconfigureerd();
@@ -80,8 +72,8 @@ export default async function ConceptenPage({
       ] = await Promise.all([
         supabase.from("aanvragen").select("*").order("created_at", { ascending: false }),
         supabase.from("klanten").select("*"),
-        supabase.from("designs").select("*").order("versienummer", { ascending: false }),
-        supabase.from("feedback").select("*").order("created_at", { ascending: false }),
+        supabase.from("designs").select("*").order("versienummer", { ascending: true }),
+        supabase.from("feedback").select("*").order("created_at", { ascending: true }),
         supabase.from("content_checks").select("*"),
       ]);
 
@@ -106,10 +98,35 @@ export default async function ConceptenPage({
         const klant = klantenById.get(aanvraag.klant_id);
         const veldtypeLabel = VELDTYPE_LABELS[aanvraag.veldtype] ?? aanvraag.veldtype;
 
-        const designsVanAanvraag = designs
+        const designItems: TijdlijnItem[] = designs
           .filter((design) => design.aanvraag_id === aanvraag.id)
-          .sort((a, b) => b.versienummer - a.versienummer);
-        const feedbackVanAanvraag = feedback.find((item) => item.aanvraag_id === aanvraag.id);
+          .sort((a, b) => a.versienummer - b.versienummer)
+          .map((design) => ({
+            soort: "concept",
+            op: new Date(design.created_at).toLocaleString("nl-NL"),
+            opSorteerwaarde: design.created_at,
+            omschrijving: `Concept v${design.versienummer} gegenereerd en gemaild`,
+            details: design.status,
+            thumbnail: design.opslaglocatie,
+            kleur: "bg-purple-400",
+          }));
+
+        const feedbackItems: TijdlijnItem[] = feedback
+          .filter((item) => item.aanvraag_id === aanvraag.id)
+          .sort((a, b) => a.created_at.localeCompare(b.created_at))
+          .map((item) => ({
+            soort: "klantreactie",
+            op: new Date(item.created_at).toLocaleString("nl-NL"),
+            opSorteerwaarde: item.created_at,
+            omschrijving: item.goedgekeurd ? "Klant keurde het concept goed" : "Klant wees het concept af",
+            details: item.feedbacktekst ?? undefined,
+            kleur: item.goedgekeurd ? "bg-brand-groen" : "bg-brand-oranje",
+          }));
+
+        const tijdlijn = [...designItems, ...feedbackItems].sort((a, b) =>
+          a.opSorteerwaarde.localeCompare(b.opSorteerwaarde)
+        );
+
         const geblokkeerdeCheck = checks.find((check) => check.aanvraag_id === aanvraag.id && check.geblokkeerd);
 
         return {
@@ -118,18 +135,8 @@ export default async function ConceptenPage({
           bedrijf: klant?.bedrijf ?? null,
           provincie: klant?.provincie ?? "—",
           veldtype: `${veldtypeLabel} (${aanvraag.afmeting})`,
-          statusWaarde: aanvraag.status,
           voorstelGeplandOp: new Date(aanvraag.voorstel_gepland_op).toLocaleString("nl-NL"),
-          laatsteDesign: designsVanAanvraag[0]
-            ? {
-                versienummer: designsVanAanvraag[0].versienummer,
-                status: designsVanAanvraag[0].status,
-                opslaglocatie: designsVanAanvraag[0].opslaglocatie,
-              }
-            : null,
-          laatsteFeedback: feedbackVanAanvraag
-            ? { goedgekeurd: feedbackVanAanvraag.goedgekeurd, feedbacktekst: feedbackVanAanvraag.feedbacktekst }
-            : null,
+          tijdlijn,
           geblokkeerdeCheck: geblokkeerdeCheck
             ? { probleem: geblokkeerdeCheck.probleem, toelichting: geblokkeerdeCheck.toelichting }
             : null,
@@ -139,28 +146,18 @@ export default async function ConceptenPage({
     foutmelding = error instanceof Error ? error.message : "Onbekende fout bij het ophalen van concepten.";
   }
 
-  const statusTellingen = CONCEPT_STATUSSEN.reduce(
-    (tellingen, status) => {
-      tellingen[status] = kaarten.filter((kaart) => kaart.statusWaarde === status).length;
-      return tellingen;
-    },
-    {} as Record<AanvraagStatus, number>
-  );
-
-  const zichtbareKaarten = kaarten.filter((kaart) => kaart.statusWaarde === actieveStatus);
-
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-semibold text-brand-zwart">Concepten</h1>
         <p className="mt-1 text-sm text-neutral-600">
-          Hier zie je de voorstellen die de AI automatisch gegenereerd en gemaild heeft, en hoe de
-          klant erop gereageerd heeft. Eenmaal goedgekeurd gaat een aanvraag naar de productieflow
+          Hier zie je welke voorstellen de AI automatisch gegenereerd en gemaild heeft, en hoe de
+          klant erop gereageerd heeft. Bij goedkeuring gaat een aanvraag direct door naar &ldquo;Nieuw&rdquo;
           op{" "}
           <a href="/intern" className="font-medium text-brand-groen hover:underline">
             Aanvragen
           </a>
-          .
+          ; bij afwijzing stuurt de AI automatisch een herzien concept terug.
         </p>
       </div>
 
@@ -180,95 +177,71 @@ export default async function ConceptenPage({
       )}
 
       {!foutmelding && (
-        <>
-          <div className="flex flex-wrap gap-2">
-            {CONCEPT_STATUSSEN.map((status) => (
-              <a
-                key={status}
-                href={`/intern/concepten?status=${status}`}
-                className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-sm transition ${
-                  status === actieveStatus
-                    ? "border-brand-groen bg-brand-groen/10 font-medium text-brand-groen"
-                    : "border-neutral-200 bg-white text-neutral-600 hover:border-neutral-300"
-                }`}
-              >
-                <span className={`h-2 w-2 rounded-full ${AANVRAAG_STATUS_KLEUREN[status].split(" ")[0]}`} />
-                {AANVRAAG_STATUS_LABELS[status]}
-                <span className="text-neutral-400">({statusTellingen[status]})</span>
-              </a>
-            ))}
+        <div>
+          <div className="mb-3 flex items-center gap-2">
+            <span className="h-2.5 w-2.5 rounded-full bg-purple-400" />
+            <h2 className="font-semibold text-brand-zwart">Voorstel verstuurd</h2>
+            <span className="text-sm text-neutral-400">({kaarten.length})</span>
           </div>
 
-          <div>
-            <div className="mb-3 flex items-center gap-2">
-              <span className={`h-2.5 w-2.5 rounded-full ${AANVRAAG_STATUS_KLEUREN[actieveStatus].split(" ")[0]}`} />
-              <h2 className="font-semibold text-brand-zwart">{AANVRAAG_STATUS_LABELS[actieveStatus]}</h2>
-              <span className="text-sm text-neutral-400">({zichtbareKaarten.length})</span>
-            </div>
+          {kaarten.length === 0 && (
+            <p className="rounded-lg border border-dashed border-neutral-200 p-4 text-center text-sm text-neutral-400">
+              Geen open concepten — alles is al goedgekeurd of nog niet verstuurd.
+            </p>
+          )}
 
-            {zichtbareKaarten.length === 0 && (
-              <p className="rounded-lg border border-dashed border-neutral-200 p-4 text-center text-sm text-neutral-400">
-                Geen concepten in deze status.
-              </p>
-            )}
-
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {zichtbareKaarten.map((kaart) => (
-                <div key={kaart.aanvraagId} className="rounded-lg border border-neutral-200 bg-white p-3 shadow-sm">
+          <div className="grid gap-3 sm:grid-cols-2">
+            {kaarten.map((kaart) => (
+              <div key={kaart.aanvraagId} className="rounded-lg border border-neutral-200 bg-white p-4 shadow-sm">
+                <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
                     <p className="truncate font-medium text-brand-zwart">{kaart.klantNaam}</p>
                     {kaart.bedrijf && <p className="truncate text-xs text-neutral-500">{kaart.bedrijf}</p>}
+                    <p className="mt-1 text-xs text-neutral-600">{kaart.veldtype}</p>
+                    <p className="text-xs text-neutral-500">{kaart.provincie}</p>
                   </div>
-
-                  <p className="mt-2 text-xs text-neutral-600">{kaart.veldtype}</p>
-                  <p className="text-xs text-neutral-500">{kaart.provincie}</p>
-
-                  {kaart.laatsteDesign && (
-                    <div className="mt-2 flex items-center gap-2">
-                      {/* eslint-disable-next-line @next/next/no-img-element -- extern/placeholder pad */}
-                      <img
-                        src={kaart.laatsteDesign.opslaglocatie}
-                        alt={`Ontwerp versie ${kaart.laatsteDesign.versienummer}`}
-                        className="h-10 w-16 shrink-0 rounded border border-neutral-200 object-cover"
-                      />
-                      <span className="text-xs text-neutral-500">
-                        Concept v{kaart.laatsteDesign.versienummer} — {kaart.laatsteDesign.status}
-                      </span>
-                    </div>
-                  )}
-
-                  {kaart.laatsteFeedback && (
-                    <p
-                      className={`mt-2 text-xs ${
-                        kaart.laatsteFeedback.goedgekeurd ? "text-brand-groen" : "text-brand-oranje"
-                      }`}
-                    >
-                      Klant: {kaart.laatsteFeedback.goedgekeurd ? "Goedgekeurd" : "Afgewezen"}
-                      {kaart.laatsteFeedback.feedbacktekst && ` — ${kaart.laatsteFeedback.feedbacktekst}`}
-                    </p>
-                  )}
-
-                  {kaart.geblokkeerdeCheck && (
-                    <p className="mt-2 text-xs text-brand-oranje">
-                      Te controleren: {kaart.geblokkeerdeCheck.probleem}
-                      {kaart.geblokkeerdeCheck.toelichting && ` — ${kaart.geblokkeerdeCheck.toelichting}`}
-                    </p>
-                  )}
-
-                  <div className="mt-2 flex items-center justify-between">
-                    <span className="text-[10px] text-neutral-400">Voorstel: {kaart.voorstelGeplandOp}</span>
-                    <a
-                      href={`/intern/${kaart.aanvraagId}`}
-                      className="text-xs font-medium text-brand-groen hover:underline"
-                    >
-                      Bekijken →
-                    </a>
-                  </div>
+                  <a
+                    href={`/intern/${kaart.aanvraagId}`}
+                    className="shrink-0 text-xs font-medium text-brand-groen hover:underline"
+                  >
+                    Bekijken →
+                  </a>
                 </div>
-              ))}
-            </div>
+
+                {kaart.geblokkeerdeCheck && (
+                  <p className="mt-2 text-xs text-brand-oranje">
+                    Te controleren: {kaart.geblokkeerdeCheck.probleem}
+                    {kaart.geblokkeerdeCheck.toelichting && ` — ${kaart.geblokkeerdeCheck.toelichting}`}
+                  </p>
+                )}
+
+                {kaart.tijdlijn.length > 0 && (
+                  <ul className="mt-3 space-y-2 border-t border-neutral-100 pt-3">
+                    {kaart.tijdlijn.map((item, index) => (
+                      <li key={index} className="flex items-start gap-2 text-xs">
+                        <span className={`mt-1 h-1.5 w-1.5 shrink-0 rounded-full ${item.kleur}`} />
+                        <div className="min-w-0">
+                          <p className="text-neutral-700">
+                            {item.omschrijving}
+                            {item.details && item.soort === "concept" && (
+                              <span className="text-neutral-400"> ({item.details})</span>
+                            )}
+                          </p>
+                          {item.details && item.soort === "klantreactie" && (
+                            <p className="text-neutral-500">“{item.details}”</p>
+                          )}
+                          <p className="text-[10px] text-neutral-400">{item.op}</p>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+
+                <p className="mt-3 text-[10px] text-neutral-400">Eerst gepland op: {kaart.voorstelGeplandOp}</p>
+              </div>
+            ))}
           </div>
-        </>
+        </div>
       )}
     </div>
   );

@@ -10,6 +10,8 @@ export interface SendProposalEmailInput {
   afmeting: string;
   /** Root-relatief (bijv. "/placeholder-ontwerp.svg") of al een volledige URL. */
   designUrl: string;
+  /** True bij een herzien concept na afwijzende klantfeedback — zie VoorstelEmailInput. */
+  isHerzien?: boolean;
 }
 
 export interface SendProposalEmailResult {
@@ -37,6 +39,7 @@ export async function sendProposalEmail(input: SendProposalEmailInput): Promise<
     afmeting: input.afmeting,
     designUrl: volledigeUrl(input.designUrl),
     voorstelUrl: volledigeUrl(`/voorstel/${input.aanvraagId}`),
+    isHerzien: input.isHerzien,
   });
 
   const resendApiKey = process.env.RESEND_API_KEY;

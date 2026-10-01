@@ -55,33 +55,38 @@ values
     now() - interval '3 days'
   ),
   (
+    -- Goedgekeurd door de klant — gaat daarom direct terug naar 'nieuw' (de productieflow).
     'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee',
     '55555555-5555-5555-5555-555555555555',
     'scorebord',
     '200 x 100 cm',
     'nieuw',
     'Scorebord in onze huisstijl, geel/zwart, met ons logo bovenaan.',
-    'goedgekeurd',
+    'nieuw',
     now() - interval '1 day'
   ),
   (
+    -- Afgewezen door de klant — de AI heeft automatisch een herzien concept gemaild, dus de
+    -- aanvraag blijft gewoon 'voorstel_verstuurd' in afwachting van een nieuwe reactie.
     'ffffffff-ffff-ffff-ffff-ffffffffffff',
     '66666666-6666-6666-6666-666666666666',
     'voetbal-zijlijn',
     '300 x 100 cm',
     'hergebruiken',
     'Bord met ons logo en de tekst "Tennisclub Smash - nieuwe leden welkom".',
-    'afgewezen',
+    'voorstel_verstuurd',
     now() - interval '2 days'
   ),
   (
+    -- Content-check vond een telefoonnummer, maar dat escaleert niet meer naar een aparte status —
+    -- gewoon 'nieuw', met de check zichtbaar als "Te controleren"-signaal.
     '99999999-9999-9999-9999-999999999999',
     '77777777-7777-7777-7777-777777777777',
     'voetbal-zijlijn',
     '300 x 100 cm',
     'nieuw',
     'Bord met ons logo en telefoonnummer 0591234567 zodat mensen ons direct kunnen bellen.',
-    'geescaleerd',
+    'nieuw',
     now() - interval '6 hours'
   )
 on conflict (id) do nothing;
@@ -120,6 +125,12 @@ values
     'ffffffff-ffff-ffff-ffff-ffffffffffff',
     1,
     'vervangen',
+    '/placeholder-ontwerp.svg'
+  ),
+  (
+    'ffffffff-ffff-ffff-ffff-ffffffffffff',
+    2,
+    'concept',
     '/placeholder-ontwerp.svg'
   )
 on conflict do nothing;

@@ -8,6 +8,12 @@ export interface VoorstelEmailInput {
   designUrl: string;
   /** Volledige URL naar de publieke voorstelpagina (/voorstel/[id]). */
   voorstelUrl: string;
+  /**
+   * True wanneer dit een herzien concept is naar aanleiding van afwijzende klantfeedback (zie
+   * app/api/aanvragen/[id]/feedback/route.ts), zodat de mail dat ook benoemt in plaats van te
+   * doen alsof het de eerste keer is.
+   */
+  isHerzien?: boolean;
 }
 
 export interface VoorstelEmailContent {
@@ -24,7 +30,12 @@ const ZWART = "#111111";
 // die niet klopt: de gegevens komen rechtstreeks uit de aanvraag.
 export function bouwVoorstelEmail(input: VoorstelEmailInput): VoorstelEmailContent {
   const veldtypeLabel = VELDTYPE_LABELS[input.veldtype] ?? input.veldtype;
-  const onderwerp = "Je concept-ontwerp van De Mediagraaf is klaar!";
+  const onderwerp = input.isHerzien
+    ? "Je herziene concept-ontwerp van De Mediagraaf is klaar!"
+    : "Je concept-ontwerp van De Mediagraaf is klaar!";
+  const introTekst = input.isHerzien
+    ? `We hebben je feedback verwerkt en een nieuw concept-ontwerp gemaakt voor jouw <strong>${veldtypeLabel}</strong> (${input.afmeting}). Bekijk het hieronder.`
+    : `Goed nieuws! We hebben een concept-ontwerp gemaakt voor jouw <strong>${veldtypeLabel}</strong> (${input.afmeting}). Bekijk het hieronder.`;
 
   const html = `<!DOCTYPE html>
 <html lang="nl">
@@ -46,8 +57,7 @@ export function bouwVoorstelEmail(input: VoorstelEmailInput): VoorstelEmailConte
               <td style="padding:24px;">
                 <p style="font-size:16px;margin:0 0 12px;">Hoi ${input.klantNaam},</p>
                 <p style="font-size:14px;line-height:1.5;margin:0 0 16px;">
-                  Goed nieuws! We hebben een concept-ontwerp gemaakt voor jouw
-                  <strong>${veldtypeLabel}</strong> (${input.afmeting}). Bekijk het hieronder.
+                  ${introTekst}
                 </p>
                 <img
                   src="${input.designUrl}"
@@ -87,7 +97,9 @@ export function bouwVoorstelEmail(input: VoorstelEmailInput): VoorstelEmailConte
   const text = [
     `Hoi ${input.klantNaam},`,
     "",
-    `Goed nieuws! We hebben een concept-ontwerp gemaakt voor jouw ${veldtypeLabel} (${input.afmeting}).`,
+    input.isHerzien
+      ? `We hebben je feedback verwerkt en een nieuw concept-ontwerp gemaakt voor jouw ${veldtypeLabel} (${input.afmeting}).`
+      : `Goed nieuws! We hebben een concept-ontwerp gemaakt voor jouw ${veldtypeLabel} (${input.afmeting}).`,
     "",
     `Bekijk je voorstel en reageer erop via: ${input.voorstelUrl}`,
     "",

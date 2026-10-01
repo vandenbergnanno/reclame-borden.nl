@@ -519,6 +519,51 @@ Klanten.
   getest in de browser (alle 4 Concepten-vakjes en alle 3 Aanvragen-vakjes tonen de juiste
   voorbeeldkaarten).
 
+## Update — Escaleren en "afgewezen" als doodlopend eindpunt verwijderd ✅
+
+Het systeem had drie statussen die eigenlijk nergens toe leidden zonder handmatig ingrijpen:
+"geëscaleerd" (contentcheck-escalatie) en "afgewezen"/"goedgekeurd" (klantreactie als eindpunt).
+Die zijn nu allemaal verwijderd — `AANVRAAG_STATUSSEN` bestaat nog maar uit 4 waarden: nieuw,
+in_behandeling, voorstel_verstuurd, gemaakt.
+
+- **Geen escalatie meer:** een contentcheck (telefoonnummer/e-mailadres gedetecteerd, of een
+  afwijkende maat bij een nieuw bord) blokkeert niets meer. De aanvraag start altijd gewoon op
+  "nieuw"; het gevonden probleem blijft gewoon zichtbaar als "Te controleren"-badge (ongewijzigd),
+  alleen zonder aparte status eromheen.
+- **Goedgekeurd → recht naar Aanvragen "Nieuw":** `POST /api/aanvragen/[id]/feedback` zet de
+  status bij goedkeuring nu op `"nieuw"` in plaats van `"goedgekeurd"` — de aanvraag verschijnt
+  meteen in de productieflow. De klantreactie zelf blijft gewoon bewaard in de `feedback`-tabel
+  (zichtbaar op de detailpagina en op Concepten).
+- **Afgewezen → AI mailt automatisch een herzien concept terug:** in plaats van een dode
+  "afgewezen"-status genereert en verstuurt de feedback-route nu meteen een nieuwe
+  conceptversie (`generateDesign()` + `sendProposalEmail()` met een "herzien concept"-variant
+  van de mailtekst, zie `lib/email/voorstelEmailTemplate.ts`), terwijl de aanvraag gewoon
+  "voorstel_verstuurd" blijft — de klant kan dus opnieuw reageren. Een mislukte regeneratie
+  blokkeert de opgeslagen feedback van de klant niet (try/catch, net als bij de geplande-
+  voorstellen-batch).
+- **Dubbele verwerking voorkomen:** `POST /api/aanvragen/verwerk-geplande-voorstellen` (de
+  "Verwerk geplande voorstellen"-testknop) sloeg aanvragen met status "nieuw" op die hun
+  geplande tijdstip gepasseerd zijn — maar "nieuw" is nu ook de status van een net goedgekeurde
+  aanvraag. De route slaat nu aanvragen over die al minstens één design hebben, zodat een
+  goedgekeurde aanvraag niet per ongeluk nóg een voorstel-mail krijgt.
+- `/voorstel/[id]` (publieke klantpagina) checkt nu de laatste `feedback`-rij in plaats van
+  `aanvraag.status` om te bepalen of er al goedgekeurd is, en toont bij een eerdere afwijzing een
+  korte melding ("we hebben je feedback verwerkt") boven het nieuwe concept in plaats van een
+  doodlopend "bedankt voor je feedback"-scherm.
+- `/intern/concepten` toont nu, omdat er nog maar één openstaande status (`voorstel_verstuurd`)
+  over is, geen vakjes meer maar een directe lijst met per aanvraag een tijdlijn van
+  conceptversies + klantreacties door elkaar — zo zie je in één oogopslag het "heen-en-weer
+  mailen" bij een afwijzing.
+- `supabase/migrations/0001_init.sql` (CHECK-constraint), `supabase/seed.sql` en
+  `lib/demo/voorbeelddata.ts` bijgewerkt: de 3 voorbeeldaanvragen die eerder goedgekeurd/
+  afgewezen/geëscaleerd demonstreerden, laten nu respectievelijk zien: een goedgekeurde aanvraag
+  terug op "nieuw", een afgewezen aanvraag met een tweede (herziene) conceptversie op
+  "voorstel_verstuurd", en een "Te controleren"-aanvraag gewoon op "nieuw".
+- Geverifieerd met `npm run typecheck`, `npm run lint`, een schone `npm run build`, en handmatig
+  getest in de browser (Aanvragen "Nieuw" toont de teruggekeerde goedgekeurde aanvraag en de
+  "Te controleren"-aanvraag; Concepten toont de volledige concept-/feedbacktijdlijn inclusief de
+  herziene tweede versie na afwijzing).
+
 ## Nog volledig open (bewuste placeholders voor latere sessies)
 
 - Open ontwerpvraag: hoe wordt de vrije tekst uit de ontwerpwens (sponsornaam, slogan, ...)

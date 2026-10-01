@@ -48,10 +48,7 @@ create table if not exists aanvragen (
   bord_aanschaf text not null check (bord_aanschaf in ('hergebruiken', 'nieuw')),
   wens text not null,
   status text not null default 'nieuw' check (
-    status in (
-      'nieuw', 'in_behandeling', 'voorstel_verstuurd', 'goedgekeurd', 'afgewezen', 'geescaleerd',
-      'gemaakt'
-    )
+    status in ('nieuw', 'in_behandeling', 'voorstel_verstuurd', 'gemaakt')
   ),
   bijlage_pad text,
   voorstel_gepland_op timestamptz not null,
