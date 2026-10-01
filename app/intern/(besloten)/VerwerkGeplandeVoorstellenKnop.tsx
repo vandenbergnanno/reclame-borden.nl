@@ -55,7 +55,7 @@ export function VerwerkGeplandeVoorstellenKnop() {
       </div>
       <p className="mt-1 text-xs text-neutral-500">
         Alleen voor lokaal testen: simuleert de geplande taak die in productie automatisch zou
-        draaien zodra het "voorstel gepland op"-tijdstip van een aanvraag verstreken is.
+        draaien zodra het &ldquo;voorstel gepland op&rdquo;-tijdstip van een aanvraag verstreken is.
       </p>
     </div>
   );

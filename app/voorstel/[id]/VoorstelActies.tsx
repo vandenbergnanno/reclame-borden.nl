@@ -64,7 +64,10 @@ export function VoorstelActies({ aanvraagId }: { aanvraagId: string }) {
           </button>
           <button
             type="button"
-            onClick={() => setModus("idle")}
+            onClick={() => {
+              setModus("idle");
+              setFoutmelding(null);
+            }}
             disabled={bezig}
             className="rounded-lg border border-neutral-300 px-4 py-2.5 font-medium text-neutral-700 hover:bg-neutral-50"
           >
@@ -89,7 +92,10 @@ export function VoorstelActies({ aanvraagId }: { aanvraagId: string }) {
         </button>
         <button
           type="button"
-          onClick={() => setModus("feedback")}
+          onClick={() => {
+            setModus("feedback");
+            setFoutmelding(null);
+          }}
           disabled={bezig}
           className="rounded-lg border border-neutral-300 px-5 py-2.5 font-medium text-brand-zwart hover:bg-neutral-50 disabled:opacity-50"
         >

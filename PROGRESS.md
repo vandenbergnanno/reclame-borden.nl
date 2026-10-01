@@ -381,6 +381,24 @@ daadwerkelijk bij de leverancier kan bestellen. Dat mag niet zomaar automatisch 
   een tijdelijke debug-route (nieuw bord + standaardmaat → geen check; nieuw bord + afwijkende
   maat → gevlagd; hergebruiken + afwijkende maat → geen check) — route daarna verwijderd.
 
+## Update — kwaliteitsronde: lint, kleine bugfix, volledige doorloop ✅
+
+Op verzoek om de site "spik en span" te maken: een grondige kwaliteitscontrole over het geheel.
+
+- **ESLint ingericht** (`.eslintrc.json`, `next/core-web-vitals`) en één echte lint-fout
+  gevonden en gefixt: een niet-geëscapet aanhalingsteken in
+  `VerwerkGeplandeVoorstellenKnop.tsx`. `npm run lint` is nu volledig schoon.
+- **Bugfix**: op de voorstelpagina bleef een oude foutmelding soms zichtbaar staan nadat je van
+  "Feedback geven" terug naar "Annuleren" ging, of andersom wisselde — de foutmelding werd niet
+  gewist bij het wisselen tussen die twee standen. Gefixt in `VoorstelActies.tsx`.
+- **Volledige doorloop**: elke pagina en flow opnieuw getest (homepage, formulier met alle
+  combinaties inclusief "Anders, namelijk..." + "nieuw bord", intern overzicht, klanten, detail,
+  login/uitloggen, voorstelpagina met alle statussen) — zowel op desktop- als mobielformaat.
+  Geen verdere problemen gevonden; een eerder vermoeden van een selectie-bug in de keuzekaarten
+  bleek een timing-artefact van de testmethode te zijn (bevestigd met screenshots: selectie werkt
+  gewoon correct).
+- Geverifieerd met `npm run typecheck`, `npm run lint` en een schone `npm run build`.
+
 ## Nog volledig open (bewuste placeholders voor latere sessies)
 
 - Open ontwerpvraag: hoe wordt de vrije tekst uit de ontwerpwens (sponsornaam, slogan, ...)
