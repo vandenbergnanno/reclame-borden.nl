@@ -130,6 +130,12 @@ values
   (
     'ffffffff-ffff-ffff-ffff-ffffffffffff',
     2,
+    'vervangen',
+    '/placeholder-ontwerp.svg'
+  ),
+  (
+    'ffffffff-ffff-ffff-ffff-ffffffffffff',
+    3,
     'concept',
     '/placeholder-ontwerp.svg'
   )
@@ -146,5 +152,10 @@ values
     'ffffffff-ffff-ffff-ffff-ffffffffffff',
     false,
     'Logo mag groter en graag iets minder tekst.'
+  ),
+  (
+    'ffffffff-ffff-ffff-ffff-ffffffffffff',
+    false,
+    'Helaas nog steeds niet goed — de kleuren kloppen niet met ons clublogo.'
   )
 on conflict do nothing;

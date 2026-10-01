@@ -564,6 +564,26 @@ in_behandeling, voorstel_verstuurd, gemaakt.
   "Te controleren"-aanvraag; Concepten toont de volledige concept-/feedbacktijdlijn inclusief de
   herziene tweede versie na afwijzing).
 
+## Update — "Loopt vast"-signaal bij 2x afwijzen op Concepten ✅
+
+De AI blijft nu automatisch concepten herzien en mailen na een afwijzing, maar als de klant
+hetzelfde voorstel twee keer op rij afwijst, komt de AI er zelf kennelijk niet uit — dat moet dan
+een medewerker oppakken. Concepten splitst daarom de openstaande voorstellen in twee groepen.
+
+- Nieuwe sectie bovenaan `/intern/concepten`: **"Loopt vast"** — toont elke aanvraag met 2 of meer
+  afwijzingen (`LOOPT_VAST_VANAF` in `app/intern/(besloten)/concepten/page.tsx`), met een rode
+  "Nx afgewezen"-badge en een korte uitleg ("neem persoonlijk contact op").
+  Aanvragen met 0 of 1 afwijzing blijven gewoon in de bestaande "Voorstel verstuurd"-sectie staan.
+  De kaart zelf (tijdlijn, contentcheck-badge, Bekijken-link) is ongewijzigd, nu alleen gedeeld via
+  een `ConceptKaartWeergave`-component i.p.v. inline gedupliceerde JSX.
+- `lib/demo/voorbeelddata.ts` en `supabase/seed.sql`: de Erik Mulder-aanvraag heeft nu een tweede
+  afwijzing + een derde conceptversie, zodat "Loopt vast" direct een voorbeeld te zien heeft.
+- Geen statuswijziging of database-aanpassing nodig — dit is puur een telling over de bestaande
+  `feedback`-rijen per aanvraag, dus geen migratie nodig.
+- Geverifieerd met `npm run typecheck`, `npm run lint`, een schone `npm run build`, en handmatig
+  getest in de browser (Erik Mulder verschijnt nu bovenaan bij "Loopt vast" met "2x afgewezen",
+  Marieke Visser blijft gewoon bij "Voorstel verstuurd").
+
 ## Nog volledig open (bewuste placeholders voor latere sessies)
 
 - Open ontwerpvraag: hoe wordt de vrije tekst uit de ontwerpwens (sponsornaam, slogan, ...)

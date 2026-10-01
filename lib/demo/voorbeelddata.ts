@@ -228,9 +228,17 @@ export const VOORBEELD_DESIGNS: DesignRow[] = [
     id: "f7777777-f777-f777-f777-f77777777777",
     aanvraag_id: "ffffffff-ffff-ffff-ffff-ffffffffffff",
     versienummer: 2,
-    status: "concept",
+    status: "vervangen",
     opslaglocatie: "/placeholder-ontwerp.svg",
     created_at: dagenGeleden(1),
+  },
+  {
+    id: "f8888888-f888-f888-f888-f88888888888",
+    aanvraag_id: "ffffffff-ffff-ffff-ffff-ffffffffffff",
+    versienummer: 3,
+    status: "concept",
+    opslaglocatie: "/placeholder-ontwerp.svg",
+    created_at: minutenGeleden(180),
   },
 ];
 
@@ -248,5 +256,12 @@ export const VOORBEELD_FEEDBACK: FeedbackRow[] = [
     goedgekeurd: false,
     feedbacktekst: "Logo mag groter en graag iets minder tekst.",
     created_at: dagenGeleden(2),
+  },
+  {
+    id: "39999999-3999-3999-3999-399999999999",
+    aanvraag_id: "ffffffff-ffff-ffff-ffff-ffffffffffff",
+    goedgekeurd: false,
+    feedbacktekst: "Helaas nog steeds niet goed — de kleuren kloppen niet met ons clublogo.",
+    created_at: dagenGeleden(1),
   },
 ];

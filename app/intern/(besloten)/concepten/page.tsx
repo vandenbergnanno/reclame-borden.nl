@@ -36,7 +36,12 @@ interface ConceptKaart {
   voorstelGeplandOp: string;
   tijdlijn: TijdlijnItem[];
   geblokkeerdeCheck: { probleem: string; toelichting: string | null } | null;
+  aantalAfwijzingen: number;
 }
+
+// Vanaf hoeveel afwijzingen op rij we een aanvraag apart als "loopt vast" tonen — de AI komt er
+// kennelijk zelf niet uit, dus is het moment om een medewerker het te laten overnemen.
+const LOOPT_VAST_VANAF = 2;
 
 // Toont de klant-mailflow: welke voorstellen de AI gegenereerd en gemaild heeft, en hoe de klant
 // daarop gereageerd heeft (inclusief een eventuele afwijzing-en-herziening-heen-en-weer). Dit is
@@ -111,8 +116,8 @@ export default async function ConceptenPage() {
             kleur: "bg-purple-400",
           }));
 
-        const feedbackItems: TijdlijnItem[] = feedback
-          .filter((item) => item.aanvraag_id === aanvraag.id)
+        const feedbackVanAanvraag = feedback.filter((item) => item.aanvraag_id === aanvraag.id);
+        const feedbackItems: TijdlijnItem[] = [...feedbackVanAanvraag]
           .sort((a, b) => a.created_at.localeCompare(b.created_at))
           .map((item) => ({
             soort: "klantreactie",
@@ -128,6 +133,7 @@ export default async function ConceptenPage() {
         );
 
         const geblokkeerdeCheck = checks.find((check) => check.aanvraag_id === aanvraag.id && check.geblokkeerd);
+        const aantalAfwijzingen = feedbackVanAanvraag.filter((item) => !item.goedgekeurd).length;
 
         return {
           aanvraagId: aanvraag.id,
@@ -140,11 +146,15 @@ export default async function ConceptenPage() {
           geblokkeerdeCheck: geblokkeerdeCheck
             ? { probleem: geblokkeerdeCheck.probleem, toelichting: geblokkeerdeCheck.toelichting }
             : null,
+          aantalAfwijzingen,
         };
       });
   } catch (error) {
     foutmelding = error instanceof Error ? error.message : "Onbekende fout bij het ophalen van concepten.";
   }
+
+  const vastgelopenKaarten = kaarten.filter((kaart) => kaart.aantalAfwijzingen >= LOOPT_VAST_VANAF);
+  const openstaandeKaarten = kaarten.filter((kaart) => kaart.aantalAfwijzingen < LOOPT_VAST_VANAF);
 
   return (
     <div className="space-y-6">
@@ -177,72 +187,116 @@ export default async function ConceptenPage() {
       )}
 
       {!foutmelding && (
-        <div>
-          <div className="mb-3 flex items-center gap-2">
-            <span className="h-2.5 w-2.5 rounded-full bg-purple-400" />
-            <h2 className="font-semibold text-brand-zwart">Voorstel verstuurd</h2>
-            <span className="text-sm text-neutral-400">({kaarten.length})</span>
-          </div>
+        <>
+          {vastgelopenKaarten.length > 0 && (
+            <div>
+              <div className="mb-3 flex items-center gap-2">
+                <span className="h-2.5 w-2.5 rounded-full bg-red-500" />
+                <h2 className="font-semibold text-brand-zwart">Loopt vast</h2>
+                <span className="text-sm text-neutral-400">({vastgelopenKaarten.length})</span>
+              </div>
+              <p className="mb-3 text-sm text-neutral-600">
+                De klant heeft hier al {LOOPT_VAST_VANAF}+ keer op afgewezen — de AI komt er zelf
+                niet uit. Neem persoonlijk contact op.
+              </p>
 
-          {kaarten.length === 0 && (
-            <p className="rounded-lg border border-dashed border-neutral-200 p-4 text-center text-sm text-neutral-400">
-              Geen open concepten — alles is al goedgekeurd of nog niet verstuurd.
-            </p>
+              <div className="grid gap-3 sm:grid-cols-2">
+                {vastgelopenKaarten.map((kaart) => (
+                  <ConceptKaartWeergave key={kaart.aanvraagId} kaart={kaart} nadruk />
+                ))}
+              </div>
+            </div>
           )}
 
-          <div className="grid gap-3 sm:grid-cols-2">
-            {kaarten.map((kaart) => (
-              <div key={kaart.aanvraagId} className="rounded-lg border border-neutral-200 bg-white p-4 shadow-sm">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0">
-                    <p className="truncate font-medium text-brand-zwart">{kaart.klantNaam}</p>
-                    {kaart.bedrijf && <p className="truncate text-xs text-neutral-500">{kaart.bedrijf}</p>}
-                    <p className="mt-1 text-xs text-neutral-600">{kaart.veldtype}</p>
-                    <p className="text-xs text-neutral-500">{kaart.provincie}</p>
-                  </div>
-                  <a
-                    href={`/intern/${kaart.aanvraagId}`}
-                    className="shrink-0 text-xs font-medium text-brand-groen hover:underline"
-                  >
-                    Bekijken →
-                  </a>
-                </div>
+          <div>
+            <div className="mb-3 flex items-center gap-2">
+              <span className="h-2.5 w-2.5 rounded-full bg-purple-400" />
+              <h2 className="font-semibold text-brand-zwart">Voorstel verstuurd</h2>
+              <span className="text-sm text-neutral-400">({openstaandeKaarten.length})</span>
+            </div>
 
-                {kaart.geblokkeerdeCheck && (
-                  <p className="mt-2 text-xs text-brand-oranje">
-                    Te controleren: {kaart.geblokkeerdeCheck.probleem}
-                    {kaart.geblokkeerdeCheck.toelichting && ` — ${kaart.geblokkeerdeCheck.toelichting}`}
-                  </p>
-                )}
+            {kaarten.length === 0 && (
+              <p className="rounded-lg border border-dashed border-neutral-200 p-4 text-center text-sm text-neutral-400">
+                Geen open concepten — alles is al goedgekeurd of nog niet verstuurd.
+              </p>
+            )}
 
-                {kaart.tijdlijn.length > 0 && (
-                  <ul className="mt-3 space-y-2 border-t border-neutral-100 pt-3">
-                    {kaart.tijdlijn.map((item, index) => (
-                      <li key={index} className="flex items-start gap-2 text-xs">
-                        <span className={`mt-1 h-1.5 w-1.5 shrink-0 rounded-full ${item.kleur}`} />
-                        <div className="min-w-0">
-                          <p className="text-neutral-700">
-                            {item.omschrijving}
-                            {item.details && item.soort === "concept" && (
-                              <span className="text-neutral-400"> ({item.details})</span>
-                            )}
-                          </p>
-                          {item.details && item.soort === "klantreactie" && (
-                            <p className="text-neutral-500">“{item.details}”</p>
-                          )}
-                          <p className="text-[10px] text-neutral-400">{item.op}</p>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                )}
+            {kaarten.length > 0 && openstaandeKaarten.length === 0 && (
+              <p className="rounded-lg border border-dashed border-neutral-200 p-4 text-center text-sm text-neutral-400">
+                Alle openstaande concepten staan hierboven bij &ldquo;Loopt vast&rdquo;.
+              </p>
+            )}
 
-                <p className="mt-3 text-[10px] text-neutral-400">Eerst gepland op: {kaart.voorstelGeplandOp}</p>
-              </div>
-            ))}
+            <div className="grid gap-3 sm:grid-cols-2">
+              {openstaandeKaarten.map((kaart) => (
+                <ConceptKaartWeergave key={kaart.aanvraagId} kaart={kaart} />
+              ))}
+            </div>
           </div>
-        </div>
+        </>
       )}
+    </div>
+  );
+}
+
+function ConceptKaartWeergave({ kaart, nadruk = false }: { kaart: ConceptKaart; nadruk?: boolean }) {
+  return (
+    <div
+      className={`rounded-lg border bg-white p-4 shadow-sm ${
+        nadruk ? "border-red-200" : "border-neutral-200"
+      }`}
+    >
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0">
+          <p className="truncate font-medium text-brand-zwart">{kaart.klantNaam}</p>
+          {kaart.bedrijf && <p className="truncate text-xs text-neutral-500">{kaart.bedrijf}</p>}
+          <p className="mt-1 text-xs text-neutral-600">{kaart.veldtype}</p>
+          <p className="text-xs text-neutral-500">{kaart.provincie}</p>
+        </div>
+        <a
+          href={`/intern/${kaart.aanvraagId}`}
+          className="shrink-0 text-xs font-medium text-brand-groen hover:underline"
+        >
+          Bekijken →
+        </a>
+      </div>
+
+      {nadruk && (
+        <p className="mt-2 text-xs font-medium text-red-700">
+          {kaart.aantalAfwijzingen}x afgewezen
+        </p>
+      )}
+
+      {kaart.geblokkeerdeCheck && (
+        <p className="mt-2 text-xs text-brand-oranje">
+          Te controleren: {kaart.geblokkeerdeCheck.probleem}
+          {kaart.geblokkeerdeCheck.toelichting && ` — ${kaart.geblokkeerdeCheck.toelichting}`}
+        </p>
+      )}
+
+      {kaart.tijdlijn.length > 0 && (
+        <ul className="mt-3 space-y-2 border-t border-neutral-100 pt-3">
+          {kaart.tijdlijn.map((item, index) => (
+            <li key={index} className="flex items-start gap-2 text-xs">
+              <span className={`mt-1 h-1.5 w-1.5 shrink-0 rounded-full ${item.kleur}`} />
+              <div className="min-w-0">
+                <p className="text-neutral-700">
+                  {item.omschrijving}
+                  {item.details && item.soort === "concept" && (
+                    <span className="text-neutral-400"> ({item.details})</span>
+                  )}
+                </p>
+                {item.details && item.soort === "klantreactie" && (
+                  <p className="text-neutral-500">“{item.details}”</p>
+                )}
+                <p className="text-[10px] text-neutral-400">{item.op}</p>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <p className="mt-3 text-[10px] text-neutral-400">Eerst gepland op: {kaart.voorstelGeplandOp}</p>
     </div>
   );
 }
