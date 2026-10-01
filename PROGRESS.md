@@ -492,6 +492,33 @@ pagina's vallen nu automatisch terug op voorbeelddata (een statische kopie van
   handmatig getest in de browser (alle drie pagina's tonen nu meteen bruikbare voorbeeldkaarten,
   zonder tijdelijke code-aanpassingen).
 
+## Update — Nieuw tabblad "Concepten", Aanvragen alleen nog productieflow ✅
+
+`/intern` (Aanvragen) had te veel vakjes: zodra een aanvraag daar binnenkomt is de klant het
+voorstel immers al gepasseerd. De klant-goedkeuringsflow (voorstel versturen, wachten op reactie,
+afwijzen/escaleren) is daarom verplaatst naar een nieuw tabblad "Concepten", naast Aanvragen en
+Klanten.
+
+- `/intern` (Aanvragen) toont nu alleen nog de 3 productievakjes: Nieuw, In behandeling, Klaar
+  voor levering (`PRODUCTIE_STATUSSEN` in `lib/types/domain.ts`). De knop "Verwerk geplande
+  voorstellen (test)" is hier weggehaald.
+- Nieuw: `/intern/concepten` toont de 4 klant-goedkeuringsvakjes: Voorstel verstuurd,
+  Goedgekeurd, Afgewezen, Geëscaleerd (`CONCEPT_STATUSSEN`). Per kaart zie je het laatst
+  gegenereerde ontwerp (versie + status + thumbnail), de laatste klantreactie (goedgekeurd/
+  afgewezen + feedbacktekst), en bij een geëscaleerde aanvraag de gevonden contentcheck. De
+  testknop "Verwerk geplande voorstellen" staat nu hier, want dat is precies de stap waarbij de
+  AI een concept genereert en de voorstel-mail verstuurt.
+- `InternNav.tsx` toont nu 3 tabbladen: Aanvragen, Concepten, Klanten.
+- De onderliggende status (`aanvragen.status`, nog steeds 7 waarden) en de detailpagina
+  (`/intern/[id]`, met de volledige statusdropdown) zijn ongewijzigd — dit is puur een opsplitsing
+  in hoe `/intern` de bestaande statussen toont.
+- `supabase/seed.sql` en `lib/demo/voorbeelddata.ts` uitgebreid met 3 extra klanten/aanvragen
+  (status goedgekeurd/afgewezen/geëscaleerd, met bijpassende designs/feedback/content_check) zodat
+  alle vakjes op Concepten iets te tonen hebben.
+- Geverifieerd met `npm run typecheck`, `npm run lint`, een schone `npm run build`, en handmatig
+  getest in de browser (alle 4 Concepten-vakjes en alle 3 Aanvragen-vakjes tonen de juiste
+  voorbeeldkaarten).
+
 ## Nog volledig open (bewuste placeholders voor latere sessies)
 
 - Open ontwerpvraag: hoe wordt de vrije tekst uit de ontwerpwens (sponsornaam, slogan, ...)

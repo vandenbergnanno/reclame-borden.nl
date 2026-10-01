@@ -8,12 +8,11 @@ import {
 import {
   AANVRAAG_STATUS_KLEUREN,
   AANVRAAG_STATUS_LABELS,
-  AANVRAAG_STATUSSEN,
+  PRODUCTIE_STATUSSEN,
   BORD_AANSCHAF_LABELS,
   VELDTYPE_LABELS,
   type AanvraagStatus,
 } from "@/lib/types/domain";
-import { VerwerkGeplandeVoorstellenKnop } from "./VerwerkGeplandeVoorstellenKnop";
 import { StatusActieKnop } from "./StatusActieKnop";
 
 export const metadata: Metadata = {
@@ -25,8 +24,8 @@ export const metadata: Metadata = {
 // te halen — dat is niet wat je wilt voor een pagina die live aanvraagstatussen toont.
 export const dynamic = "force-dynamic";
 
-function isAanvraagStatus(waarde: string | undefined): waarde is AanvraagStatus {
-  return typeof waarde === "string" && (AANVRAAG_STATUSSEN as readonly string[]).includes(waarde);
+function isProductieStatus(waarde: string | undefined): waarde is AanvraagStatus {
+  return typeof waarde === "string" && (PRODUCTIE_STATUSSEN as readonly string[]).includes(waarde);
 }
 
 interface AanvraagKaart {
@@ -51,7 +50,7 @@ export default async function InternPage({
   searchParams: { status?: string; klant?: string };
 }) {
   // Standaard begin je bij "Nieuw" — vandaar komt immers elke aanvraag binnen.
-  const actieveStatus: AanvraagStatus = isAanvraagStatus(searchParams.status) ? searchParams.status : "nieuw";
+  const actieveStatus: AanvraagStatus = isProductieStatus(searchParams.status) ? searchParams.status : "nieuw";
   const klantFilter = searchParams.klant;
 
   let foutmelding: string | null = null;
@@ -122,7 +121,7 @@ export default async function InternPage({
     foutmelding = error instanceof Error ? error.message : "Onbekende fout bij het ophalen van aanvragen.";
   }
 
-  const statusTellingen = AANVRAAG_STATUSSEN.reduce(
+  const statusTellingen = PRODUCTIE_STATUSSEN.reduce(
     (tellingen, status) => {
       tellingen[status] = kaarten.filter((kaart) => kaart.statusWaarde === status).length;
       return tellingen;
@@ -142,7 +141,12 @@ export default async function InternPage({
       <div>
         <h1 className="text-2xl font-semibold text-brand-zwart">Aanvragen</h1>
         <p className="mt-1 text-sm text-neutral-600">
-          Klik op een vakje om de aanvragen in die status te zien. Alles start bij &ldquo;Nieuw&rdquo;.
+          De fysieke productie van goedgekeurde borden. Klik op een vakje om de aanvragen in die
+          status te zien. De klant-goedkeuring zelf staat op{" "}
+          <a href="/intern/concepten" className="font-medium text-brand-groen hover:underline">
+            Concepten
+          </a>
+          .
         </p>
       </div>
 
@@ -163,8 +167,6 @@ export default async function InternPage({
         </p>
       )}
 
-      <VerwerkGeplandeVoorstellenKnop />
-
       {foutmelding && (
         <p className="rounded border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700">
           {foutmelding}
@@ -174,7 +176,7 @@ export default async function InternPage({
       {!foutmelding && (
         <>
           <div className="flex flex-wrap gap-2">
-            {AANVRAAG_STATUSSEN.map((status) => (
+            {PRODUCTIE_STATUSSEN.map((status) => (
               <a
                 key={status}
                 href={`/intern?status=${status}${klantQuery}`}

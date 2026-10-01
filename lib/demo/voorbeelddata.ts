@@ -52,6 +52,33 @@ export const VOORBEELD_KLANTEN: KlantRow[] = [
     provincie: "Groningen",
     created_at: dagenGeleden(4),
   },
+  {
+    id: "55555555-5555-5555-5555-555555555555",
+    naam: "Lotte Hendriks",
+    bedrijf: "Sportcafé De Kantine",
+    email: "lotte@dekantine.nl",
+    telefoon: null,
+    provincie: "Zeeland",
+    created_at: dagenGeleden(2),
+  },
+  {
+    id: "66666666-6666-6666-6666-666666666666",
+    naam: "Erik Mulder",
+    bedrijf: "Tennisclub Smash",
+    email: "erik@tcsmash.nl",
+    telefoon: null,
+    provincie: "Flevoland",
+    created_at: dagenGeleden(3),
+  },
+  {
+    id: "77777777-7777-7777-7777-777777777777",
+    naam: "Dennis Kuipers",
+    bedrijf: "Kuipers Garagebedrijf",
+    email: "dennis@kuipersgarage.nl",
+    telefoon: "0591234567",
+    provincie: "Drenthe",
+    created_at: dagenGeleden(1),
+  },
 ];
 
 export const VOORBEELD_AANVRAGEN: AanvraagRow[] = [
@@ -107,6 +134,45 @@ export const VOORBEELD_AANVRAGEN: AanvraagRow[] = [
     created_at: dagenGeleden(4),
     updated_at: dagenGeleden(3),
   },
+  {
+    id: "eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee",
+    klant_id: "55555555-5555-5555-5555-555555555555",
+    veldtype: "scorebord",
+    afmeting: "200 x 100 cm",
+    bord_aanschaf: "nieuw",
+    wens: "Scorebord in onze huisstijl, geel/zwart, met ons logo bovenaan.",
+    status: "goedgekeurd",
+    bijlage_pad: null,
+    voorstel_gepland_op: dagenGeleden(1),
+    created_at: dagenGeleden(2),
+    updated_at: dagenGeleden(1),
+  },
+  {
+    id: "ffffffff-ffff-ffff-ffff-ffffffffffff",
+    klant_id: "66666666-6666-6666-6666-666666666666",
+    veldtype: "voetbal-zijlijn",
+    afmeting: "300 x 100 cm",
+    bord_aanschaf: "hergebruiken",
+    wens: 'Bord met ons logo en de tekst "Tennisclub Smash - nieuwe leden welkom".',
+    status: "afgewezen",
+    bijlage_pad: null,
+    voorstel_gepland_op: dagenGeleden(2),
+    created_at: dagenGeleden(3),
+    updated_at: dagenGeleden(2),
+  },
+  {
+    id: "99999999-9999-9999-9999-999999999999",
+    klant_id: "77777777-7777-7777-7777-777777777777",
+    veldtype: "voetbal-zijlijn",
+    afmeting: "300 x 100 cm",
+    bord_aanschaf: "nieuw",
+    wens: "Bord met ons logo en telefoonnummer 0591234567 zodat mensen ons direct kunnen bellen.",
+    status: "geescaleerd",
+    bijlage_pad: null,
+    voorstel_gepland_op: minutenGeleden(360),
+    created_at: dagenGeleden(1),
+    updated_at: minutenGeleden(360),
+  },
 ];
 
 export const VOORBEELD_CONTENT_CHECKS: ContentCheckRow[] = [
@@ -117,6 +183,14 @@ export const VOORBEELD_CONTENT_CHECKS: ContentCheckRow[] = [
     geblokkeerd: false,
     toelichting: "Placeholder-check (trefwoorden) heeft niets verdachts gevonden in de ingevoerde wens.",
     created_at: dagenGeleden(5),
+  },
+  {
+    id: "e9999999-e999-e999-e999-e99999999999",
+    aanvraag_id: "99999999-9999-9999-9999-999999999999",
+    probleem: "telefoonnummer gedetecteerd",
+    geblokkeerd: true,
+    toelichting: "Overleg met de klant of dit telefoonnummer echt op het bord moet komen.",
+    created_at: minutenGeleden(360),
   },
 ];
 
@@ -129,6 +203,37 @@ export const VOORBEELD_DESIGNS: DesignRow[] = [
     opslaglocatie: "/placeholder-ontwerp.svg",
     created_at: dagenGeleden(3),
   },
+  {
+    id: "f5555555-f555-f555-f555-f55555555555",
+    aanvraag_id: "eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee",
+    versienummer: 1,
+    status: "definitief",
+    opslaglocatie: "/placeholder-ontwerp.svg",
+    created_at: dagenGeleden(1),
+  },
+  {
+    id: "f6666666-f666-f666-f666-f66666666666",
+    aanvraag_id: "ffffffff-ffff-ffff-ffff-ffffffffffff",
+    versienummer: 1,
+    status: "vervangen",
+    opslaglocatie: "/placeholder-ontwerp.svg",
+    created_at: dagenGeleden(2),
+  },
 ];
 
-export const VOORBEELD_FEEDBACK: FeedbackRow[] = [];
+export const VOORBEELD_FEEDBACK: FeedbackRow[] = [
+  {
+    id: "17777777-1777-1777-1777-177777777777",
+    aanvraag_id: "eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee",
+    goedgekeurd: true,
+    feedbacktekst: null,
+    created_at: dagenGeleden(1),
+  },
+  {
+    id: "28888888-2888-2888-2888-288888888888",
+    aanvraag_id: "ffffffff-ffff-ffff-ffff-ffffffffffff",
+    goedgekeurd: false,
+    feedbacktekst: "Logo mag groter en graag iets minder tekst.",
+    created_at: dagenGeleden(2),
+  },
+];

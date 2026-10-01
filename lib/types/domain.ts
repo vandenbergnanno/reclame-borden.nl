@@ -68,6 +68,21 @@ export const AANVRAAG_STATUS_KLEUREN: Record<AanvraagStatus, string> = {
   gemaakt: "bg-teal-100 text-teal-700",
 };
 
+// /intern (Aanvragen) toont alleen de fysieke productieflow als vakjes: tegen de tijd dat een
+// aanvraag hier binnenkomt, is het voorstel door de klant al goedgekeurd. De klant-
+// goedkeuringsflow zelf (versturen, wachten op reactie, afwijzen/escaleren) staat apart op
+// /intern/concepten.
+export const PRODUCTIE_STATUSSEN: readonly AanvraagStatus[] = ["nieuw", "in_behandeling", "gemaakt"];
+
+// /intern/concepten toont de klant-goedkeuringsflow als vakjes: hierin zie je welke voorstellen
+// (automatisch gegenereerd en gemaild) nog open staan, en hoe de klant erop gereageerd heeft.
+export const CONCEPT_STATUSSEN: readonly AanvraagStatus[] = [
+  "voorstel_verstuurd",
+  "goedgekeurd",
+  "afgewezen",
+  "geescaleerd",
+];
+
 // Simpel, apart doorstuur-pad voor de productiekant ("inkomend" -> "in behandeling" ->
 // "gemaakt"), los van de klant-goedkeuringsflow (voorstel_verstuurd/goedgekeurd/afgewezen). Elke
 // status hier heeft een knoplabel voor de eenknops-doorstuuractie in het interne overzicht.
