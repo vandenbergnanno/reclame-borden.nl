@@ -456,6 +456,23 @@ is aangepast).
   getest met tijdelijke voorbeelddata (kolomkop en de knoptekst "Markeer als klaar voor levering"
   tonen allebei de nieuwe naam).
 
+## Update — Aanvragen terug naar klikbare statusvakjes (één status per keer) ✅
+
+Het kanban-bord met alle kolommen tegelijk zichtbaar bleek niet de gewenste interactie: in plaats
+daarvan is `/intern` nu een rij klikbare "vakjes" (één per status, met aantal), waarbij je per
+klik maar de aanvragen van dát vakje ziet.
+
+- Standaard staat het vakje "Nieuw" actief (`/intern`); klikken op bijv. "In behandeling" navigeert
+  naar `/intern?status=in_behandeling` en toont alleen die aanvragen eronder, als kaarten (niet
+  meer als tabel).
+- De pijltje-knop (`StatusActieKnop`) en het bevestigingsdialoogje op elke kaart werken ongewijzigd
+  — na het doorzetten verdwijnt de kaart automatisch uit de huidige status-weergave.
+- Bij het vakje "Klaar voor levering" blijven de kaarten op provincie gesorteerd in plaats van op
+  datum.
+- Geverifieerd met `npm run typecheck`, `npm run lint`, een schone `npm run build`, en handmatig
+  getest met tijdelijke voorbeelddata (klikken tussen vakjes toont steeds de juiste, enkele groep
+  aanvragen).
+
 ## Nog volledig open (bewuste placeholders voor latere sessies)
 
 - Open ontwerpvraag: hoe wordt de vrije tekst uit de ontwerpwens (sponsornaam, slogan, ...)
