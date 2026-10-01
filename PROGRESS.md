@@ -443,6 +443,19 @@ kaarten die je met een pijltje een stap verder zet.
   consolelog dat de juiste vraag met de juiste doel-status verschijnt; native dialogs worden in
   deze testomgeving automatisch onderdrukt, wat in een echte browser niet gebeurt).
 
+## Update — Laatste kolom hernoemd naar "Klaar voor levering" ✅
+
+Op basis van een schermafbeelding van hoe het bord eruit moet zien: de laatste kanban-kolom heet
+nu "Klaar voor levering" in plaats van "Gemaakt" (alle 7 kolommen blijven staan, alleen het label
+is aangepast).
+
+- `AANVRAAG_STATUS_LABELS.gemaakt` en het knoplabel in `VOLGENDE_PRODUCTIESTATUS.in_behandeling`
+  in `lib/types/domain.ts` zijn bijgewerkt — de statuswaarde zelf (`"gemaakt"`) blijft ongewijzigd,
+  dus er is geen database-migratie nodig.
+- Geverifieerd met `npm run typecheck`, `npm run lint`, een schone `npm run build`, en handmatig
+  getest met tijdelijke voorbeelddata (kolomkop en de knoptekst "Markeer als klaar voor levering"
+  tonen allebei de nieuwe naam).
+
 ## Nog volledig open (bewuste placeholders voor latere sessies)
 
 - Open ontwerpvraag: hoe wordt de vrije tekst uit de ontwerpwens (sponsornaam, slogan, ...)

@@ -53,7 +53,7 @@ export const AANVRAAG_STATUS_LABELS: Record<AanvraagStatus, string> = {
   goedgekeurd: "Goedgekeurd",
   afgewezen: "Afgewezen",
   geescaleerd: "Geëscaleerd",
-  gemaakt: "Gemaakt",
+  gemaakt: "Klaar voor levering",
 };
 
 // Eén plek voor de statuskleuren, zodat de statustabbladen, tabelbadges en detailpagina er
@@ -73,7 +73,7 @@ export const AANVRAAG_STATUS_KLEUREN: Record<AanvraagStatus, string> = {
 // status hier heeft een knoplabel voor de eenknops-doorstuuractie in het interne overzicht.
 export const VOLGENDE_PRODUCTIESTATUS: Partial<Record<AanvraagStatus, { status: AanvraagStatus; label: string }>> = {
   nieuw: { status: "in_behandeling", label: "Start behandeling" },
-  in_behandeling: { status: "gemaakt", label: "Markeer als gemaakt" },
+  in_behandeling: { status: "gemaakt", label: "Markeer als klaar voor levering" },
 };
 
 // Nederlandse provincies, gebruikt om te bepalen waar een klant/bord naartoe moet. De klant kiest
