@@ -9,6 +9,7 @@ import {
   type AanvraagStatus,
 } from "@/lib/types/domain";
 import { VerwerkGeplandeVoorstellenKnop } from "./VerwerkGeplandeVoorstellenKnop";
+import { StatusActieKnop } from "./StatusActieKnop";
 
 export const metadata: Metadata = {
   title: "Intern overzicht — Mediagraaf Conceptor",
@@ -39,6 +40,7 @@ export default async function InternPage({
     aanvraagId: string;
     klantNaam: string;
     bedrijf: string | null;
+    provincie: string;
     veldtype: string;
     bordAanschaf: string;
     nieuwBord: boolean;
@@ -55,6 +57,7 @@ export default async function InternPage({
     goedgekeurd: 0,
     afgewezen: 0,
     geescaleerd: 0,
+    gemaakt: 0,
   };
   let klantNaamFilter: string | null = null;
 
@@ -91,6 +94,16 @@ export default async function InternPage({
       return true;
     });
 
+    // Bij "Gemaakt" is de volgorde op datum niet zo relevant meer — dan wil je juist weten welke
+    // provincies er klaarliggen, bijv. om bezorgroutes te plannen.
+    if (statusFilter === "gemaakt") {
+      gefilterd.sort((a, b) => {
+        const provincieA = klantenById.get(a.klant_id)?.provincie ?? "";
+        const provincieB = klantenById.get(b.klant_id)?.provincie ?? "";
+        return provincieA.localeCompare(provincieB, "nl");
+      });
+    }
+
     rijen = gefilterd.map((aanvraag) => {
       const klant = klantenById.get(aanvraag.klant_id);
       const veldtypeLabel = VELDTYPE_LABELS[aanvraag.veldtype] ?? aanvraag.veldtype;
@@ -99,6 +112,7 @@ export default async function InternPage({
         aanvraagId: aanvraag.id,
         klantNaam: klant?.naam ?? "Onbekende klant",
         bedrijf: klant?.bedrijf ?? null,
+        provincie: klant?.provincie ?? "—",
         veldtype: `${veldtypeLabel} (${aanvraag.afmeting})`,
         bordAanschaf: BORD_AANSCHAF_LABELS[aanvraag.bord_aanschaf] ?? aanvraag.bord_aanschaf,
         nieuwBord: aanvraag.bord_aanschaf === "nieuw",
@@ -164,6 +178,7 @@ export default async function InternPage({
               <tr>
                 <th className="px-4 py-3 font-semibold">Klant</th>
                 <th className="px-4 py-3 font-semibold">Bedrijf</th>
+                <th className="px-4 py-3 font-semibold">Provincie</th>
                 <th className="px-4 py-3 font-semibold">Veldtype</th>
                 <th className="px-4 py-3 font-semibold">Bord</th>
                 <th className="px-4 py-3 font-semibold">Status</th>
@@ -178,6 +193,7 @@ export default async function InternPage({
                 <tr key={rij.aanvraagId} className="transition hover:bg-neutral-50">
                   <td className="px-4 py-3 font-medium text-brand-zwart">{rij.klantNaam}</td>
                   <td className="px-4 py-3 text-neutral-600">{rij.bedrijf ?? "—"}</td>
+                  <td className="px-4 py-3 text-neutral-600">{rij.provincie}</td>
                   <td className="px-4 py-3 text-neutral-600">{rij.veldtype}</td>
                   <td className="px-4 py-3">
                     {rij.nieuwBord ? (
@@ -207,12 +223,15 @@ export default async function InternPage({
                     )}
                   </td>
                   <td className="px-4 py-3">
-                    <a
-                      href={`/intern/${rij.aanvraagId}`}
-                      className="font-medium text-brand-groen hover:underline"
-                    >
-                      Bekijken →
-                    </a>
+                    <div className="flex flex-col items-start gap-2">
+                      <StatusActieKnop aanvraagId={rij.aanvraagId} huidigeStatus={rij.statusWaarde} />
+                      <a
+                        href={`/intern/${rij.aanvraagId}`}
+                        className="font-medium text-brand-groen hover:underline"
+                      >
+                        Bekijken →
+                      </a>
+                    </div>
                   </td>
                 </tr>
               ))}

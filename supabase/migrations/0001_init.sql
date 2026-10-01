@@ -25,10 +25,17 @@ create table if not exists klanten (
   bedrijf text,
   email text not null,
   telefoon text,
+  provincie text not null check (
+    provincie in (
+      'Drenthe', 'Flevoland', 'Friesland', 'Gelderland', 'Groningen', 'Limburg',
+      'Noord-Brabant', 'Noord-Holland', 'Overijssel', 'Utrecht', 'Zeeland', 'Zuid-Holland'
+    )
+  ),
   created_at timestamptz not null default now()
 );
 
 comment on table klanten is 'Bedrijven/personen die een aanvraag voor een reclamebord-ontwerp indienen.';
+comment on column klanten.provincie is 'Door de klant opgegeven provincie, gebruikt om gemaakte borden logistiek te sorteren/groeperen.';
 
 -- ---------------------------------------------------------------------------
 -- aanvragen
@@ -41,7 +48,10 @@ create table if not exists aanvragen (
   bord_aanschaf text not null check (bord_aanschaf in ('hergebruiken', 'nieuw')),
   wens text not null,
   status text not null default 'nieuw' check (
-    status in ('nieuw', 'in_behandeling', 'voorstel_verstuurd', 'goedgekeurd', 'afgewezen', 'geescaleerd')
+    status in (
+      'nieuw', 'in_behandeling', 'voorstel_verstuurd', 'goedgekeurd', 'afgewezen', 'geescaleerd',
+      'gemaakt'
+    )
   ),
   bijlage_pad text,
   voorstel_gepland_op timestamptz not null,

@@ -399,6 +399,28 @@ Op verzoek om de site "spik en span" te maken: een grondige kwaliteitscontrole o
   gewoon correct).
 - Geverifieerd met `npm run typecheck`, `npm run lint` en een schone `npm run build`.
 
+## Update — productiepad (Nieuw → In behandeling → Gemaakt) en provincie ✅
+
+Los van de klant-goedkeuringsflow wilde je een simpel, eenknops-doorstuurpad voor de productiekant
+van een order, en bij "Gemaakt" sorteren op provincie (bijv. voor het plannen van bezorgroutes).
+
+- **Nieuwe status "Gemaakt"** toegevoegd aan `AANVRAAG_STATUSSEN` (met een teal badge-kleur).
+- **Provincie bij de klant**: nieuw verplicht veld in het aanvraagformulier (12 Nederlandse
+  provincies, `PROVINCIES` in `lib/types/domain.ts`) en nieuwe kolom `klanten.provincie`.
+- **Doorstuur-knoppen** (`StatusActieKnop.tsx`, nieuw): in het overzicht krijgt elke rij met
+  status "Nieuw" een knop "Start behandeling" (→ in behandeling), en elke rij met "In
+  behandeling" een knop "Markeer als gemaakt" (→ gemaakt) — één klik, geen navigatie naar de
+  detailpagina nodig. Dit pad staat los van de bestaande statusdropdown op de detailpagina, die
+  alle statussen blijft tonen.
+- **Sortering op provincie**: kies je het tabblad "Gemaakt", dan wordt de lijst gesorteerd op
+  provincie (alfabetisch) in plaats van op datum.
+- Provincie ook zichtbaar op `/intern` (nieuwe kolom), `/intern/klanten` en de detailpagina.
+- Seed-data uitgebreid met een vierde klant (Groningen) en twee "gemaakt"-aanvragen om de
+  sortering te kunnen demonstreren.
+- Geverifieerd met `npm run typecheck`, `npm run lint`, een schone `npm run build`, en handmatig
+  getest met tijdelijke voorbeelddata (sortering op provincie bevestigd: Groningen vóór
+  Noord-Holland; doorstuur-knoppen tonen de juiste nette foutmelding zonder Supabase, geen crash).
+
 ## Nog volledig open (bewuste placeholders voor latere sessies)
 
 - Open ontwerpvraag: hoe wordt de vrije tekst uit de ontwerpwens (sponsornaam, slogan, ...)

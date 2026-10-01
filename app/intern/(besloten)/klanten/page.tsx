@@ -16,6 +16,7 @@ export default async function KlantenPage() {
     bedrijf: string | null;
     email: string;
     telefoon: string | null;
+    provincie: string;
     aantalAanvragen: number;
     aantalOpen: number;
   }[] = [];
@@ -39,6 +40,7 @@ export default async function KlantenPage() {
         bedrijf: klant.bedrijf,
         email: klant.email,
         telefoon: klant.telefoon,
+        provincie: klant.provincie,
         aantalAanvragen: aanvragenVanKlant.length,
         aantalOpen: aanvragenVanKlant.filter(
           (aanvraag) => aanvraag.status !== "goedgekeurd" && aanvraag.status !== "afgewezen"
@@ -85,6 +87,7 @@ export default async function KlantenPage() {
                 <th className="px-4 py-3 font-semibold">Bedrijf</th>
                 <th className="px-4 py-3 font-semibold">E-mail</th>
                 <th className="px-4 py-3 font-semibold">Telefoon</th>
+                <th className="px-4 py-3 font-semibold">Provincie</th>
                 <th className="px-4 py-3 font-semibold">Aanvragen</th>
                 <th className="px-4 py-3 font-semibold"></th>
               </tr>
@@ -96,6 +99,7 @@ export default async function KlantenPage() {
                   <td className="px-4 py-3 text-neutral-600">{rij.bedrijf ?? "—"}</td>
                   <td className="px-4 py-3 text-neutral-600">{rij.email}</td>
                   <td className="px-4 py-3 text-neutral-600">{rij.telefoon ?? "—"}</td>
+                  <td className="px-4 py-3 text-neutral-600">{rij.provincie}</td>
                   <td className="px-4 py-3">
                     <span className="text-neutral-600">{rij.aantalAanvragen}</span>
                     {rij.aantalOpen > 0 && (

@@ -5,6 +5,7 @@ import {
   AFMETING_ANDERS,
   BORD_AANSCHAF_LABELS,
   BORD_AANSCHAF_OPTIES,
+  PROVINCIES,
   STANDAARD_AFMETINGEN,
   VELDTYPEN,
   VELDTYPE_LABELS,
@@ -95,6 +96,27 @@ export function AanvraagForm() {
             hint="Hierop nemen we contact met je op."
           />
           <Veld label="Telefoonnummer" name="telefoon" type="tel" autoComplete="tel" />
+          <div>
+            <label htmlFor="provincie" className="mb-1 block text-sm font-medium text-brand-zwart">
+              Provincie *
+            </label>
+            <select
+              id="provincie"
+              name="provincie"
+              required
+              defaultValue=""
+              className="w-full rounded-lg border border-neutral-300 px-3 py-2.5 focus:border-brand-groen focus:outline-none focus:ring-1 focus:ring-brand-groen"
+            >
+              <option value="" disabled>
+                Kies een provincie
+              </option>
+              {PROVINCIES.map((provincie) => (
+                <option key={provincie} value={provincie}>
+                  {provincie}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
       </Sectie>
 

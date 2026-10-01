@@ -87,6 +87,7 @@ export default async function AanvraagDetailPage({ params }: { params: { id: str
             <Rij label="Bedrijf" waarde={klant?.bedrijf} />
             <Rij label="E-mail" waarde={klant?.email} />
             <Rij label="Telefoon" waarde={klant?.telefoon} />
+            <Rij label="Provincie" waarde={klant?.provincie} />
           </dl>
         </div>
 

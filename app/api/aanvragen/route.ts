@@ -3,7 +3,14 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { analyzeRequest } from "@/lib/ai/analyzeRequest";
 import { controleerAfmetingBeschikbaarheid } from "@/lib/ai/controleerAfmetingBeschikbaarheid";
 import { berekenVoorstelGeplandOp } from "@/lib/planning/voorstelPlanning";
-import { BORD_AANSCHAF_OPTIES, VELDTYPEN, type BordAanschaf, type Veldtype } from "@/lib/types/domain";
+import {
+  BORD_AANSCHAF_OPTIES,
+  PROVINCIES,
+  VELDTYPEN,
+  type BordAanschaf,
+  type Provincie,
+  type Veldtype,
+} from "@/lib/types/domain";
 
 // Bestandsuploads vragen om de Node.js-runtime (niet de edge-runtime).
 export const runtime = "nodejs";
@@ -14,6 +21,10 @@ function isVeldtype(waarde: FormDataEntryValue | null): waarde is Veldtype {
 
 function isBordAanschaf(waarde: FormDataEntryValue | null): waarde is BordAanschaf {
   return typeof waarde === "string" && (BORD_AANSCHAF_OPTIES as readonly string[]).includes(waarde);
+}
+
+function isProvincie(waarde: FormDataEntryValue | null): waarde is Provincie {
+  return typeof waarde === "string" && (PROVINCIES as readonly string[]).includes(waarde);
 }
 
 export async function POST(request: Request) {
@@ -28,6 +39,7 @@ export async function POST(request: Request) {
   const bedrijf = formData.get("bedrijf");
   const email = formData.get("email");
   const telefoon = formData.get("telefoon");
+  const provincie = formData.get("provincie");
   const veldtype = formData.get("veldtype");
   const afmeting = formData.get("afmeting");
   const bordAanschaf = formData.get("bord_aanschaf");
@@ -39,6 +51,9 @@ export async function POST(request: Request) {
   }
   if (typeof email !== "string" || email.trim() === "") {
     return NextResponse.json({ ok: false, error: "E-mailadres is verplicht." }, { status: 400 });
+  }
+  if (!isProvincie(provincie)) {
+    return NextResponse.json({ ok: false, error: "Kies een geldige provincie." }, { status: 400 });
   }
   if (!isVeldtype(veldtype)) {
     return NextResponse.json({ ok: false, error: "Kies een geldig veldtype." }, { status: 400 });
@@ -87,6 +102,7 @@ export async function POST(request: Request) {
         bedrijf: typeof bedrijf === "string" && bedrijf.trim() !== "" ? bedrijf.trim() : null,
         email: email.trim(),
         telefoon: typeof telefoon === "string" && telefoon.trim() !== "" ? telefoon.trim() : null,
+        provincie,
       })
       .select("id")
       .single();
