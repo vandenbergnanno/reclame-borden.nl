@@ -20,45 +20,27 @@ export const metadata: Metadata = {
 // te halen — dat is niet wat je wilt voor een pagina die live aanvraagstatussen toont.
 export const dynamic = "force-dynamic";
 
-function isAanvraagStatus(waarde: string | undefined): waarde is AanvraagStatus {
-  return typeof waarde === "string" && (AANVRAAG_STATUSSEN as readonly string[]).includes(waarde);
+interface AanvraagKaart {
+  aanvraagId: string;
+  klantNaam: string;
+  bedrijf: string | null;
+  provincie: string;
+  veldtype: string;
+  bordAanschaf: string;
+  nieuwBord: boolean;
+  statusWaarde: AanvraagStatus;
+  ingediendOp: string;
+  heeftGeblokkeerdeCheck: boolean;
 }
 
 // Server component: haalt aanvragen, klanten en contentchecks apart op en koppelt ze in JS.
 // Dat houdt de Supabase-typing eenvoudig, zolang lib/types/database.ts nog handgeschreven is
 // (nog geen relaties/embeds zoals de door de CLI gegenereerde types die kennen).
-export default async function InternPage({
-  searchParams,
-}: {
-  searchParams: { status?: string; klant?: string };
-}) {
-  const statusFilter = isAanvraagStatus(searchParams.status) ? searchParams.status : undefined;
+export default async function InternPage({ searchParams }: { searchParams: { klant?: string } }) {
   const klantFilter = searchParams.klant;
 
   let foutmelding: string | null = null;
-  let rijen: {
-    aanvraagId: string;
-    klantNaam: string;
-    bedrijf: string | null;
-    provincie: string;
-    veldtype: string;
-    bordAanschaf: string;
-    nieuwBord: boolean;
-    status: string;
-    statusWaarde: AanvraagStatus;
-    ingediendOp: string;
-    voorstelGeplandOp: string;
-    heeftGeblokkeerdeCheck: boolean;
-  }[] = [];
-  let statusTellingen: Record<AanvraagStatus, number> = {
-    nieuw: 0,
-    in_behandeling: 0,
-    voorstel_verstuurd: 0,
-    goedgekeurd: 0,
-    afgewezen: 0,
-    geescaleerd: 0,
-    gemaakt: 0,
-  };
+  let kaarten: AanvraagKaart[] = [];
   let klantNaamFilter: string | null = null;
 
   try {
@@ -80,31 +62,16 @@ export default async function InternPage({
       (checks ?? []).filter((check) => check.geblokkeerd).map((check) => check.aanvraag_id)
     );
 
-    for (const aanvraag of aanvragen ?? []) {
-      statusTellingen[aanvraag.status] = (statusTellingen[aanvraag.status] ?? 0) + 1;
-    }
-
     if (klantFilter) {
       klantNaamFilter = klantenById.get(klantFilter)?.naam ?? "onbekende klant";
     }
 
     const gefilterd = (aanvragen ?? []).filter((aanvraag) => {
-      if (statusFilter && aanvraag.status !== statusFilter) return false;
       if (klantFilter && aanvraag.klant_id !== klantFilter) return false;
       return true;
     });
 
-    // Bij "Gemaakt" is de volgorde op datum niet zo relevant meer — dan wil je juist weten welke
-    // provincies er klaarliggen, bijv. om bezorgroutes te plannen.
-    if (statusFilter === "gemaakt") {
-      gefilterd.sort((a, b) => {
-        const provincieA = klantenById.get(a.klant_id)?.provincie ?? "";
-        const provincieB = klantenById.get(b.klant_id)?.provincie ?? "";
-        return provincieA.localeCompare(provincieB, "nl");
-      });
-    }
-
-    rijen = gefilterd.map((aanvraag) => {
+    kaarten = gefilterd.map((aanvraag) => {
       const klant = klantenById.get(aanvraag.klant_id);
       const veldtypeLabel = VELDTYPE_LABELS[aanvraag.veldtype] ?? aanvraag.veldtype;
 
@@ -116,10 +83,8 @@ export default async function InternPage({
         veldtype: `${veldtypeLabel} (${aanvraag.afmeting})`,
         bordAanschaf: BORD_AANSCHAF_LABELS[aanvraag.bord_aanschaf] ?? aanvraag.bord_aanschaf,
         nieuwBord: aanvraag.bord_aanschaf === "nieuw",
-        status: AANVRAAG_STATUS_LABELS[aanvraag.status] ?? aanvraag.status,
         statusWaarde: aanvraag.status,
         ingediendOp: new Date(aanvraag.created_at).toLocaleString("nl-NL"),
-        voorstelGeplandOp: new Date(aanvraag.voorstel_gepland_op).toLocaleString("nl-NL"),
         heeftGeblokkeerdeCheck: geblokkeerdeAanvraagIds.has(aanvraag.id),
       };
     });
@@ -127,33 +92,31 @@ export default async function InternPage({
     foutmelding = error instanceof Error ? error.message : "Onbekende fout bij het ophalen van aanvragen.";
   }
 
-  const totaalAantal = Object.values(statusTellingen).reduce((som, n) => som + n, 0);
+  // Kolommen vakje-voor-vakje vullen. Alles start bij "Nieuw"; bij "Gemaakt" sorteren we op
+  // provincie (handig om bijv. bezorgroutes per regio te plannen) in plaats van op datum.
+  const kolommen = AANVRAAG_STATUSSEN.map((status) => {
+    const kaartenInKolom = kaarten.filter((kaart) => kaart.statusWaarde === status);
+    if (status === "gemaakt") {
+      kaartenInKolom.sort((a, b) => a.provincie.localeCompare(b.provincie, "nl"));
+    }
+    return { status, kaarten: kaartenInKolom };
+  });
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-semibold text-brand-zwart">Aanvragen</h1>
-        <p className="mt-1 text-sm text-neutral-600">Alle ingediende aanvragen, met hun huidige status.</p>
-      </div>
-
-      <div className="flex flex-wrap gap-2 text-sm">
-        <StatusTab href="/intern" label="Alle" aantal={totaalAantal} actief={!statusFilter} />
-        {AANVRAAG_STATUSSEN.map((optie) => (
-          <StatusTab
-            key={optie}
-            href={`/intern?status=${optie}`}
-            label={AANVRAAG_STATUS_LABELS[optie]}
-            aantal={statusTellingen[optie]}
-            actief={statusFilter === optie}
-          />
-        ))}
+        <p className="mt-1 text-sm text-neutral-600">
+          Alles start bij &ldquo;Nieuw&rdquo; — gebruik het pijltje op een kaart om &rsquo;m een stap verder
+          te zetten.
+        </p>
       </div>
 
       {klantNaamFilter && (
         <p className="rounded border border-neutral-200 bg-neutral-50 px-3 py-2 text-sm text-neutral-700">
           Aanvragen van <span className="font-medium">{klantNaamFilter}</span>.{" "}
           <a href="/intern" className="font-medium text-brand-groen hover:underline">
-            Toon alle klanten
+            Toon alle aanvragen
           </a>
           .
         </p>
@@ -167,103 +130,69 @@ export default async function InternPage({
         </p>
       )}
 
-      {!foutmelding && rijen.length === 0 && (
-        <p className="text-sm text-neutral-600">Geen aanvragen gevonden voor dit filter.</p>
-      )}
+      {!foutmelding && (
+        <div className="flex gap-4 overflow-x-auto pb-2">
+          {kolommen.map(({ status, kaarten: kaartenInKolom }) => (
+            <div key={status} className="w-72 shrink-0">
+              <div className="mb-3 flex items-center gap-2">
+                <span className={`h-2.5 w-2.5 rounded-full ${AANVRAAG_STATUS_KLEUREN[status].split(" ")[0]}`} />
+                <h2 className="font-semibold text-brand-zwart">{AANVRAAG_STATUS_LABELS[status]}</h2>
+                <span className="text-sm text-neutral-400">({kaartenInKolom.length})</span>
+              </div>
 
-      {!foutmelding && rijen.length > 0 && (
-        <div className="overflow-x-auto rounded-xl border border-neutral-200 bg-white shadow-sm">
-          <table className="w-full text-left text-sm">
-            <thead className="bg-neutral-50 text-xs uppercase tracking-wide text-neutral-500">
-              <tr>
-                <th className="px-4 py-3 font-semibold">Klant</th>
-                <th className="px-4 py-3 font-semibold">Bedrijf</th>
-                <th className="px-4 py-3 font-semibold">Provincie</th>
-                <th className="px-4 py-3 font-semibold">Veldtype</th>
-                <th className="px-4 py-3 font-semibold">Bord</th>
-                <th className="px-4 py-3 font-semibold">Status</th>
-                <th className="px-4 py-3 font-semibold">Ingediend op</th>
-                <th className="px-4 py-3 font-semibold">Voorstel gepland op</th>
-                <th className="px-4 py-3 font-semibold">Checks</th>
-                <th className="px-4 py-3 font-semibold"></th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-neutral-100">
-              {rijen.map((rij) => (
-                <tr key={rij.aanvraagId} className="transition hover:bg-neutral-50">
-                  <td className="px-4 py-3 font-medium text-brand-zwart">{rij.klantNaam}</td>
-                  <td className="px-4 py-3 text-neutral-600">{rij.bedrijf ?? "—"}</td>
-                  <td className="px-4 py-3 text-neutral-600">{rij.provincie}</td>
-                  <td className="px-4 py-3 text-neutral-600">{rij.veldtype}</td>
-                  <td className="px-4 py-3">
-                    {rij.nieuwBord ? (
-                      <span className="rounded-full bg-brand-oranje/10 px-2 py-0.5 text-xs font-medium text-brand-oranje">
-                        {rij.bordAanschaf}
-                      </span>
-                    ) : (
-                      <span className="text-neutral-600">{rij.bordAanschaf}</span>
-                    )}
-                  </td>
-                  <td className="px-4 py-3">
-                    <span
-                      className={`rounded-full px-2 py-0.5 text-xs font-medium ${AANVRAAG_STATUS_KLEUREN[rij.statusWaarde]}`}
-                    >
-                      {rij.status}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-neutral-500">{rij.ingediendOp}</td>
-                  <td className="px-4 py-3 text-neutral-500">{rij.voorstelGeplandOp}</td>
-                  <td className="px-4 py-3">
-                    {rij.heeftGeblokkeerdeCheck ? (
-                      <span className="rounded-full bg-brand-oranje/10 px-2 py-0.5 text-xs font-medium text-brand-oranje">
-                        Te controleren
-                      </span>
-                    ) : (
-                      <span className="text-xs text-neutral-400">—</span>
-                    )}
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex flex-col items-start gap-2">
-                      <StatusActieKnop aanvraagId={rij.aanvraagId} huidigeStatus={rij.statusWaarde} />
+              <div className="space-y-3">
+                {kaartenInKolom.length === 0 && (
+                  <p className="rounded-lg border border-dashed border-neutral-200 p-3 text-center text-xs text-neutral-400">
+                    Geen aanvragen
+                  </p>
+                )}
+
+                {kaartenInKolom.map((kaart) => (
+                  <div key={kaart.aanvraagId} className="rounded-lg border border-neutral-200 bg-white p-3 shadow-sm">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <p className="truncate font-medium text-brand-zwart">{kaart.klantNaam}</p>
+                        {kaart.bedrijf && <p className="truncate text-xs text-neutral-500">{kaart.bedrijf}</p>}
+                      </div>
+                      <StatusActieKnop
+                        aanvraagId={kaart.aanvraagId}
+                        klantNaam={kaart.klantNaam}
+                        huidigeStatus={kaart.statusWaarde}
+                      />
+                    </div>
+
+                    <p className="mt-2 text-xs text-neutral-600">{kaart.veldtype}</p>
+                    <p className="text-xs text-neutral-500">{kaart.provincie}</p>
+
+                    <div className="mt-2 flex flex-wrap gap-1">
+                      {kaart.nieuwBord && (
+                        <span className="rounded-full bg-brand-oranje/10 px-2 py-0.5 text-[10px] font-medium text-brand-oranje">
+                          {kaart.bordAanschaf}
+                        </span>
+                      )}
+                      {kaart.heeftGeblokkeerdeCheck && (
+                        <span className="rounded-full bg-brand-oranje/10 px-2 py-0.5 text-[10px] font-medium text-brand-oranje">
+                          Te controleren
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="mt-2 flex items-center justify-between">
+                      <span className="text-[10px] text-neutral-400">{kaart.ingediendOp}</span>
                       <a
-                        href={`/intern/${rij.aanvraagId}`}
-                        className="font-medium text-brand-groen hover:underline"
+                        href={`/intern/${kaart.aanvraagId}`}
+                        className="text-xs font-medium text-brand-groen hover:underline"
                       >
                         Bekijken →
                       </a>
                     </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
         </div>
       )}
     </div>
-  );
-}
-
-function StatusTab({
-  href,
-  label,
-  aantal,
-  actief,
-}: {
-  href: string;
-  label: string;
-  aantal: number;
-  actief: boolean;
-}) {
-  return (
-    <a
-      href={href}
-      className={`rounded-full border px-3 py-1 ${
-        actief
-          ? "border-brand-groen bg-green-50 font-medium text-brand-groen"
-          : "border-neutral-300 text-neutral-600 hover:border-brand-groen"
-      }`}
-    >
-      {label} ({aantal})
-    </a>
   );
 }

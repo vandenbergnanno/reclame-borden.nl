@@ -421,6 +421,28 @@ van een order, en bij "Gemaakt" sorteren op provincie (bijv. voor het plannen va
   getest met tijdelijke voorbeelddata (sortering op provincie bevestigd: Groningen vóór
   Noord-Holland; doorstuur-knoppen tonen de juiste nette foutmelding zonder Supabase, geen crash).
 
+## Update — Aanvragen als kanban-bord met bevestiging ✅
+
+Het tabel+tabbladen-overzicht is omgebouwd naar een kanban-bord: één kolom per status, met
+kaarten die je met een pijltje een stap verder zet.
+
+- `/intern` toont nu horizontaal scrollbare kolommen voor alle statussen (Nieuw, In behandeling,
+  Voorstel verstuurd, Goedgekeurd, Afgewezen, Geëscaleerd, Gemaakt), elk met het aantal kaarten.
+  Alles komt binnen in de kolom "Nieuw".
+- `StatusActieKnop.tsx` is omgebouwd tot een rond pijltje-knopje rechtsboven op de kaart (alleen
+  zichtbaar op kaarten in "Nieuw" en "In behandeling", waar een volgende productiestap bestaat).
+  Vóór het versturen vraagt `window.confirm()` nu expliciet bevestiging: "Weet je zeker dat je de
+  aanvraag van [klant] wilt verplaatsen naar '[volgende status]'?" — bij annuleren gebeurt er
+  niets.
+- De "Gemaakt"-kolom blijft gesorteerd op provincie (zoals eerder gevraagd), de andere kolommen op
+  datum van indienen.
+- De oude statustabbladen zijn vervallen (de kolommen van het bord tonen nu alle statussen
+  tegelijk); de klantfilter (`/intern?klant=...`) vanaf de Klanten-pagina blijft gewoon werken.
+- Geverifieerd met `npm run typecheck`, `npm run lint`, een schone `npm run build`, en handmatig
+  getest met tijdelijke voorbeelddata — inclusief het bevestigingsdialoogje (bevestigd via de
+  consolelog dat de juiste vraag met de juiste doel-status verschijnt; native dialogs worden in
+  deze testomgeving automatisch onderdrukt, wat in een echte browser niet gebeurt).
+
 ## Nog volledig open (bewuste placeholders voor latere sessies)
 
 - Open ontwerpvraag: hoe wordt de vrije tekst uit de ontwerpwens (sponsornaam, slogan, ...)
