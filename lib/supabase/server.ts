@@ -19,3 +19,10 @@ export function createServerSupabaseClient() {
     auth: { persistSession: false },
   });
 }
+
+// Gebruikt door interne overzichtspagina's om te bepalen of ze live data kunnen ophalen, of
+// (zolang er nog geen echt Supabase-project gekoppeld is) moeten terugvallen op de
+// voorbeelddata uit lib/demo/voorbeelddata.ts.
+export function isSupabaseGeconfigureerd(): boolean {
+  return Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY);
+}

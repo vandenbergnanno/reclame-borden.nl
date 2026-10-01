@@ -473,6 +473,25 @@ klik maar de aanvragen van dát vakje ziet.
   getest met tijdelijke voorbeelddata (klikken tussen vakjes toont steeds de juiste, enkele groep
   aanvragen).
 
+## Update — Voorbeelddata zichtbaar in /intern zonder Supabase-project ✅
+
+Zonder Supabase-project toonden de interne overzichtspagina's alleen een rode foutmelding —
+daardoor leek het alsof wijzigingen niet werkten wanneer je ze zelf in de browser bekeek. De
+pagina's vallen nu automatisch terug op voorbeelddata (een statische kopie van
+`supabase/seed.sql`) zodra Supabase niet gekoppeld is, met een duidelijke gele banner erboven.
+
+- Nieuw: `lib/demo/voorbeelddata.ts` met dezelfde klanten/aanvragen/checks/designs als
+  `supabase/seed.sql`, en `isSupabaseGeconfigureerd()` in `lib/supabase/server.ts`.
+- `/intern`, `/intern/klanten` en `/intern/[id]` gebruiken deze voorbeelddata als terugval, met
+  de tekst "Je ziet nu voorbeelddata — er is nog geen Supabase-project gekoppeld" erboven, zodat
+  nooit de indruk ontstaat dat het om echte aanvragen/klanten gaat.
+- Schrijfacties (pijltje-knop, statusdropdown, aanvraagformulier) blijven ongewijzigd een
+  duidelijke Supabase-foutmelding geven zodra je ze gebruikt — dit verandert alleen het
+  **bekijken** van bestaande (voorbeeld)data.
+- Geverifieerd met `npm run typecheck`, `npm run lint`, een schone `npm run build`, en
+  handmatig getest in de browser (alle drie pagina's tonen nu meteen bruikbare voorbeeldkaarten,
+  zonder tijdelijke code-aanpassingen).
+
 ## Nog volledig open (bewuste placeholders voor latere sessies)
 
 - Open ontwerpvraag: hoe wordt de vrije tekst uit de ontwerpwens (sponsornaam, slogan, ...)

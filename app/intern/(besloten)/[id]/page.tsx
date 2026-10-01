@@ -1,6 +1,13 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { createServerSupabaseClient, isSupabaseGeconfigureerd } from "@/lib/supabase/server";
+import {
+  VOORBEELD_AANVRAGEN,
+  VOORBEELD_CONTENT_CHECKS,
+  VOORBEELD_DESIGNS,
+  VOORBEELD_FEEDBACK,
+  VOORBEELD_KLANTEN,
+} from "@/lib/demo/voorbeelddata";
 import {
   AANVRAAG_STATUS_KLEUREN,
   AANVRAAG_STATUS_LABELS,
@@ -17,44 +24,68 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 export default async function AanvraagDetailPage({ params }: { params: { id: string } }) {
-  let supabase: ReturnType<typeof createServerSupabaseClient>;
-  try {
-    supabase = createServerSupabaseClient();
-  } catch (error) {
-    return (
-      <p className="rounded border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700">
-        {error instanceof Error ? error.message : "Supabase is niet geconfigureerd."}
-      </p>
-    );
-  }
+  const toontVoorbeelddata = !isSupabaseGeconfigureerd();
 
-  const { data: aanvraag, error: aanvraagFout } = await supabase
-    .from("aanvragen")
-    .select("*")
-    .eq("id", params.id)
-    .maybeSingle();
+  let aanvraag: (typeof VOORBEELD_AANVRAGEN)[number] | null | undefined;
+  let klant: (typeof VOORBEELD_KLANTEN)[number] | null | undefined;
+  let contentChecks: typeof VOORBEELD_CONTENT_CHECKS | null;
+  let designs: typeof VOORBEELD_DESIGNS | null;
+  let feedback: typeof VOORBEELD_FEEDBACK | null;
 
-  if (aanvraagFout) {
-    return (
-      <p className="rounded border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700">
-        {aanvraagFout.message}
-      </p>
-    );
+  if (toontVoorbeelddata) {
+    aanvraag = VOORBEELD_AANVRAGEN.find((item) => item.id === params.id);
+    klant = aanvraag ? VOORBEELD_KLANTEN.find((item) => item.id === aanvraag!.klant_id) : undefined;
+    contentChecks = VOORBEELD_CONTENT_CHECKS.filter((item) => item.aanvraag_id === params.id);
+    designs = VOORBEELD_DESIGNS.filter((item) => item.aanvraag_id === params.id);
+    feedback = VOORBEELD_FEEDBACK.filter((item) => item.aanvraag_id === params.id);
+  } else {
+    const supabase = createServerSupabaseClient();
+
+    const { data: aanvraagData, error: aanvraagFout } = await supabase
+      .from("aanvragen")
+      .select("*")
+      .eq("id", params.id)
+      .maybeSingle();
+
+    if (aanvraagFout) {
+      return (
+        <p className="rounded border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700">
+          {aanvraagFout.message}
+        </p>
+      );
+    }
+
+    aanvraag = aanvraagData;
+
+    if (!aanvraag) {
+      notFound();
+    }
+
+    const [{ data: klantData }, { data: contentChecksData }, { data: designsData }, { data: feedbackData }] = await Promise.all([
+      supabase.from("klanten").select("*").eq("id", aanvraag.klant_id).maybeSingle(),
+      supabase.from("content_checks").select("*").eq("aanvraag_id", aanvraag.id).order("created_at", { ascending: false }),
+      supabase.from("designs").select("*").eq("aanvraag_id", aanvraag.id).order("versienummer", { ascending: false }),
+      supabase.from("feedback").select("*").eq("aanvraag_id", aanvraag.id).order("created_at", { ascending: false }),
+    ]);
+
+    klant = klantData;
+    contentChecks = contentChecksData;
+    designs = designsData;
+    feedback = feedbackData;
   }
 
   if (!aanvraag) {
     notFound();
   }
 
-  const [{ data: klant }, { data: contentChecks }, { data: designs }, { data: feedback }] = await Promise.all([
-    supabase.from("klanten").select("*").eq("id", aanvraag.klant_id).maybeSingle(),
-    supabase.from("content_checks").select("*").eq("aanvraag_id", aanvraag.id).order("created_at", { ascending: false }),
-    supabase.from("designs").select("*").eq("aanvraag_id", aanvraag.id).order("versienummer", { ascending: false }),
-    supabase.from("feedback").select("*").eq("aanvraag_id", aanvraag.id).order("created_at", { ascending: false }),
-  ]);
-
   return (
     <div className="space-y-6">
+      {toontVoorbeelddata && (
+        <p className="rounded border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+          Je ziet nu voorbeelddata — er is nog geen Supabase-project gekoppeld (zie .env.example).
+        </p>
+      )}
+
       <div>
         <a href="/intern" className="text-sm text-neutral-500 hover:text-brand-zwart">
           ← Terug naar overzicht

@@ -1,5 +1,10 @@
 import type { Metadata } from "next";
-import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { createServerSupabaseClient, isSupabaseGeconfigureerd } from "@/lib/supabase/server";
+import {
+  VOORBEELD_AANVRAGEN,
+  VOORBEELD_CONTENT_CHECKS,
+  VOORBEELD_KLANTEN,
+} from "@/lib/demo/voorbeelddata";
 import {
   AANVRAAG_STATUS_KLEUREN,
   AANVRAAG_STATUS_LABELS,
@@ -52,31 +57,46 @@ export default async function InternPage({
   let foutmelding: string | null = null;
   let kaarten: AanvraagKaart[] = [];
   let klantNaamFilter: string | null = null;
+  const toontVoorbeelddata = !isSupabaseGeconfigureerd();
 
   try {
-    const supabase = createServerSupabaseClient();
+    let aanvragen: typeof VOORBEELD_AANVRAGEN;
+    let klanten: typeof VOORBEELD_KLANTEN;
+    let checks: Pick<(typeof VOORBEELD_CONTENT_CHECKS)[number], "aanvraag_id" | "geblokkeerd">[];
 
-    const [{ data: aanvragen, error: aanvragenFout }, { data: klanten, error: klantenFout }, { data: checks, error: checksFout }] =
-      await Promise.all([
-        supabase.from("aanvragen").select("*").order("created_at", { ascending: false }),
-        supabase.from("klanten").select("*"),
-        supabase.from("content_checks").select("aanvraag_id, geblokkeerd"),
-      ]);
+    if (toontVoorbeelddata) {
+      aanvragen = VOORBEELD_AANVRAGEN;
+      klanten = VOORBEELD_KLANTEN;
+      checks = VOORBEELD_CONTENT_CHECKS;
+    } else {
+      const supabase = createServerSupabaseClient();
 
-    if (aanvragenFout) throw new Error(aanvragenFout.message);
-    if (klantenFout) throw new Error(klantenFout.message);
-    if (checksFout) throw new Error(checksFout.message);
+      const [{ data: aanvragenData, error: aanvragenFout }, { data: klantenData, error: klantenFout }, { data: checksData, error: checksFout }] =
+        await Promise.all([
+          supabase.from("aanvragen").select("*").order("created_at", { ascending: false }),
+          supabase.from("klanten").select("*"),
+          supabase.from("content_checks").select("aanvraag_id, geblokkeerd"),
+        ]);
 
-    const klantenById = new Map((klanten ?? []).map((klant) => [klant.id, klant]));
+      if (aanvragenFout) throw new Error(aanvragenFout.message);
+      if (klantenFout) throw new Error(klantenFout.message);
+      if (checksFout) throw new Error(checksFout.message);
+
+      aanvragen = aanvragenData ?? [];
+      klanten = klantenData ?? [];
+      checks = checksData ?? [];
+    }
+
+    const klantenById = new Map(klanten.map((klant) => [klant.id, klant]));
     const geblokkeerdeAanvraagIds = new Set(
-      (checks ?? []).filter((check) => check.geblokkeerd).map((check) => check.aanvraag_id)
+      checks.filter((check) => check.geblokkeerd).map((check) => check.aanvraag_id)
     );
 
     if (klantFilter) {
       klantNaamFilter = klantenById.get(klantFilter)?.naam ?? "onbekende klant";
     }
 
-    const gefilterd = (aanvragen ?? []).filter((aanvraag) => {
+    const gefilterd = aanvragen.filter((aanvraag) => {
       if (klantFilter && aanvraag.klant_id !== klantFilter) return false;
       return true;
     });
@@ -133,6 +153,13 @@ export default async function InternPage({
             Toon alle aanvragen
           </a>
           .
+        </p>
+      )}
+
+      {toontVoorbeelddata && (
+        <p className="rounded border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+          Je ziet nu voorbeelddata — er is nog geen Supabase-project gekoppeld (zie .env.example).
+          Dit zijn geen echte aanvragen.
         </p>
       )}
 
