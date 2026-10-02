@@ -584,6 +584,35 @@ een medewerker oppakken. Concepten splitst daarom de openstaande voorstellen in 
   getest in de browser (Erik Mulder verschijnt nu bovenaan bij "Loopt vast" met "2x afgewezen",
   Marieke Visser blijft gewoon bij "Voorstel verstuurd").
 
+## Update — Voorstel-e-mails gaan nu automatisch binnen 45-60 min ✅
+
+Tot nu toe werd `voorstel_gepland_op` wel al correct berekend (45-60 min na indienen, zie
+`lib/planning/voorstelPlanning.ts`), maar het daadwerkelijk genereren+mailen gebeurde alleen als
+iemand op de "Verwerk geplande voorstellen"-knop klikte. Dat draait nu ook vanzelf, op de
+achtergrond, zonder daarbuiten te schieten.
+
+- Nieuw: `lib/planning/scheduler.ts` start een achtergrondtaak die elke 60 seconden controleert of
+  er aanvragen zijn waarvan `voorstel_gepland_op` verstreken is, en zo ja, ze meteen verwerkt. Een
+  minuut poll-interval houdt de daadwerkelijke verzendtijd dicht bij het geplande tijdstip (nooit
+  ver erbuiten), zonder de database constant te bevragen.
+- Nieuw: `instrumentation.ts` (met `experimental.instrumentationHook: true` in
+  `next.config.mjs` — bleek in deze Next.js-versie nog nodig) start die achtergrondtaak één keer
+  bij het opstarten van de server (`next dev` én `next start`).
+- De verwerklogica zelf is verplaatst naar een gedeelde functie
+  (`lib/planning/verwerkGeplandeVoorstellen.ts`), gebruikt door zowel de achtergrondtaak als
+  `POST /api/aanvragen/verwerk-geplande-voorstellen` (nu een stuk kleiner).
+- De testknop op `/intern/concepten` heet nu "Verwerk geplande voorstellen **nu**" met aangepaste
+  uitleg: hij is er alleen nog om tijdens het testen niet op de achtergrondtaak te hoeven wachten,
+  niet om iets te simuleren wat anders niet zou gebeuren.
+- **Beperking, al genoteerd onder "Nog volledig open":** dit werkt alleen zo lang het
+  Node.js-proces blijft draaien (prima voor `next dev`/`next start` op een gewone server). Op
+  serverless hosting zoals Vercel moet dit bij een echte deployment alsnog vervangen worden door
+  een cron (Vercel Cron / Supabase `pg_cron`).
+- Geverifieerd: `npm run typecheck`, `npm run lint`, een schone `npm run build`, en in de
+  serverlogs gecontroleerd dat `[scheduler] achtergrondplanner gestart (controleert elke 60s)`
+  verschijnt bij het opstarten; de handmatige testknop op `/intern/concepten` werkt nog steeds
+  (geeft dezelfde Supabase-foutmelding als voorheen, aangezien er nog geen project gekoppeld is).
+
 ## Nog volledig open (bewuste placeholders voor latere sessies)
 
 - Open ontwerpvraag: hoe wordt de vrije tekst uit de ontwerpwens (sponsornaam, slogan, ...)
@@ -593,9 +622,10 @@ een medewerker oppakken. Concepten splitst daarom de openstaande voorstellen in 
   een Replicate-account/API-key is.
 - `RESEND_API_KEY` invullen zodra er een Resend-account is — de koppeling zelf staat al klaar.
 
-- Scheduler koppelen (Vercel Cron / Supabase `pg_cron`) die
-  `POST /api/aanvragen/verwerk-geplande-voorstellen` automatisch en beveiligd aanroept, in plaats
-  van de handmatige testknop op `/intern`.
+- Bij een echte deployment: de in-process achtergrondplanner (`lib/planning/scheduler.ts`) werkt
+  alleen op een long-running server/VM/container. Op serverless hosting (bijv. Vercel) moet dit
+  alsnog vervangen worden door een echte scheduler (Vercel Cron / Supabase `pg_cron`) die
+  `POST /api/aanvragen/verwerk-geplande-voorstellen` beveiligd aanroept.
 - Individuele medewerkersaccounts (Supabase Auth) in plaats van de huidige gedeelde-
   wachtwoord-poort voor `/intern`.
 - Downloadlink voor bijlagen op de detailpagina (`/intern/[id]`) zodra Supabase Storage echt werkt.

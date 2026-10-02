@@ -3,9 +3,9 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-// Testhulpmiddel: simuleert wat in productie een geplande taak (Vercel Cron / Supabase pg_cron)
-// automatisch zou doen zodra het geplande voorstel-tijdstip van een aanvraag verstreken is. Zie
-// app/api/aanvragen/verwerk-geplande-voorstellen/route.ts voor de TODO om dit echt te plannen.
+// Een achtergrondplanner (zie instrumentation.ts + lib/planning/scheduler.ts) doet dit inmiddels
+// ook automatisch, elke minuut. Deze knop roept dezelfde route handmatig aan, puur zodat je tijdens
+// het testen niet hoeft te wachten tot de achtergrondplanner er zelf aan toekomt.
 export function VerwerkGeplandeVoorstellenKnop() {
   const router = useRouter();
   const [status, setStatus] = useState<"idle" | "bezig" | "fout">("idle");
@@ -47,15 +47,16 @@ export function VerwerkGeplandeVoorstellenKnop() {
           disabled={status === "bezig"}
           className="rounded border border-brand-zwart px-3 py-1.5 text-sm font-medium text-brand-zwart hover:bg-white disabled:opacity-50"
         >
-          {status === "bezig" ? "Bezig..." : "Verwerk geplande voorstellen (test)"}
+          {status === "bezig" ? "Bezig..." : "Verwerk geplande voorstellen nu"}
         </button>
         {melding && (
           <span className={`text-sm ${status === "fout" ? "text-red-700" : "text-neutral-600"}`}>{melding}</span>
         )}
       </div>
       <p className="mt-1 text-xs text-neutral-500">
-        Alleen voor lokaal testen: simuleert de geplande taak die in productie automatisch zou
-        draaien zodra het &ldquo;voorstel gepland op&rdquo;-tijdstip van een aanvraag verstreken is.
+        Dit gebeurt ook automatisch, elke minuut, zodra het &ldquo;voorstel gepland op&rdquo;-tijdstip
+        van een aanvraag verstreken is. Deze knop is er puur om dat niet te hoeven afwachten tijdens
+        het testen.
       </p>
     </div>
   );
