@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
+const MAX_LENGTE = { onderwerp: 300, platte_tekst: 20_000, html_inhoud: 100_000 } as const;
+
 // Beveiligd via middleware.ts (de gedeelde-wachtwoord-poort van /intern) — alleen ingelogde
 // medewerkers kunnen hier bij.
 //
@@ -24,6 +26,13 @@ export async function PATCH(request: Request, { params }: { params: { id: string
       { ok: false, error: "Onderwerp, platte tekst en HTML-inhoud zijn allemaal verplicht." },
       { status: 400 }
     );
+  }
+  if (
+    onderwerp.length > MAX_LENGTE.onderwerp ||
+    platteTekst.length > MAX_LENGTE.platte_tekst ||
+    htmlInhoud.length > MAX_LENGTE.html_inhoud
+  ) {
+    return NextResponse.json({ ok: false, error: "Eén van de velden is te lang." }, { status: 400 });
   }
 
   let supabase: ReturnType<typeof createServerSupabaseClient>;

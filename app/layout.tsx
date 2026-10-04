@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { MediagraafLogo } from "@/components/MediagraafLogo";
+import { CookieMelding } from "@/components/CookieMelding";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -35,6 +36,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             Prototype — De Mediagraaf
           </footer>
         </div>
+        <CookieMelding />
       </body>
     </html>
   );

@@ -2,8 +2,11 @@ import { NextResponse } from "next/server";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { generateDesign } from "@/lib/ai/generateDesign";
 import { sendProposalEmail } from "@/lib/email/sendProposalEmail";
+import { checkRateLimit, clientIp, teVeelPogingenResponse } from "@/lib/security/rateLimit";
 
 export const runtime = "nodejs";
+
+const MAX_FEEDBACKTEKST_LENGTE = 2000;
 
 // Publieke route (geen /intern-login nodig) — de klant bereikt dit via de link in de
 // voorstel-e-mail, niet via een ingelogde sessie.
@@ -13,6 +16,11 @@ export const runtime = "nodejs";
 // genereert en verstuurt de AI automatisch een herzien concept terwijl de aanvraag gewoon
 // "voorstel_verstuurd" blijft. De klantreactie zelf blijft bewaard als rij in `feedback`.
 export async function POST(request: Request, { params }: { params: { id: string } }) {
+  const rateLimit = checkRateLimit(`feedback:${clientIp(request)}`, 20, 60 * 60 * 1000);
+  if (!rateLimit.toegestaan) {
+    return teVeelPogingenResponse(rateLimit);
+  }
+
   let body: { actie?: unknown; feedbacktekst?: unknown };
   try {
     body = await request.json();
@@ -28,6 +36,12 @@ export async function POST(request: Request, { params }: { params: { id: string 
 
   if (!goedgekeurd && (typeof body.feedbacktekst !== "string" || body.feedbacktekst.trim() === "")) {
     return NextResponse.json({ ok: false, error: "Beschrijf wat er nog moet veranderen." }, { status: 400 });
+  }
+  if (typeof body.feedbacktekst === "string" && body.feedbacktekst.length > MAX_FEEDBACKTEKST_LENGTE) {
+    return NextResponse.json(
+      { ok: false, error: `Feedback mag maximaal ${MAX_FEEDBACKTEKST_LENGTE} tekens zijn.` },
+      { status: 400 }
+    );
   }
 
   let supabase: ReturnType<typeof createServerSupabaseClient>;

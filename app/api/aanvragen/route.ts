@@ -3,6 +3,7 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { analyzeRequest } from "@/lib/ai/analyzeRequest";
 import { controleerAfmetingBeschikbaarheid } from "@/lib/ai/controleerAfmetingBeschikbaarheid";
 import { berekenVoorstelGeplandOp } from "@/lib/planning/voorstelPlanning";
+import { checkRateLimit, clientIp, teVeelPogingenResponse } from "@/lib/security/rateLimit";
 import {
   BORD_AANSCHAF_OPTIES,
   PROVINCIES,
@@ -14,6 +15,17 @@ import {
 
 // Bestandsuploads vragen om de Node.js-runtime (niet de edge-runtime).
 export const runtime = "nodejs";
+
+// Ruim genoeg voor legitieme klanten (ook als ze een paar keer opnieuw moeten indienen), maar
+// blokkeert geautomatiseerde spam van hetzelfde IP.
+const MAX_AANVRAGEN_PER_UUR = 10;
+
+// Simpele lengtegrenzen tegen misbruik (extreem grote payloads) — ruim boven wat een mens ooit
+// in een formulierveld zou typen.
+const MAX_LENGTE = { naam: 200, bedrijf: 200, email: 320, telefoon: 50, afmeting: 100, wens: 2000 } as const;
+
+const MAX_BIJLAGE_BYTES = 10 * 1024 * 1024;
+const TOEGESTANE_BIJLAGE_TYPES = ["image/png", "image/jpeg", "image/webp", "image/gif", "application/pdf"];
 
 function isVeldtype(waarde: FormDataEntryValue | null): waarde is Veldtype {
   return typeof waarde === "string" && (VELDTYPEN as readonly string[]).includes(waarde);
@@ -27,7 +39,16 @@ function isProvincie(waarde: FormDataEntryValue | null): waarde is Provincie {
   return typeof waarde === "string" && (PROVINCIES as readonly string[]).includes(waarde);
 }
 
+function isGeldigEmailFormaat(waarde: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(waarde);
+}
+
 export async function POST(request: Request) {
+  const rateLimit = checkRateLimit(`aanvraag:${clientIp(request)}`, MAX_AANVRAGEN_PER_UUR, 60 * 60 * 1000);
+  if (!rateLimit.toegestaan) {
+    return teVeelPogingenResponse(rateLimit);
+  }
+
   let formData: FormData;
   try {
     formData = await request.formData();
@@ -49,8 +70,20 @@ export async function POST(request: Request) {
   if (typeof naam !== "string" || naam.trim() === "") {
     return NextResponse.json({ ok: false, error: "Naam is verplicht." }, { status: 400 });
   }
+  if (naam.length > MAX_LENGTE.naam) {
+    return NextResponse.json({ ok: false, error: "Naam is te lang." }, { status: 400 });
+  }
+  if (typeof bedrijf === "string" && bedrijf.length > MAX_LENGTE.bedrijf) {
+    return NextResponse.json({ ok: false, error: "Bedrijfsnaam is te lang." }, { status: 400 });
+  }
   if (typeof email !== "string" || email.trim() === "") {
     return NextResponse.json({ ok: false, error: "E-mailadres is verplicht." }, { status: 400 });
+  }
+  if (email.length > MAX_LENGTE.email || !isGeldigEmailFormaat(email.trim())) {
+    return NextResponse.json({ ok: false, error: "Vul een geldig e-mailadres in." }, { status: 400 });
+  }
+  if (typeof telefoon === "string" && telefoon.length > MAX_LENGTE.telefoon) {
+    return NextResponse.json({ ok: false, error: "Telefoonnummer is te lang." }, { status: 400 });
   }
   if (!isProvincie(provincie)) {
     return NextResponse.json({ ok: false, error: "Kies een geldige provincie." }, { status: 400 });
@@ -61,6 +94,9 @@ export async function POST(request: Request) {
   if (typeof afmeting !== "string" || afmeting.trim() === "") {
     return NextResponse.json({ ok: false, error: "Kies of vul een afmeting in." }, { status: 400 });
   }
+  if (afmeting.length > MAX_LENGTE.afmeting) {
+    return NextResponse.json({ ok: false, error: "Afmeting is te lang." }, { status: 400 });
+  }
   if (!isBordAanschaf(bordAanschaf)) {
     return NextResponse.json(
       { ok: false, error: "Geef aan of je een bestaand bord hergebruikt of een nieuw bord wilt." },
@@ -69,6 +105,23 @@ export async function POST(request: Request) {
   }
   if (typeof wens !== "string" || wens.trim() === "") {
     return NextResponse.json({ ok: false, error: "Beschrijf je ontwerpwens." }, { status: 400 });
+  }
+  if (wens.length > MAX_LENGTE.wens) {
+    return NextResponse.json(
+      { ok: false, error: `Ontwerpwens mag maximaal ${MAX_LENGTE.wens} tekens zijn.` },
+      { status: 400 }
+    );
+  }
+  if (bijlage instanceof File && bijlage.size > 0) {
+    if (bijlage.size > MAX_BIJLAGE_BYTES) {
+      return NextResponse.json({ ok: false, error: "Bijlage mag maximaal 10 MB zijn." }, { status: 400 });
+    }
+    if (bijlage.type && !TOEGESTANE_BIJLAGE_TYPES.includes(bijlage.type)) {
+      return NextResponse.json(
+        { ok: false, error: "Bijlage moet een afbeelding (png/jpg/webp/gif) of PDF zijn." },
+        { status: 400 }
+      );
+    }
   }
 
   let supabase: ReturnType<typeof createServerSupabaseClient>;

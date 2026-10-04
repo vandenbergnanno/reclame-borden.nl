@@ -658,6 +658,47 @@ zolang `emails.verzonden` nog `false` is.
   getest in de browser (de formulieren tonen de huidige waarden correct voorgevuld; opslaan geeft
   terecht de bekende Supabase-foutmelding zolang er geen project gekoppeld is).
 
+## Update — Beveiligingsronde: middleware-gat gedicht, rate limiting, cookiemelding ✅
+
+Op verzoek een beveiligingspas over de hele app. De belangrijkste vondst: **drie interne
+schrijf-routes bleken helemaal niet beschermd** door de `/intern`-inlogpoort, ondanks een
+commentaar dat het tegendeel beweerde.
+
+- **Kritieke fix — `middleware.ts` matcher-gat:** `/api/aanvragen/[id]/designs/[designId]` en
+  `/api/aanvragen/[id]/emails/[emailId]` matchten niet met de oude matcher-syntax (losse
+  `:id`/`:designId`-segmenten in één string bleek niet te werken), en
+  `/api/aanvragen/verwerk-geplande-voorstellen` stond per ongeluk helemaal nooit in de lijst.
+  Alle drie waren dus zonder inlog aanroepbaar. Opgelost door het model om te draaien: in plaats
+  van elke beschermde route los op te sommen (foutgevoelig — dit ging al twee keer mis), matcht
+  `/api/aanvragen/:path*` nu de hele subtree in één keer, en staat alleen een expliciete
+  allowlist (`POST /api/aanvragen`, `POST /api/aanvragen/[id]/feedback`) er zonder inlog bij. Een
+  nieuwe route onder `/api/aanvragen/` is dus **standaard beschermd**, niet standaard open.
+  Geverifieerd met `curl` dat alle vijf schrijf-routes nu een nette 401 geven zonder sessie, en
+  dat de twee publieke routes en alle paginas gewoon bereikbaar blijven.
+- **Rate limiting** (`lib/security/rateLimit.ts`, in-memory per IP, globalThis zodat het
+  dev-hot-reloads overleeft — zelfde patroon als de achtergrondplanner):
+  - `POST /api/intern/login`: 5 pogingen per 15 min (brute-force op het gedeelde wachtwoord).
+  - `POST /api/aanvragen`: 10 per uur (spam op het publieke formulier).
+  - `POST /api/aanvragen/[id]/feedback`: 20 per uur.
+  - Beperking, genoteerd onder "Nog volledig open": telt per Node-proces, dus niet geschikt voor
+    een serverless/multi-instance deployment zonder gedeelde store (bijv. Upstash Redis).
+- **Invoervalidatie aangescherpt** in `POST /api/aanvragen`: lengtegrenzen op alle tekstvelden,
+  een echte e-mailformaatcheck, en op de bijlage-upload een maximum van 10 MB en een allowlist
+  van bestandstypen (afbeeldingen + PDF) — voorheen kon elk bestandstype van elke grootte
+  geüpload worden. Ook lengtegrenzen toegevoegd aan de concept/e-mail-bewerkroutes.
+- **Beveiligingsheaders** (`next.config.mjs`): X-Content-Type-Options, X-Frame-Options,
+  Referrer-Policy, Permissions-Policy, Strict-Transport-Security. Bewust **geen**
+  Content-Security-Policy — Next.js' dev-server heeft `unsafe-eval` nodig voor Fast Refresh, en
+  een CSP die dat mist breekt de hele dev-omgeving; bij een echte deployment moet dit alsnog met
+  een nonce-aanpak toegevoegd worden.
+- **Cookiemelding** (`components/CookieMelding.tsx`): een simpele banner onderaan elke pagina die
+  uitlegt dat de enige cookie op de site de functionele inlogsessie van `/intern` is (geen
+  tracking/advertenties) — met een "Oké"-knop die het via `localStorage` onthoudt.
+- Geverifieerd met `npm run typecheck`, `npm run lint`, een schone `npm run build`, en uitgebreid
+  handmatig getest: `curl`-tests voor elke rate limit en validatieregel, de volledige inlog- en
+  bewerkflow in de browser (reikt nu weer correct de route, niet 401), en de cookiemelding
+  (verschijnt, verdwijnt na "Oké", blijft weg na een refresh).
+
 ## Nog volledig open (bewuste placeholders voor latere sessies)
 
 - Open ontwerpvraag: hoe wordt de vrije tekst uit de ontwerpwens (sponsornaam, slogan, ...)
@@ -682,3 +723,8 @@ zolang `emails.verzonden` nog `false` is.
   `SUPABASE_STORAGE_BUCKET` daadwerkelijk aanmaken.
 - Vullen van `/docs/reference`, `/assets/brand` en `/assets/mockups` met echt materiaal van
   De Mediagraaf.
+- Bij een echte deployment: `lib/security/rateLimit.ts` is in-memory per Node-proces — op
+  serverless/multi-instance hosting telt elke instantie apart, dus moet dit dan naar een gedeelde
+  store (bijv. Upstash Redis) voordat de limieten weer kloppen.
+- Content-Security-Policy toevoegen bij een echte deployment (zie next.config.mjs) — bewust nog
+  achterwege gelaten omdat Next.js' dev-server `unsafe-eval` nodig heeft voor Fast Refresh.

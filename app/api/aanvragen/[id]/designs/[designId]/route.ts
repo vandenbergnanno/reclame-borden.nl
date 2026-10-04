@@ -19,6 +19,9 @@ export async function PATCH(request: Request, { params }: { params: { id: string
   if (typeof body.opslaglocatie !== "string" || body.opslaglocatie.trim() === "") {
     return NextResponse.json({ ok: false, error: "Geef een geldige afbeeldingslocatie op." }, { status: 400 });
   }
+  if (body.opslaglocatie.length > 2000) {
+    return NextResponse.json({ ok: false, error: "Afbeeldingslocatie is te lang." }, { status: 400 });
+  }
 
   let supabase: ReturnType<typeof createServerSupabaseClient>;
   try {

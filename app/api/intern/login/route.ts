@@ -1,7 +1,18 @@
 import { NextResponse } from "next/server";
 import { INTERN_SESSIE_COOKIE, INTERN_SESSIE_MAX_LEEFTIJD_SECONDEN } from "@/lib/auth/internSessie";
+import { checkRateLimit, clientIp, teVeelPogingenResponse } from "@/lib/security/rateLimit";
+
+// Het wachtwoord is gedeeld en dus een vast doelwit voor brute-force — maximaal 5 pogingen per
+// 15 minuten per IP, los van of het wachtwoord klopte.
+const MAX_POGINGEN = 5;
+const VENSTER_MS = 15 * 60 * 1000;
 
 export async function POST(request: Request) {
+  const rateLimit = checkRateLimit(`login:${clientIp(request)}`, MAX_POGINGEN, VENSTER_MS);
+  if (!rateLimit.toegestaan) {
+    return teVeelPogingenResponse(rateLimit);
+  }
+
   const verwachtWachtwoord = process.env.INTERN_WACHTWOORD;
 
   if (!verwachtWachtwoord) {
