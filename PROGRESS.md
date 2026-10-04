@@ -613,6 +613,32 @@ achtergrond, zonder daarbuiten te schieten.
   verschijnt bij het opstarten; de handmatige testknop op `/intern/concepten` werkt nog steeds
   (geeft dezelfde Supabase-foutmelding als voorheen, aangezien er nog geen project gekoppeld is).
 
+## Update — Gemailde voorstellen zichtbaar op de aanvraag-detailpagina ✅
+
+Tot nu toe werd de inhoud van een voorstel-e-mail nergens bewaard — `sendProposalEmail()` stuurde
+'m (of logde 'm als placeholder) en liet de tekst daarna los. Daardoor was op `/intern/[id]` wel
+te zien wélke conceptversies er waren, maar niet wát er precies naar de klant gemaild is.
+
+- Nieuwe tabel `emails` (migratie + `lib/types/database.ts`): één rij per verstuurde (of
+  gelogde) e-mail, gekoppeld aan zowel de aanvraag als de specifieke designversie waar 'm bij
+  hoort. Bewaart onderwerp, de volledige HTML- en platte-tekstversie, en of 'm écht verstuurd is
+  (`verzonden`) of alleen gelogd omdat `RESEND_API_KEY` nog ontbreekt.
+- `sendProposalEmail()` geeft de opgebouwde e-mail nu terug aan de aanroeper (naast
+  verzonden/reden), zodat `lib/planning/verwerkGeplandeVoorstellen.ts` en de afwijzings-flow in
+  `app/api/aanvragen/[id]/feedback/route.ts` 'm kunnen opslaan in `emails`.
+- `/intern/[id]`: de "Ontwerpen"-sectie heet nu **"Ontwerpen & e-mails"** en toont per
+  conceptversie de bijbehorende e-mail — onderwerp, tijdstip, of 'm echt verstuurd is, en een
+  volledige visuele preview via een gesandboxte `<iframe>` (`sandbox="allow-same-origin"`: de
+  ontwerpafbeelding laadt gewoon, maar eventuele scripts in klantinvoer kunnen nooit draaien).
+- `lib/demo/voorbeelddata.ts` bouwt de voorbeeld-e-mails met dezelfde `bouwVoorstelEmail()` als de
+  echte flow (via een kleine `maakVoorbeeldEmail()`-helper), zodat de preview exact toont wat een
+  klant ook echt zou krijgen; `supabase/seed.sql` kreeg de overeenkomstige `emails`-rijen (gekoppeld
+  via een subquery op aanvraag_id+versienummer, omdat designs daar zonder eigen id ingevoegd worden).
+- Geverifieerd met `npm run typecheck`, `npm run lint`, een schone `npm run build`, en handmatig
+  getest in de browser (Erik Mulder's drie conceptversies tonen elk hun eigen e-mail inclusief
+  correct geladen ontwerpafbeelding; een aanvraag zonder ontwerp toont nog gewoon "Nog geen
+  ontwerp gegenereerd.").
+
 ## Nog volledig open (bewuste placeholders voor latere sessies)
 
 - Open ontwerpvraag: hoe wordt de vrije tekst uit de ontwerpwens (sponsornaam, slogan, ...)

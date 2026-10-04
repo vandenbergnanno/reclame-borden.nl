@@ -174,6 +174,45 @@ export interface Database {
           },
         ];
       };
+      emails: {
+        Row: {
+          id: string;
+          aanvraag_id: string;
+          design_id: string;
+          onderwerp: string;
+          html_inhoud: string;
+          platte_tekst: string;
+          verzonden: boolean;
+          verzonden_op: string;
+        };
+        Insert: {
+          id?: string;
+          aanvraag_id: string;
+          design_id: string;
+          onderwerp: string;
+          html_inhoud: string;
+          platte_tekst: string;
+          verzonden?: boolean;
+          verzonden_op?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["emails"]["Insert"]>;
+        Relationships: [
+          {
+            foreignKeyName: "emails_aanvraag_id_fkey";
+            columns: ["aanvraag_id"];
+            isOneToOne: false;
+            referencedRelation: "aanvragen";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "emails_design_id_fkey";
+            columns: ["design_id"];
+            isOneToOne: false;
+            referencedRelation: "designs";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;

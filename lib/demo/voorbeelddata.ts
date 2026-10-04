@@ -3,12 +3,14 @@
 // `isSupabaseGeconfigureerd()` in lib/supabase/server.ts). Puur om de interface zelf te kunnen
 // bekijken en testen — dit is geen vervanging van een database en wordt nooit beschreven.
 import type { Database } from "@/lib/types/database";
+import { bouwVoorstelEmail } from "@/lib/email/voorstelEmailTemplate";
 
 type KlantRow = Database["public"]["Tables"]["klanten"]["Row"];
 type AanvraagRow = Database["public"]["Tables"]["aanvragen"]["Row"];
 type ContentCheckRow = Database["public"]["Tables"]["content_checks"]["Row"];
 type DesignRow = Database["public"]["Tables"]["designs"]["Row"];
 type FeedbackRow = Database["public"]["Tables"]["feedback"]["Row"];
+type EmailRow = Database["public"]["Tables"]["emails"]["Row"];
 
 const NU = new Date();
 const minutenGeleden = (minuten: number) => new Date(NU.getTime() - minuten * 60_000).toISOString();
@@ -264,4 +266,108 @@ export const VOORBEELD_FEEDBACK: FeedbackRow[] = [
     feedbacktekst: "Helaas nog steeds niet goed — de kleuren kloppen niet met ons clublogo.",
     created_at: dagenGeleden(1),
   },
+];
+
+// Eén e-mail per designversie hierboven — opgebouwd met dezelfde `bouwVoorstelEmail()` als de
+// echte flow, zodat de preview op /intern/[id] exact toont wat een klant ook echt zou krijgen.
+// De echte sendProposalEmail() maakt designUrl/voorstelUrl altijd absoluut (e-mailclients kunnen
+// geen relatieve paden laden) — dat doen we hier ook, anders laadt de ontwerpafbeelding niet in de
+// gesandboxte voorbeeld-iframe op de detailpagina (die heeft geen eigen basis-URL om relatieve
+// paden tegen op te lossen).
+function maakVoorbeeldEmail(
+  rij: Pick<EmailRow, "id" | "aanvraag_id" | "design_id" | "verzonden" | "verzonden_op">,
+  inhoud: Parameters<typeof bouwVoorstelEmail>[0]
+): EmailRow {
+  const basisUrl = "http://localhost:3000";
+  const { onderwerp, html, text } = bouwVoorstelEmail({
+    ...inhoud,
+    designUrl: new URL(inhoud.designUrl, basisUrl).toString(),
+    voorstelUrl: new URL(inhoud.voorstelUrl, basisUrl).toString(),
+  });
+  return { ...rij, onderwerp, html_inhoud: html, platte_tekst: text };
+}
+
+export const VOORBEELD_EMAILS: EmailRow[] = [
+  maakVoorbeeldEmail(
+    {
+      id: "d1111111-d111-d111-d111-d11111111111",
+      aanvraag_id: "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+      design_id: "f1111111-f111-f111-f111-f11111111111",
+      verzonden: false,
+      verzonden_op: dagenGeleden(3),
+    },
+    {
+      klantNaam: "Marieke Visser",
+      veldtype: "scorebord",
+      afmeting: "200 x 100 cm",
+      designUrl: "/placeholder-ontwerp.svg",
+      voorstelUrl: "/voorstel/bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+    }
+  ),
+  maakVoorbeeldEmail(
+    {
+      id: "d5555555-d555-d555-d555-d55555555555",
+      aanvraag_id: "eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee",
+      design_id: "f5555555-f555-f555-f555-f55555555555",
+      verzonden: false,
+      verzonden_op: dagenGeleden(2),
+    },
+    {
+      klantNaam: "Lotte Hendriks",
+      veldtype: "scorebord",
+      afmeting: "200 x 100 cm",
+      designUrl: "/placeholder-ontwerp.svg",
+      voorstelUrl: "/voorstel/eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee",
+    }
+  ),
+  maakVoorbeeldEmail(
+    {
+      id: "d6666666-d666-d666-d666-d66666666666",
+      aanvraag_id: "ffffffff-ffff-ffff-ffff-ffffffffffff",
+      design_id: "f6666666-f666-f666-f666-f66666666666",
+      verzonden: false,
+      verzonden_op: dagenGeleden(3),
+    },
+    {
+      klantNaam: "Erik Mulder",
+      veldtype: "voetbal-zijlijn",
+      afmeting: "300 x 100 cm",
+      designUrl: "/placeholder-ontwerp.svg",
+      voorstelUrl: "/voorstel/ffffffff-ffff-ffff-ffff-ffffffffffff",
+    }
+  ),
+  maakVoorbeeldEmail(
+    {
+      id: "d7777777-d777-d777-d777-d77777777777",
+      aanvraag_id: "ffffffff-ffff-ffff-ffff-ffffffffffff",
+      design_id: "f7777777-f777-f777-f777-f77777777777",
+      verzonden: false,
+      verzonden_op: dagenGeleden(2),
+    },
+    {
+      klantNaam: "Erik Mulder",
+      veldtype: "voetbal-zijlijn",
+      afmeting: "300 x 100 cm",
+      designUrl: "/placeholder-ontwerp.svg",
+      voorstelUrl: "/voorstel/ffffffff-ffff-ffff-ffff-ffffffffffff",
+      isHerzien: true,
+    }
+  ),
+  maakVoorbeeldEmail(
+    {
+      id: "d8888888-d888-d888-d888-d88888888888",
+      aanvraag_id: "ffffffff-ffff-ffff-ffff-ffffffffffff",
+      design_id: "f8888888-f888-f888-f888-f88888888888",
+      verzonden: false,
+      verzonden_op: minutenGeleden(180),
+    },
+    {
+      klantNaam: "Erik Mulder",
+      veldtype: "voetbal-zijlijn",
+      afmeting: "300 x 100 cm",
+      designUrl: "/placeholder-ontwerp.svg",
+      voorstelUrl: "/voorstel/ffffffff-ffff-ffff-ffff-ffffffffffff",
+      isHerzien: true,
+    }
+  ),
 ];

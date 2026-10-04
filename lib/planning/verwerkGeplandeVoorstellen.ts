@@ -55,21 +55,34 @@ export async function verwerkGeplandeVoorstellen(): Promise<VerwerkGeplandeVoors
         wens: aanvraag.wens,
       });
 
-      await supabase.from("designs").insert({
-        aanvraag_id: aanvraag.id,
-        versienummer: 1,
-        status: design.status,
-        opslaglocatie: design.opslaglocatie,
-      });
+      const { data: nieuwDesign } = await supabase
+        .from("designs")
+        .insert({
+          aanvraag_id: aanvraag.id,
+          versienummer: 1,
+          status: design.status,
+          opslaglocatie: design.opslaglocatie,
+        })
+        .select("id")
+        .single();
 
-      if (klant?.email) {
-        await sendProposalEmail({
+      if (klant?.email && nieuwDesign) {
+        const emailResultaat = await sendProposalEmail({
           klantEmail: klant.email,
           klantNaam: klant.naam,
           aanvraagId: aanvraag.id,
           veldtype: aanvraag.veldtype,
           afmeting: aanvraag.afmeting,
           designUrl: design.opslaglocatie,
+        });
+
+        await supabase.from("emails").insert({
+          aanvraag_id: aanvraag.id,
+          design_id: nieuwDesign.id,
+          onderwerp: emailResultaat.onderwerp,
+          html_inhoud: emailResultaat.html,
+          platte_tekst: emailResultaat.text,
+          verzonden: emailResultaat.verzonden,
         });
       }
 

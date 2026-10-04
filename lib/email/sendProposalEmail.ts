@@ -17,6 +17,11 @@ export interface SendProposalEmailInput {
 export interface SendProposalEmailResult {
   verzonden: boolean;
   reden: string;
+  /** De daadwerkelijk opgebouwde e-mail (ook aanwezig als 'm alleen gelogd is, niet verstuurd), zodat
+   * de aanroeper 'm kan bewaren in de `emails`-tabel voor het interne overzicht. */
+  onderwerp: string;
+  html: string;
+  text: string;
 }
 
 // Basis-URL van de site, nodig omdat e-mailclients geen relatieve paden kunnen laden. Voor lokaal
@@ -52,6 +57,9 @@ export async function sendProposalEmail(input: SendProposalEmailInput): Promise<
     return {
       verzonden: false,
       reden: "sendProposalEmail is nog een placeholder; RESEND_API_KEY ontbreekt (zie .env.example).",
+      onderwerp,
+      html,
+      text,
     };
   }
 
@@ -68,8 +76,8 @@ export async function sendProposalEmail(input: SendProposalEmailInput): Promise<
 
   if (error) {
     console.error(`[sendProposalEmail] Resend gaf een fout voor aanvraag ${input.aanvraagId}:`, error);
-    return { verzonden: false, reden: error.message };
+    return { verzonden: false, reden: error.message, onderwerp, html, text };
   }
 
-  return { verzonden: true, reden: "Verstuurd via Resend." };
+  return { verzonden: true, reden: "Verstuurd via Resend.", onderwerp, html, text };
 }

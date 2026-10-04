@@ -134,3 +134,23 @@ create table if not exists feedback (
 comment on table feedback is 'Reactie van de klant op een voorgesteld ontwerp: akkoord of afwijzing met toelichting.';
 
 create index if not exists feedback_aanvraag_id_idx on feedback (aanvraag_id);
+
+-- ---------------------------------------------------------------------------
+-- emails
+-- ---------------------------------------------------------------------------
+create table if not exists emails (
+  id uuid primary key default gen_random_uuid(),
+  aanvraag_id uuid not null references aanvragen (id) on delete cascade,
+  design_id uuid not null references designs (id) on delete cascade,
+  onderwerp text not null,
+  html_inhoud text not null,
+  platte_tekst text not null,
+  verzonden boolean not null default false,
+  verzonden_op timestamptz not null default now()
+);
+
+comment on table emails is 'Kopie van elke (poging tot een) voorstel-e-mail die de AI heeft gestuurd, zodat intern precies te zien is wat er naar de klant is gegaan — ook als sendProposalEmail() nog in placeholder-modus draait (verzonden = false, zie lib/email/sendProposalEmail.ts).';
+comment on column emails.design_id is 'De conceptversie waarvoor deze e-mail is verstuurd; elke nieuwe/herziene designversie hoort bij precies één e-mail.';
+comment on column emails.verzonden is 'False zolang RESEND_API_KEY ontbreekt (de e-mail is dan alleen naar de serverlogs geschreven) of als Resend een fout teruggaf.';
+
+create index if not exists emails_aanvraag_id_idx on emails (aanvraag_id);
