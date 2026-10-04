@@ -639,6 +639,25 @@ te zien wélke conceptversies er waren, maar niet wát er precies naar de klant 
   correct geladen ontwerpafbeelding; een aanvraag zonder ontwerp toont nog gewoon "Nog geen
   ontwerp gegenereerd.").
 
+## Update — Concept en e-mail aanpasbaar zolang nog niet verstuurd ✅
+
+Op `/intern/[id]` was de gemailde inhoud nu wel te zien, maar niet aan te passen. Zolang Resend
+nog niet gekoppeld is (`RESEND_API_KEY` ontbreekt) is elke voorstel-e-mail sowieso nog maar
+"gelogd" in plaats van echt verstuurd — en zelfs daarna kan een medewerker in theorie nog iets
+willen corrigeren vóórdat het echt de deur uitgaat. Daarom is elk concept/e-mail nu bewerkbaar
+zolang `emails.verzonden` nog `false` is.
+
+- Twee nieuwe PATCH-routes, beveiligd via `middleware.ts`: `/api/aanvragen/[id]/designs/[designId]`
+  (past `opslaglocatie` aan) en `/api/aanvragen/[id]/emails/[emailId]` (past onderwerp, platte
+  tekst en HTML-inhoud aan). Beide weigeren de aanpassing server-side (409) als de bijbehorende
+  e-mail al écht verstuurd is — niet alleen een UI-regel.
+- Nieuwe clientcomponenten `ConceptBewerken.tsx` en `EmailBewerken.tsx`: een "Bewerken"-knop die
+  een inline formulier toont, alleen gerenderd op `/intern/[id]` als `!email.verzonden`. Na
+  opslaan een `router.refresh()`, net als de andere interne formulieren.
+- Geverifieerd met `npm run typecheck`, `npm run lint`, een schone `npm run build`, en handmatig
+  getest in de browser (de formulieren tonen de huidige waarden correct voorgevuld; opslaan geeft
+  terecht de bekende Supabase-foutmelding zolang er geen project gekoppeld is).
+
 ## Nog volledig open (bewuste placeholders voor latere sessies)
 
 - Open ontwerpvraag: hoe wordt de vrije tekst uit de ontwerpwens (sponsornaam, slogan, ...)

@@ -1,0 +1,69 @@
+import { NextResponse } from "next/server";
+import { createServerSupabaseClient } from "@/lib/supabase/server";
+
+// Beveiligd via middleware.ts (de gedeelde-wachtwoord-poort van /intern) — alleen ingelogde
+// medewerkers kunnen hier bij.
+//
+// Een e-mail mag alleen aangepast worden zolang hij nog niet écht verstuurd is (zie
+// `emails.verzonden`) — anders zou je hier iets anders laten zien dan wat de klant daadwerkelijk
+// ontvangen heeft.
+export async function PATCH(request: Request, { params }: { params: { id: string; emailId: string } }) {
+  let body: { onderwerp?: unknown; platte_tekst?: unknown; html_inhoud?: unknown };
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ ok: false, error: "Ongeldig verzoek." }, { status: 400 });
+  }
+
+  const onderwerp = typeof body.onderwerp === "string" ? body.onderwerp.trim() : null;
+  const platteTekst = typeof body.platte_tekst === "string" ? body.platte_tekst : null;
+  const htmlInhoud = typeof body.html_inhoud === "string" ? body.html_inhoud : null;
+
+  if (!onderwerp || !platteTekst || !htmlInhoud) {
+    return NextResponse.json(
+      { ok: false, error: "Onderwerp, platte tekst en HTML-inhoud zijn allemaal verplicht." },
+      { status: 400 }
+    );
+  }
+
+  let supabase: ReturnType<typeof createServerSupabaseClient>;
+  try {
+    supabase = createServerSupabaseClient();
+  } catch (error) {
+    return NextResponse.json(
+      { ok: false, error: error instanceof Error ? error.message : "Supabase is niet geconfigureerd." },
+      { status: 500 }
+    );
+  }
+
+  const { data: email, error: emailFout } = await supabase
+    .from("emails")
+    .select("id, verzonden")
+    .eq("id", params.emailId)
+    .eq("aanvraag_id", params.id)
+    .maybeSingle();
+
+  if (emailFout) {
+    return NextResponse.json({ ok: false, error: emailFout.message }, { status: 500 });
+  }
+  if (!email) {
+    return NextResponse.json({ ok: false, error: "E-mail niet gevonden." }, { status: 404 });
+  }
+  if (email.verzonden) {
+    return NextResponse.json(
+      { ok: false, error: "Deze e-mail is al verstuurd en kan niet meer aangepast worden." },
+      { status: 409 }
+    );
+  }
+
+  const { error: updateFout } = await supabase
+    .from("emails")
+    .update({ onderwerp, platte_tekst: platteTekst, html_inhoud: htmlInhoud })
+    .eq("id", email.id);
+
+  if (updateFout) {
+    return NextResponse.json({ ok: false, error: updateFout.message }, { status: 500 });
+  }
+
+  return NextResponse.json({ ok: true });
+}

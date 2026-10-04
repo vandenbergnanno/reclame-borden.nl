@@ -16,6 +16,8 @@ import {
   VELDTYPE_LABELS,
 } from "@/lib/types/domain";
 import { StatusWijzigen } from "./StatusWijzigen";
+import { ConceptBewerken } from "./ConceptBewerken";
+import { EmailBewerken } from "./EmailBewerken";
 
 export const metadata: Metadata = {
   title: "Aanvraag — Mediagraaf Conceptor",
@@ -212,6 +214,13 @@ export default async function AanvraagDetailPage({ params }: { params: { id: str
                         <span className="ml-2 text-xs font-normal text-neutral-500">{design.status}</span>
                       </p>
                       <p className="text-xs text-neutral-500">{design.opslaglocatie}</p>
+                      {!email?.verzonden && (
+                        <ConceptBewerken
+                          aanvraagId={aanvraag.id}
+                          designId={design.id}
+                          huidigeOpslaglocatie={design.opslaglocatie}
+                        />
+                      )}
                     </div>
                   </div>
 
@@ -241,6 +250,15 @@ export default async function AanvraagDetailPage({ params }: { params: { id: str
                         title={`E-mail bij concept versie ${design.versienummer}`}
                         className="mt-2 h-64 w-full rounded border border-neutral-200 bg-white"
                       />
+                      {!email.verzonden && (
+                        <EmailBewerken
+                          aanvraagId={aanvraag.id}
+                          emailId={email.id}
+                          huidigOnderwerp={email.onderwerp}
+                          huidigePlatteTekst={email.platte_tekst}
+                          huidigeHtmlInhoud={email.html_inhoud}
+                        />
+                      )}
                     </div>
                   ) : (
                     <p className="mt-3 border-t border-neutral-100 pt-3 text-xs text-neutral-400">
