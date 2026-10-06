@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { createServerSupabaseClient, isSupabaseGeconfigureerd } from "@/lib/supabase/server";
 import { VOORBEELD_AANVRAGEN, VOORBEELD_KLANTEN } from "@/lib/demo/voorbeelddata";
+import { CONCEPT_STATUSSEN, PRODUCTIE_STATUSSEN } from "@/lib/types/domain";
 
 export const metadata: Metadata = {
   title: "Klanten — Mediagraaf Conceptor",
@@ -20,6 +21,8 @@ export default async function KlantenPage() {
     provincie: string;
     aantalAanvragen: number;
     aantalOpen: number;
+    heeftProductieItems: boolean;
+    heeftConceptItems: boolean;
   }[] = [];
 
   const toontVoorbeelddata = !isSupabaseGeconfigureerd();
@@ -57,6 +60,12 @@ export default async function KlantenPage() {
         provincie: klant.provincie,
         aantalAanvragen: aanvragenVanKlant.length,
         aantalOpen: aanvragenVanKlant.filter((aanvraag) => aanvraag.status !== "gemaakt").length,
+        heeftProductieItems: aanvragenVanKlant.some((aanvraag) =>
+          (PRODUCTIE_STATUSSEN as readonly string[]).includes(aanvraag.status)
+        ),
+        heeftConceptItems: aanvragenVanKlant.some((aanvraag) =>
+          (CONCEPT_STATUSSEN as readonly string[]).includes(aanvraag.status)
+        ),
       };
     });
   } catch (error) {
@@ -128,12 +137,24 @@ export default async function KlantenPage() {
                     )}
                   </td>
                   <td className="px-4 py-3">
-                    <a
-                      href={`/intern?klant=${rij.klantId}`}
-                      className="font-medium text-brand-groen hover:underline"
-                    >
-                      Aanvragen bekijken →
-                    </a>
+                    <div className="flex flex-col items-start gap-1">
+                      {rij.heeftProductieItems && (
+                        <a
+                          href={`/intern?klant=${rij.klantId}`}
+                          className="font-medium text-brand-groen hover:underline"
+                        >
+                          Aanvragen bekijken →
+                        </a>
+                      )}
+                      {rij.heeftConceptItems && (
+                        <a
+                          href={`/intern/concepten?klant=${rij.klantId}`}
+                          className="font-medium text-brand-groen hover:underline"
+                        >
+                          Concepten bekijken →
+                        </a>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}

@@ -47,9 +47,15 @@ const LOOPT_VAST_VANAF = 2;
 // daarop gereageerd heeft (inclusief een eventuele afwijzing-en-herziening-heen-en-weer). Dit is
 // bewust gescheiden van /intern (de fysieke productieflow van al goedgekeurde borden) — zie
 // PRODUCTIE_STATUSSEN/CONCEPT_STATUSSEN in lib/types/domain.ts.
-export default async function ConceptenPage() {
+export default async function ConceptenPage({
+  searchParams,
+}: {
+  searchParams: { klant?: string };
+}) {
+  const klantFilter = searchParams.klant;
   let foutmelding: string | null = null;
   let kaarten: ConceptKaart[] = [];
+  let klantNaamFilter: string | null = null;
   const toontVoorbeelddata = !isSupabaseGeconfigureerd();
 
   try {
@@ -97,8 +103,13 @@ export default async function ConceptenPage() {
 
     const klantenById = new Map(klanten.map((klant) => [klant.id, klant]));
 
+    if (klantFilter) {
+      klantNaamFilter = klantenById.get(klantFilter)?.naam ?? "Onbekende klant";
+    }
+
     kaarten = aanvragen
       .filter((aanvraag) => (CONCEPT_STATUSSEN as readonly string[]).includes(aanvraag.status))
+      .filter((aanvraag) => !klantFilter || aanvraag.klant_id === klantFilter)
       .map((aanvraag) => {
         const klant = klantenById.get(aanvraag.klant_id);
         const veldtypeLabel = VELDTYPE_LABELS[aanvraag.veldtype] ?? aanvraag.veldtype;
@@ -170,6 +181,16 @@ export default async function ConceptenPage() {
           ; bij afwijzing stuurt de AI automatisch een herzien concept terug.
         </p>
       </div>
+
+      {klantNaamFilter && (
+        <p className="rounded border border-neutral-200 bg-neutral-50 px-3 py-2 text-sm text-neutral-700">
+          Concepten van <span className="font-medium">{klantNaamFilter}</span>.{" "}
+          <a href="/intern/concepten" className="font-medium text-brand-groen hover:underline">
+            Toon alle concepten
+          </a>
+          .
+        </p>
+      )}
 
       {toontVoorbeelddata && (
         <p className="rounded border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-800">

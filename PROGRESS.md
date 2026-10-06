@@ -699,6 +699,41 @@ commentaar dat het tegendeel beweerde.
   bewerkflow in de browser (reikt nu weer correct de route, niet 401), en de cookiemelding
   (verschijnt, verdwijnt na "Oké", blijft weg na een refresh).
 
+## Update — Review van /intern: drie echte bugs gefixt ✅
+
+Op verzoek een volledige doorlichting van het interne gedeelte (Aanvragen, Concepten, Klanten,
+detailpagina) vanuit het perspectief van een verkoper die dit de hele dag gebruikt. Drie
+bevindingen waren geen "nice to have" maar konden een medewerker echt fouten laten maken of
+spullen laten missen — die zijn nu gefixt:
+
+- **"Nieuw" betekende twee tegenovergestelde dingen.** Een kersverse aanvraag (nog geen voorstel
+  verstuurd) en een door de klant al goedgekeurde aanvraag (terug voor productie) kregen allebei
+  gewoon de status "nieuw" en zagen er op de Aanvragen-kaart identiek uit — een medewerker kon per
+  ongeluk op "Start behandeling" klikken bij een aanvraag die de klant nog nooit gezien heeft. Elke
+  "Nieuw"-kaart toont nu een badge: **"Wacht nog op voorstel"** of **"Goedgekeurd door klant"**
+  (`app/intern/(besloten)/page.tsx`, haalt er nu ook `feedback` bij op).
+- **Klanten → "Aanvragen bekijken" kon een klant onbereikbaar maken.** Die link ging altijd naar
+  `/intern?klant=X`, dat standaard alleen de productiestatussen toont — een klant wiens enige
+  openstaande item in de concept/mailflow zat (`voorstel_verstuurd`) was zo simpelweg niet te
+  vinden. Concepten ondersteunt nu ook `?klant=`, en Klanten toont per rij de juiste link(en):
+  "Aanvragen bekijken" en/of "Concepten bekijken", afhankelijk van waar die klant daadwerkelijk
+  iets openstaand heeft.
+- **Bewerk-knoppen stonden ook op oude, vervangen conceptversies.** "Concept bewerken"/"E-mail
+  bewerken" op de detailpagina gingen af op `!email.verzonden` per versie — maar zolang Resend niet
+  gekoppeld is, blijft élke e-mail voor altijd `verzonden: false`, ook allang ingehaalde versies.
+  De knoppen staan nu alleen nog bij de nieuwste versie (een "Huidig"-badge maakt dat ook visueel
+  duidelijk).
+- Kleinigheidje: "onbekende klant" (kleine letter) vs "Onbekende klant" rechtgetrokken naar overal
+  hoofdletter.
+- Geverifieerd met `npm run typecheck`, `npm run lint`, een schone `npm run build`, en handmatig in
+  de browser: de badges kloppen per kaart, Erik Mulder (concept-status) is nu bereikbaar via
+  Klanten → "Concepten bekijken" mét werkende klantfilter, en op zijn detailpagina staat "Huidig" +
+  de bewerk-knoppen alleen nog bij conceptversie 3, niet bij 1 of 2.
+
+Rest van de review (features die een verkoper zou kunnen helpen, geen bugs) staat hieronder onder
+"Nog volledig open" — bewust niet in dit rondje meegebouwd, dat zijn grotere keuzes om eerst af te
+stemmen.
+
 ## Nog volledig open (bewuste placeholders voor latere sessies)
 
 - Open ontwerpvraag: hoe wordt de vrije tekst uit de ontwerpwens (sponsornaam, slogan, ...)
@@ -728,3 +763,22 @@ commentaar dat het tegendeel beweerde.
   store (bijv. Upstash Redis) voordat de limieten weer kloppen.
 - Content-Security-Policy toevoegen bij een echte deployment (zie next.config.mjs) — bewust nog
   achterwege gelaten omdat Next.js' dev-server `unsafe-eval` nodig heeft voor Fast Refresh.
+
+**Ideeën uit de verkoper-georiënteerde review van /intern (geen bugs, wel dingen die het proces
+echt zouden kunnen versnellen — nog niet gebouwd, eerst met de gebruiker afstemmen welke prioriteit
+heeft):**
+- Zoeken/filteren op klantnaam of bedrijf — Aanvragen, Concepten en Klanten hebben nu geen enkel
+  zoekveld; bij meer dan een paar tientallen rijen wordt scrollen onhandig.
+- Een teller/badge op het "Concepten"-tabblad in `InternNav.tsx` voor het aantal "Loopt vast"-
+  gevallen, zodat een medewerker die niet per se hoeft te missen door simpelweg niet op dat
+  tabblad te klikken.
+- Een "wacht al X dagen"-indicator op kaarten in "Nieuw"/"In behandeling" — nu sorteert alles enkel
+  op datum zonder visuele waarschuwing als iets te lang blijft liggen.
+- Live/periodieke refresh van de interne pagina's (nu alleen bij navigeren of handmatig), zodat een
+  klant die tijdens je dienst reageert niet onopgemerkt blijft tot je toevallig opnieuw laadt.
+- Paginering/limieten op de Supabase-queries in alle drie overzichtspagina's — nu wordt alles
+  ongefilterd opgehaald en client-side gejoind, prima op deze schaal maar schaalt niet oneindig.
+- Mobiel/tablet: `InternNav` + logout-knop in `layout.tsx` wrappen niet expliciet op een smal
+  scherm (`flex` zonder `flex-wrap`).
+- Audit-trail voor handmatige statuswijzigingen via `StatusWijzigen.tsx` (nu geen log van wie wat
+  wanneer veranderde, los van de automatische flow).

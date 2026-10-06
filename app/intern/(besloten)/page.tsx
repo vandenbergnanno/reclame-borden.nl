@@ -3,6 +3,7 @@ import { createServerSupabaseClient, isSupabaseGeconfigureerd } from "@/lib/supa
 import {
   VOORBEELD_AANVRAGEN,
   VOORBEELD_CONTENT_CHECKS,
+  VOORBEELD_FEEDBACK,
   VOORBEELD_KLANTEN,
 } from "@/lib/demo/voorbeelddata";
 import {
@@ -39,6 +40,11 @@ interface AanvraagKaart {
   statusWaarde: AanvraagStatus;
   ingediendOp: string;
   heeftGeblokkeerdeCheck: boolean;
+  // Status "nieuw" dekt twee heel verschillende dingen: een kersverse aanvraag die nog op een
+  // voorstel wacht, en een door de klant al goedgekeurde aanvraag die terugkeert voor productie
+  // (zie app/api/aanvragen/[id]/feedback/route.ts). Zonder dit onderscheid lijkt elke "Nieuw"-kaart
+  // hetzelfde, terwijl je bij de eerste nog helemaal niet "Start behandeling" zou moeten klikken.
+  alGoedgekeurd: boolean;
 }
 
 // Server component: haalt aanvragen, klanten en contentchecks apart op en koppelt ze in JS.
@@ -62,37 +68,49 @@ export default async function InternPage({
     let aanvragen: typeof VOORBEELD_AANVRAGEN;
     let klanten: typeof VOORBEELD_KLANTEN;
     let checks: Pick<(typeof VOORBEELD_CONTENT_CHECKS)[number], "aanvraag_id" | "geblokkeerd">[];
+    let feedback: Pick<(typeof VOORBEELD_FEEDBACK)[number], "aanvraag_id" | "goedgekeurd">[];
 
     if (toontVoorbeelddata) {
       aanvragen = VOORBEELD_AANVRAGEN;
       klanten = VOORBEELD_KLANTEN;
       checks = VOORBEELD_CONTENT_CHECKS;
+      feedback = VOORBEELD_FEEDBACK;
     } else {
       const supabase = createServerSupabaseClient();
 
-      const [{ data: aanvragenData, error: aanvragenFout }, { data: klantenData, error: klantenFout }, { data: checksData, error: checksFout }] =
-        await Promise.all([
-          supabase.from("aanvragen").select("*").order("created_at", { ascending: false }),
-          supabase.from("klanten").select("*"),
-          supabase.from("content_checks").select("aanvraag_id, geblokkeerd"),
-        ]);
+      const [
+        { data: aanvragenData, error: aanvragenFout },
+        { data: klantenData, error: klantenFout },
+        { data: checksData, error: checksFout },
+        { data: feedbackData, error: feedbackFout },
+      ] = await Promise.all([
+        supabase.from("aanvragen").select("*").order("created_at", { ascending: false }),
+        supabase.from("klanten").select("*"),
+        supabase.from("content_checks").select("aanvraag_id, geblokkeerd"),
+        supabase.from("feedback").select("aanvraag_id, goedgekeurd"),
+      ]);
 
       if (aanvragenFout) throw new Error(aanvragenFout.message);
       if (klantenFout) throw new Error(klantenFout.message);
       if (checksFout) throw new Error(checksFout.message);
+      if (feedbackFout) throw new Error(feedbackFout.message);
 
       aanvragen = aanvragenData ?? [];
       klanten = klantenData ?? [];
       checks = checksData ?? [];
+      feedback = feedbackData ?? [];
     }
 
     const klantenById = new Map(klanten.map((klant) => [klant.id, klant]));
     const geblokkeerdeAanvraagIds = new Set(
       checks.filter((check) => check.geblokkeerd).map((check) => check.aanvraag_id)
     );
+    const goedgekeurdeAanvraagIds = new Set(
+      feedback.filter((item) => item.goedgekeurd).map((item) => item.aanvraag_id)
+    );
 
     if (klantFilter) {
-      klantNaamFilter = klantenById.get(klantFilter)?.naam ?? "onbekende klant";
+      klantNaamFilter = klantenById.get(klantFilter)?.naam ?? "Onbekende klant";
     }
 
     const gefilterd = aanvragen.filter((aanvraag) => {
@@ -115,6 +133,7 @@ export default async function InternPage({
         statusWaarde: aanvraag.status,
         ingediendOp: new Date(aanvraag.created_at).toLocaleString("nl-NL"),
         heeftGeblokkeerdeCheck: geblokkeerdeAanvraagIds.has(aanvraag.id),
+        alGoedgekeurd: goedgekeurdeAanvraagIds.has(aanvraag.id),
       };
     });
   } catch (error) {
@@ -225,6 +244,17 @@ export default async function InternPage({
                   <p className="text-xs text-neutral-500">{kaart.provincie}</p>
 
                   <div className="mt-2 flex flex-wrap gap-1">
+                    {kaart.statusWaarde === "nieuw" && (
+                      <span
+                        className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                          kaart.alGoedgekeurd
+                            ? "bg-brand-groen/10 text-brand-groen"
+                            : "bg-neutral-100 text-neutral-500"
+                        }`}
+                      >
+                        {kaart.alGoedgekeurd ? "Goedgekeurd door klant" : "Wacht nog op voorstel"}
+                      </span>
+                    )}
                     {kaart.nieuwBord && (
                       <span className="rounded-full bg-brand-oranje/10 px-2 py-0.5 text-[10px] font-medium text-brand-oranje">
                         {kaart.bordAanschaf}

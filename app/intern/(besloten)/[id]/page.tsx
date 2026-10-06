@@ -88,6 +88,10 @@ export default async function AanvraagDetailPage({ params }: { params: { id: str
     notFound();
   }
 
+  const hoogsteVersienummer = designs?.length
+    ? Math.max(...designs.map((design) => design.versienummer))
+    : 0;
+
   return (
     <div className="space-y-6">
       {toontVoorbeelddata && (
@@ -199,6 +203,10 @@ export default async function AanvraagDetailPage({ params }: { params: { id: str
           <ul className="space-y-4">
             {designs.map((design) => {
               const email = emails?.find((item) => item.design_id === design.id);
+              // Alleen de nieuwste versie is wat een klant nu daadwerkelijk zou zien — oudere
+              // (vervangen) versies tonen we wel in de geschiedenis, maar zijn niet meer te
+              // bewerken, ook al staat hun eigen e-mail toevallig nog op verzonden=false.
+              const isHuidigeVersie = design.versienummer === hoogsteVersienummer;
               return (
                 <li key={design.id} className="rounded-lg border border-neutral-200 p-3">
                   <div className="flex items-start gap-3">
@@ -212,9 +220,14 @@ export default async function AanvraagDetailPage({ params }: { params: { id: str
                       <p className="font-medium text-brand-zwart">
                         Concept versie {design.versienummer}
                         <span className="ml-2 text-xs font-normal text-neutral-500">{design.status}</span>
+                        {isHuidigeVersie && (
+                          <span className="ml-2 rounded-full bg-brand-groen/10 px-2 py-0.5 text-[10px] font-medium text-brand-groen">
+                            Huidig
+                          </span>
+                        )}
                       </p>
                       <p className="text-xs text-neutral-500">{design.opslaglocatie}</p>
-                      {!email?.verzonden && (
+                      {isHuidigeVersie && !email?.verzonden && (
                         <ConceptBewerken
                           aanvraagId={aanvraag.id}
                           designId={design.id}
@@ -250,7 +263,7 @@ export default async function AanvraagDetailPage({ params }: { params: { id: str
                         title={`E-mail bij concept versie ${design.versienummer}`}
                         className="mt-2 h-64 w-full rounded border border-neutral-200 bg-white"
                       />
-                      {!email.verzonden && (
+                      {isHuidigeVersie && !email.verzonden && (
                         <EmailBewerken
                           aanvraagId={aanvraag.id}
                           emailId={email.id}
