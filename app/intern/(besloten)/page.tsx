@@ -15,6 +15,7 @@ import {
   type AanvraagStatus,
 } from "@/lib/types/domain";
 import { StatusActieKnop } from "./StatusActieKnop";
+import { LiveVerversen } from "./LiveVerversen";
 
 export const metadata: Metadata = {
   title: "Intern overzicht — Mediagraaf Conceptor",
@@ -157,6 +158,7 @@ export default async function InternPage({
 
   return (
     <div className="space-y-6">
+      <LiveVerversen />
       <div>
         <h1 className="text-2xl font-semibold text-brand-zwart">Aanvragen</h1>
         <p className="mt-1 text-sm text-neutral-600">

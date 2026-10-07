@@ -7,8 +7,9 @@ import {
   VOORBEELD_FEEDBACK,
   VOORBEELD_KLANTEN,
 } from "@/lib/demo/voorbeelddata";
-import { CONCEPT_STATUSSEN, VELDTYPE_LABELS } from "@/lib/types/domain";
+import { CONCEPT_STATUSSEN, LOOPT_VAST_VANAF, VELDTYPE_LABELS } from "@/lib/types/domain";
 import { VerwerkGeplandeVoorstellenKnop } from "../VerwerkGeplandeVoorstellenKnop";
+import { LiveVerversen } from "../LiveVerversen";
 
 export const metadata: Metadata = {
   title: "Concepten — Mediagraaf Conceptor",
@@ -37,11 +38,19 @@ interface ConceptKaart {
   tijdlijn: TijdlijnItem[];
   geblokkeerdeCheck: { probleem: string; toelichting: string | null } | null;
   aantalAfwijzingen: number;
+  // Aantal dagen sinds het laatste concept gemaild is, zolang de klant daar nog niet op
+  // gereageerd heeft — null zodra de klant wél al gereageerd heeft (dan wacht er niemand meer).
+  wachtDagen: number | null;
 }
 
-// Vanaf hoeveel afwijzingen op rij we een aanvraag apart als "loopt vast" tonen — de AI komt er
-// kennelijk zelf niet uit, dus is het moment om een medewerker het te laten overnemen.
-const LOOPT_VAST_VANAF = 2;
+function berekenWachtDagen(tijdlijn: TijdlijnItem[]): number | null {
+  if (tijdlijn.length === 0) return null;
+  const laatsteItem = tijdlijn[tijdlijn.length - 1];
+  if (laatsteItem.soort !== "concept") return null;
+  const msPerDag = 1000 * 60 * 60 * 24;
+  const verstreken = Date.now() - new Date(laatsteItem.opSorteerwaarde).getTime();
+  return Math.max(0, Math.floor(verstreken / msPerDag));
+}
 
 // Toont de klant-mailflow: welke voorstellen de AI gegenereerd en gemaild heeft, en hoe de klant
 // daarop gereageerd heeft (inclusief een eventuele afwijzing-en-herziening-heen-en-weer). Dit is
@@ -158,6 +167,7 @@ export default async function ConceptenPage({
             ? { probleem: geblokkeerdeCheck.probleem, toelichting: geblokkeerdeCheck.toelichting }
             : null,
           aantalAfwijzingen,
+          wachtDagen: berekenWachtDagen(tijdlijn),
         };
       });
   } catch (error) {
@@ -169,6 +179,7 @@ export default async function ConceptenPage({
 
   return (
     <div className="space-y-6">
+      <LiveVerversen />
       <div>
         <h1 className="text-2xl font-semibold text-brand-zwart">Concepten</h1>
         <p className="mt-1 text-sm text-neutral-600">
@@ -285,6 +296,12 @@ function ConceptKaartWeergave({ kaart, nadruk = false }: { kaart: ConceptKaart; 
       {nadruk && (
         <p className="mt-2 text-xs font-medium text-red-700">
           {kaart.aantalAfwijzingen}x afgewezen
+        </p>
+      )}
+
+      {kaart.wachtDagen !== null && kaart.wachtDagen >= 1 && (
+        <p className={`mt-2 text-xs font-medium ${kaart.wachtDagen >= 3 ? "text-red-700" : "text-brand-oranje"}`}>
+          Wacht al {kaart.wachtDagen} {kaart.wachtDagen === 1 ? "dag" : "dagen"} op reactie
         </p>
       )}
 

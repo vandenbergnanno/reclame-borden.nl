@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { createServerSupabaseClient, isSupabaseGeconfigureerd } from "@/lib/supabase/server";
 import { VOORBEELD_AANVRAGEN, VOORBEELD_KLANTEN } from "@/lib/demo/voorbeelddata";
 import { CONCEPT_STATUSSEN, PRODUCTIE_STATUSSEN } from "@/lib/types/domain";
+import { KlantenTabel } from "./KlantenTabel";
 
 export const metadata: Metadata = {
   title: "Klanten — Mediagraaf Conceptor",
@@ -106,62 +107,7 @@ export default async function KlantenPage() {
         <p className="text-sm text-neutral-600">Er zijn nog geen klanten.</p>
       )}
 
-      {!foutmelding && rijen.length > 0 && (
-        <div className="overflow-x-auto rounded-xl border border-neutral-200 bg-white shadow-sm">
-          <table className="w-full text-left text-sm">
-            <thead className="bg-neutral-50 text-xs uppercase tracking-wide text-neutral-500">
-              <tr>
-                <th className="px-4 py-3 font-semibold">Naam</th>
-                <th className="px-4 py-3 font-semibold">Bedrijf</th>
-                <th className="px-4 py-3 font-semibold">E-mail</th>
-                <th className="px-4 py-3 font-semibold">Telefoon</th>
-                <th className="px-4 py-3 font-semibold">Provincie</th>
-                <th className="px-4 py-3 font-semibold">Aanvragen</th>
-                <th className="px-4 py-3 font-semibold"></th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-neutral-100">
-              {rijen.map((rij) => (
-                <tr key={rij.klantId} className="transition hover:bg-neutral-50">
-                  <td className="px-4 py-3 font-medium text-brand-zwart">{rij.naam}</td>
-                  <td className="px-4 py-3 text-neutral-600">{rij.bedrijf ?? "—"}</td>
-                  <td className="px-4 py-3 text-neutral-600">{rij.email}</td>
-                  <td className="px-4 py-3 text-neutral-600">{rij.telefoon ?? "—"}</td>
-                  <td className="px-4 py-3 text-neutral-600">{rij.provincie}</td>
-                  <td className="px-4 py-3">
-                    <span className="text-neutral-600">{rij.aantalAanvragen}</span>
-                    {rij.aantalOpen > 0 && (
-                      <span className="ml-2 rounded-full bg-brand-oranje/10 px-2 py-0.5 text-xs font-medium text-brand-oranje">
-                        {rij.aantalOpen} lopend
-                      </span>
-                    )}
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex flex-col items-start gap-1">
-                      {rij.heeftProductieItems && (
-                        <a
-                          href={`/intern?klant=${rij.klantId}`}
-                          className="font-medium text-brand-groen hover:underline"
-                        >
-                          Aanvragen bekijken →
-                        </a>
-                      )}
-                      {rij.heeftConceptItems && (
-                        <a
-                          href={`/intern/concepten?klant=${rij.klantId}`}
-                          className="font-medium text-brand-groen hover:underline"
-                        >
-                          Concepten bekijken →
-                        </a>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+      {!foutmelding && rijen.length > 0 && <KlantenTabel rijen={rijen} />}
     </div>
   );
 }

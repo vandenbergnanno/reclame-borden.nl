@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type FormEvent, type ReactNode } from "react";
+import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
 import {
   AFMETING_ANDERS,
   BORD_AANSCHAF_LABELS,
@@ -15,12 +15,78 @@ import {
 
 type Status = "idle" | "versturen" | "gelukt" | "mislukt";
 
+// Veldnamen die (los van de bestandsbijlage, die zich niet laat herstellen) automatisch
+// tussentijds opgeslagen worden, zodat een klant die per ongeluk de tab sluit of de pagina
+// vernieuwt niet alles opnieuw hoeft in te typen.
+const OPGESLAGEN_VELDNAMEN = ["naam", "bedrijf", "email", "telefoon", "provincie", "wens"] as const;
+const CONCEPT_OPSLAGSLEUTEL = "mediagraaf_aanvraag_concept";
+
 export function AanvraagForm() {
+  const formRef = useRef<HTMLFormElement>(null);
   const [status, setStatus] = useState<Status>("idle");
   const [foutmelding, setFoutmelding] = useState<string | null>(null);
   const [veldtype, setVeldtype] = useState<Veldtype | "">("");
   const [afmetingKeuze, setAfmetingKeuze] = useState<string>("");
   const [bordAanschaf, setBordAanschaf] = useState<BordAanschaf | "">("");
+  const [bijlageNaam, setBijlageNaam] = useState<string | null>(null);
+  const [conceptHersteld, setConceptHersteld] = useState(false);
+
+  // Eenmalig bij het laden: kijk of er een eerder tussentijds opgeslagen concept ligt, en herstel
+  // dat dan in zowel de React-state (voor de keuzekaarten) als de gewone tekstvelden.
+  useEffect(() => {
+    try {
+      const ruw = window.localStorage.getItem(CONCEPT_OPSLAGSLEUTEL);
+      if (!ruw) return;
+      const concept = JSON.parse(ruw) as Record<string, string>;
+
+      if (concept.veldtype) setVeldtype(concept.veldtype as Veldtype);
+      if (concept.afmetingKeuze) setAfmetingKeuze(concept.afmetingKeuze);
+      if (concept.bordAanschaf) setBordAanschaf(concept.bordAanschaf as BordAanschaf);
+
+      const form = formRef.current;
+      if (form) {
+        for (const naam of OPGESLAGEN_VELDNAMEN) {
+          const waarde = concept[naam];
+          const veld = form.elements.namedItem(naam);
+          if (
+            waarde &&
+            (veld instanceof HTMLInputElement || veld instanceof HTMLTextAreaElement || veld instanceof HTMLSelectElement)
+          ) {
+            veld.value = waarde;
+          }
+        }
+      }
+
+      setConceptHersteld(true);
+    } catch {
+      // localStorage kan geblokkeerd zijn (bijv. privénavigatie) — dan slaan we het herstellen
+      // gewoon over in plaats van de pagina te laten breken.
+    }
+  }, []);
+
+  function conceptOpslaan() {
+    const form = formRef.current;
+    if (!form) return;
+    try {
+      const data = new FormData(form);
+      const concept: Record<string, string> = { veldtype, afmetingKeuze, bordAanschaf };
+      for (const naam of OPGESLAGEN_VELDNAMEN) {
+        const waarde = data.get(naam);
+        if (typeof waarde === "string") concept[naam] = waarde;
+      }
+      window.localStorage.setItem(CONCEPT_OPSLAGSLEUTEL, JSON.stringify(concept));
+    } catch {
+      // zie hierboven
+    }
+  }
+
+  function conceptWissen() {
+    try {
+      window.localStorage.removeItem(CONCEPT_OPSLAGSLEUTEL);
+    } catch {
+      // zie hierboven
+    }
+  }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -49,10 +115,12 @@ export function AanvraagForm() {
       }
 
       setStatus("gelukt");
+      conceptWissen();
       event.currentTarget.reset();
       setVeldtype("");
       setAfmetingKeuze("");
       setBordAanschaf("");
+      setBijlageNaam(null);
     } catch (error) {
       setStatus("mislukt");
       setFoutmelding(error instanceof Error ? error.message : "Onbekende fout.");
@@ -82,7 +150,19 @@ export function AanvraagForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form
+      ref={formRef}
+      onSubmit={handleSubmit}
+      onInput={conceptOpslaan}
+      onChange={conceptOpslaan}
+      className="space-y-6"
+    >
+      {conceptHersteld && (
+        <p className="rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2 text-sm text-neutral-600">
+          We hebben je eerder ingevulde gegevens herladen — klopt alles nog, ga dan gewoon verder.
+        </p>
+      )}
+
       <Sectie stap={1} titel="Jouw gegevens">
         <div className="grid gap-4 sm:grid-cols-2">
           <Veld label="Naam" name="naam" required autoComplete="name" />
@@ -95,7 +175,13 @@ export function AanvraagForm() {
             autoComplete="email"
             hint="Hierop nemen we contact met je op."
           />
-          <Veld label="Telefoonnummer" name="telefoon" type="tel" autoComplete="tel" />
+          <Veld
+            label="Telefoonnummer"
+            name="telefoon"
+            type="tel"
+            inputMode="tel"
+            autoComplete="tel"
+          />
           <div>
             <label htmlFor="provincie" className="mb-1 block text-sm font-medium text-brand-zwart">
               Provincie *
@@ -206,12 +292,18 @@ export function AanvraagForm() {
             id="bijlage"
             name="bijlage"
             type="file"
+            accept="image/*,.pdf"
+            onChange={(event) => setBijlageNaam(event.target.files?.[0]?.name ?? null)}
             className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm file:mr-3 file:rounded file:border-0 file:bg-neutral-100 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-brand-zwart hover:file:bg-neutral-200"
           />
-          <p className="mt-1 text-xs text-neutral-500">
-            Wordt nu alleen opgeslagen — er vindt nog geen automatische verwerking van dit bestand
-            plaats.
-          </p>
+          {bijlageNaam ? (
+            <p className="mt-1.5 text-xs font-medium text-brand-groen">Gekozen: {bijlageNaam}</p>
+          ) : (
+            <p className="mt-1 text-xs text-neutral-500">
+              Wordt nu alleen opgeslagen — er vindt nog geen automatische verwerking van dit bestand
+              plaats.
+            </p>
+          )}
         </div>
       </Sectie>
 
@@ -293,6 +385,7 @@ function Veld({
   required = false,
   placeholder,
   autoComplete,
+  inputMode,
   hint,
 }: {
   label: string;
@@ -301,6 +394,7 @@ function Veld({
   required?: boolean;
   placeholder?: string;
   autoComplete?: string;
+  inputMode?: "text" | "tel" | "email" | "numeric";
   hint?: string;
 }) {
   return (
@@ -316,6 +410,7 @@ function Veld({
         required={required}
         placeholder={placeholder}
         autoComplete={autoComplete}
+        inputMode={inputMode}
         className="w-full rounded-lg border border-neutral-300 px-3 py-2.5 focus:border-brand-groen focus:outline-none focus:ring-1 focus:ring-brand-groen"
       />
       {hint && <p className="mt-1 text-xs text-neutral-500">{hint}</p>}

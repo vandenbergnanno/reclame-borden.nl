@@ -70,6 +70,11 @@ export const PRODUCTIE_STATUSSEN: readonly AanvraagStatus[] = ["nieuw", "in_beha
 // gegenereerd en verstuurd, en er wordt gewacht op (of gereageerd op) een klantreactie.
 export const CONCEPT_STATUSSEN: readonly AanvraagStatus[] = ["voorstel_verstuurd"];
 
+// Vanaf hoeveel afwijzingen op rij we een aanvraag als "loopt vast" bestempelen — de AI komt er
+// kennelijk zelf niet uit, dus is het moment om een medewerker het te laten overnemen. Gedeeld
+// tussen /intern/concepten (de lijst zelf) en de navigatieteller in layout.tsx.
+export const LOOPT_VAST_VANAF = 2;
+
 // Simpel, apart doorstuur-pad voor de productiekant ("inkomend" -> "in behandeling" ->
 // "gemaakt"), los van de klant-mailflow (voorstel_verstuurd). Elke status hier heeft een
 // knoplabel voor de eenknops-doorstuuractie in het interne overzicht.
