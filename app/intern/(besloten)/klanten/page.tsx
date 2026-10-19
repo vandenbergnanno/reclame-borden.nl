@@ -19,7 +19,7 @@ export default async function KlantenPage() {
     bedrijf: string | null;
     email: string;
     telefoon: string | null;
-    provincie: string;
+    provincie: string | null;
     aantalAanvragen: number;
     aantalOpen: number;
     heeftProductieItems: boolean;

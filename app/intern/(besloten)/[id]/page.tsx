@@ -139,11 +139,24 @@ export default async function AanvraagDetailPage({ params }: { params: { id: str
         <div className="rounded-xl border border-neutral-200 bg-white p-5 shadow-sm">
           <h2 className="mb-2 font-semibold text-brand-zwart">Bord</h2>
           <dl className="space-y-1 text-sm">
-            <Rij label="Veldtype" waarde={VELDTYPE_LABELS[aanvraag.veldtype] ?? aanvraag.veldtype} />
+            {aanvraag.veldtype && <Rij label="Veldtype" waarde={VELDTYPE_LABELS[aanvraag.veldtype] ?? aanvraag.veldtype} />}
             <Rij label="Afmeting" waarde={aanvraag.afmeting} />
+            <Rij label="Aantal" waarde={String(aanvraag.aantal)} />
+            <Rij label="Bedrukking" waarde={aanvraag.bedrukking} />
+            {aanvraag.kromtrekken && <Rij label="Kromtrekken" waarde="Extra bescherming besteld" />}
             <Rij
               label="Aanschaf"
               waarde={BORD_AANSCHAF_LABELS[aanvraag.bord_aanschaf] ?? aanvraag.bord_aanschaf}
+            />
+            <Rij
+              label="Levering"
+              waarde={
+                aanvraag.levering === "Bezorgen"
+                  ? [aanvraag.straat, [aanvraag.postcode, aanvraag.plaats].filter(Boolean).join(" ")]
+                      .filter(Boolean)
+                      .join(", ") || "Bezorgen"
+                  : aanvraag.levering
+              }
             />
             <Rij
               label="Voorstel gepland op"
@@ -153,16 +166,100 @@ export default async function AanvraagDetailPage({ params }: { params: { id: str
         </div>
       </section>
 
-      <section className="rounded-xl border border-neutral-200 bg-white p-5 shadow-sm">
-        <h2 className="mb-2 font-semibold text-brand-zwart">Ontwerpwens</h2>
-        <p className="whitespace-pre-wrap text-sm text-neutral-700">{aanvraag.wens}</p>
-        {aanvraag.bijlage_pad && (
-          <p className="mt-2 text-sm text-neutral-500">
-            Bijlage: {aanvraag.bijlage_pad}{" "}
-            <span className="text-xs">(nog geen downloadlink — wacht op een echt Supabase-project)</span>
-          </p>
-        )}
-      </section>
+      {aanvraag.wens ? (
+        // Oude testflow: tekstuele wens + AI-conceptgeneratie (zie de "Ontwerpen & e-mails"-sectie
+        // verderop).
+        <section className="rounded-xl border border-neutral-200 bg-white p-5 shadow-sm">
+          <h2 className="mb-2 font-semibold text-brand-zwart">Ontwerpwens</h2>
+          <p className="whitespace-pre-wrap text-sm text-neutral-700">{aanvraag.wens}</p>
+          {aanvraag.bijlage_pad && (
+            <p className="mt-2 text-sm text-neutral-500">
+              Bijlage: {aanvraag.bijlage_pad}{" "}
+              <span className="text-xs">(nog geen downloadlink — wacht op een echt Supabase-project)</span>
+            </p>
+          )}
+        </section>
+      ) : (
+        // Nieuwe ontwerptool (reclamebord-maker): ofwel een kant-en-klaar drukbestand (de klant
+        // heeft het zelf ontworpen), ofwel alleen een logo + opmerking ("Laat ons het ontwerp
+        // maken" — zie aanvraag.ontwerp_door_ons).
+        <section className="rounded-xl border border-neutral-200 bg-white p-5 shadow-sm">
+          <h2 className="mb-2 font-semibold text-brand-zwart">
+            {aanvraag.ontwerp_door_ons ? "Ontwerpwens (laat ons het ontwerp maken)" : "Zelf ontworpen"}
+          </h2>
+
+          {aanvraag.ontwerp_door_ons ? (
+            <>
+              <p className="rounded-lg border border-brand-oranje/30 bg-brand-oranje/5 px-3 py-2 text-sm text-brand-oranje">
+                Dit ontwerp moet nog gemaakt worden — de klant heeft gekozen voor &ldquo;Laat ons het
+                ontwerp maken&rdquo;.
+              </p>
+              {aanvraag.opmerking && (
+                <p className="mt-3 whitespace-pre-wrap text-sm text-neutral-700">{aanvraag.opmerking}</p>
+              )}
+            </>
+          ) : (
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Bestandsvoorbeeld label="Drukbestand (voorkant)" pad={aanvraag.drukbestand_pad} />
+              {aanvraag.drukbestand_achter_pad && (
+                <Bestandsvoorbeeld label="Drukbestand (achterkant)" pad={aanvraag.drukbestand_achter_pad} />
+              )}
+              <Bestandsvoorbeeld label="Voorbeeld (voorkant)" pad={aanvraag.voorbeeld_pad} afbeelding />
+              {aanvraag.voorbeeld_achter_pad && (
+                <Bestandsvoorbeeld label="Voorbeeld (achterkant)" pad={aanvraag.voorbeeld_achter_pad} afbeelding />
+              )}
+              {aanvraag.ontwerp_pad && <Bestandsvoorbeeld label="Ontwerpbestand (bewerkbaar)" pad={aanvraag.ontwerp_pad} />}
+              {aanvraag.ontwerp_ontbreekt && (
+                <p className="text-sm text-brand-oranje sm:col-span-2">
+                  Het bewerkbare ontwerpbestand kon niet worden meegestuurd (te groot) — vraag het apart op bij de klant.
+                </p>
+              )}
+              {aanvraag.opmerking && (
+                <p className="whitespace-pre-wrap text-sm text-neutral-700 sm:col-span-2">
+                  <span className="font-medium text-brand-zwart">Opmerking: </span>
+                  {aanvraag.opmerking}
+                </p>
+              )}
+              {aanvraag.teksten && (
+                <div className="sm:col-span-2">
+                  <p className="font-medium text-brand-zwart">Teksten op het bord</p>
+                  <p className="whitespace-pre-wrap text-sm text-neutral-700">{aanvraag.teksten}</p>
+                </div>
+              )}
+              {aanvraag.qr_codes && (
+                <div className="sm:col-span-2">
+                  <p className="font-medium text-brand-zwart">QR-codes</p>
+                  <p className="whitespace-pre-wrap text-sm text-neutral-700">{aanvraag.qr_codes}</p>
+                </div>
+              )}
+              {aanvraag.waarschuwingen && (
+                <div className="sm:col-span-2">
+                  <p className="font-medium text-brand-oranje">Genegeerde waarschuwingen</p>
+                  <p className="whitespace-pre-wrap text-sm text-neutral-700">{aanvraag.waarschuwingen}</p>
+                </div>
+              )}
+              {aanvraag.lege_logoplek && (
+                <p className="text-sm text-brand-oranje sm:col-span-2">
+                  Er staat nog een lege logoplek op het bord — de klant heeft geen logo meegestuurd voor die plek.
+                </p>
+              )}
+            </div>
+          )}
+
+          {aanvraag.overige_bestanden && aanvraag.overige_bestanden.length > 0 && (
+            <div className="mt-3 border-t border-neutral-100 pt-3">
+              <p className="mb-1 font-medium text-brand-zwart">Meegestuurde bestanden</p>
+              <ul className="space-y-1 text-sm text-neutral-600">
+                {aanvraag.overige_bestanden.map((bestand) => (
+                  <li key={bestand.pad}>
+                    {bestand.naam} <span className="text-xs text-neutral-400">(nog geen downloadlink — wacht op een echt Supabase-project)</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </section>
+      )}
 
       <section className="rounded-xl border border-neutral-200 bg-white p-5 shadow-sm">
         <h2 className="mb-2 font-semibold text-brand-zwart">Checks</h2>
@@ -191,6 +288,12 @@ export default async function AanvraagDetailPage({ params }: { params: { id: str
         )}
       </section>
 
+      {/* Zelf ontworpen aanvragen (kant-en-klaar drukbestand, geen "ontwerp_door_ons") hebben geen
+          voorstel/goedkeuringscyclus — er is nooit een design/e-mail/feedback-rij voor. Alleen de
+          oude wens-flow en "laat ons het ontwerp maken" (waar een medewerker nog een ontwerp +
+          e-mail moet toevoegen) gebruiken deze twee secties. */}
+      {(aanvraag.wens !== null || aanvraag.ontwerp_door_ons) && (
+        <>
       <section className="rounded-xl border border-neutral-200 bg-white p-5 shadow-sm">
         <h2 className="mb-2 font-semibold text-brand-zwart">Ontwerpen &amp; e-mails</h2>
         <p className="mb-3 text-xs text-neutral-500">
@@ -304,6 +407,8 @@ export default async function AanvraagDetailPage({ params }: { params: { id: str
           </ul>
         )}
       </section>
+        </>
+      )}
     </div>
   );
 }
@@ -313,6 +418,32 @@ function Rij({ label, waarde }: { label: string; waarde?: string | null }) {
     <div className="flex justify-between gap-4">
       <dt className="text-neutral-500">{label}</dt>
       <dd className="text-right text-brand-zwart">{waarde ?? "—"}</dd>
+    </div>
+  );
+}
+
+// Een pad dat met "/" begint is een echt bestaand bestand in /public (zoals de demo-placeholder);
+// een kaal Supabase Storage-pad (bijv. "<aanvraag-id>/bestand.pdf") heeft nog geen downloadlink,
+// net zoals bij aanvraag.bijlage_pad hierboven.
+function Bestandsvoorbeeld({ label, pad, afbeelding = false }: { label: string; pad: string | null; afbeelding?: boolean }) {
+  if (!pad) return null;
+  const isEchteUrl = pad.startsWith("/") || pad.startsWith("http");
+
+  return (
+    <div>
+      <p className="mb-1 font-medium text-brand-zwart">{label}</p>
+      {isEchteUrl && afbeelding ? (
+        // eslint-disable-next-line @next/next/no-img-element -- extern/placeholder pad
+        <img src={pad} alt={label} className="h-32 w-full rounded border border-neutral-200 object-contain bg-neutral-50" />
+      ) : isEchteUrl ? (
+        <a href={pad} target="_blank" rel="noopener noreferrer" className="text-sm text-brand-groen hover:underline">
+          {pad}
+        </a>
+      ) : (
+        <p className="text-sm text-neutral-500">
+          {pad} <span className="text-xs text-neutral-400">(nog geen downloadlink — wacht op een echt Supabase-project)</span>
+        </p>
+      )}
     </div>
   );
 }

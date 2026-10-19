@@ -121,7 +121,9 @@ export default async function ConceptenPage({
       .filter((aanvraag) => !klantFilter || aanvraag.klant_id === klantFilter)
       .map((aanvraag) => {
         const klant = klantenById.get(aanvraag.klant_id);
-        const veldtypeLabel = VELDTYPE_LABELS[aanvraag.veldtype] ?? aanvraag.veldtype;
+        // Deze pagina toont alleen CONCEPT_STATUSSEN ("voorstel_verstuurd"), een status die
+        // ontwerptool-aanvragen nooit bereiken — veldtype is hier in de praktijk dus altijd gezet.
+        const veldtypeLabel = aanvraag.veldtype ? VELDTYPE_LABELS[aanvraag.veldtype] ?? aanvraag.veldtype : "Reclamebord";
 
         const designItems: TijdlijnItem[] = designs
           .filter((design) => design.aanvraag_id === aanvraag.id)

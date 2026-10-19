@@ -21,6 +21,7 @@ export async function verwerkGeplandeVoorstellen(): Promise<VerwerkGeplandeVoors
     .from("aanvragen")
     .select("*")
     .eq("status", "nieuw")
+    .not("wens", "is", null)
     .lte("voorstel_gepland_op", new Date().toISOString());
 
   if (aanvragenFout) {
@@ -31,12 +32,21 @@ export async function verwerkGeplandeVoorstellen(): Promise<VerwerkGeplandeVoors
   // app/api/aanvragen/[id]/feedback/route.ts) — die moet hier niet nóg een keer als gloednieuwe
   // aanvraag een voorstel krijgen. Een aanvraag die al minstens één design heeft, is al een keer
   // door deze flow heen geweest en wordt overgeslagen.
+  //
+  // De `.not("wens", "is", null)` hierboven sluit daarnaast de ontwerptool-aanvragen uit (zelf
+  // ontworpen, of "laat ons het ontwerp maken"): die hebben geen `wens` en horen hier niet in de
+  // AI-conceptflow, maar in de handmatige /intern-afhandeling. Het expliciete filter op
+  // `aanvraag.veldtype`/`wens` hieronder is puur voor TypeScript — functioneel overbodig na de
+  // query hierboven, maar voorkomt dat deze flow ooit stilletjes met een `null` zou doorlopen.
   const kandidaatIds = (kandidaten ?? []).map((aanvraag) => aanvraag.id);
   const { data: bestaandeDesigns } = kandidaatIds.length
     ? await supabase.from("designs").select("aanvraag_id").in("aanvraag_id", kandidaatIds)
     : { data: [] };
   const aanvraagIdsMetDesign = new Set((bestaandeDesigns ?? []).map((design) => design.aanvraag_id));
-  const aanvragen = (kandidaten ?? []).filter((aanvraag) => !aanvraagIdsMetDesign.has(aanvraag.id));
+  const aanvragen = (kandidaten ?? []).filter(
+    (aanvraag): aanvraag is typeof aanvraag & { veldtype: NonNullable<typeof aanvraag.veldtype>; wens: string } =>
+      !aanvraagIdsMetDesign.has(aanvraag.id) && aanvraag.veldtype !== null && aanvraag.wens !== null
+  );
 
   const verwerkt: string[] = [];
   const mislukt: { aanvraagId: string; fout: string }[] = [];

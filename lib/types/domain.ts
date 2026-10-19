@@ -105,3 +105,22 @@ export type Provincie = (typeof PROVINCIES)[number];
 export const DESIGN_STATUSSEN = ["concept", "definitief", "vervangen"] as const;
 
 export type DesignStatus = (typeof DESIGN_STATUSSEN)[number];
+
+// Vanaf hier: velden van de zelfbedieningsontwerptool (reclamebord-maker). Zie
+// supabase/migrations/0002_ontwerptool.sql.
+
+export const BEDRUKKING_OPTIES = ["Enkelzijdig", "Dubbelzijdig"] as const;
+
+export type Bedrukking = (typeof BEDRUKKING_OPTIES)[number];
+
+export const LEVERING_OPTIES = ["Bezorgen", "Zelf ophalen in Oudewater"] as const;
+
+export type Levering = (typeof LEVERING_OPTIES)[number];
+
+// Eén meegestuurd bestand dat niet het hoofd-drukbestand/voorbeeld is: een logo dat de klant op
+// het bord heeft gezet, of een losse bijlage ("nog een bestand meesturen"). Zie
+// aanvragen.overige_bestanden.
+export interface OverigBestand {
+  naam: string;
+  pad: string;
+}

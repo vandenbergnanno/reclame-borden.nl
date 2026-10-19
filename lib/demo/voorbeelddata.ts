@@ -83,8 +83,36 @@ export const VOORBEELD_KLANTEN: KlantRow[] = [
   },
 ];
 
+// Standaardwaarden van de ontwerptool-kolommen (zie supabase/migrations/0002_ontwerptool.sql) —
+// gespreid in elke demo-aanvraag zodat de oudere testflow-rijen (tekstuele wens) niet elk apart
+// al deze nieuwe velden hoeven te herhalen.
+const ONTWERPTOOL_DEFAULTS = {
+  aantal: 1,
+  bedrukking: "Enkelzijdig",
+  kromtrekken: false,
+  levering: "Bezorgen",
+  straat: null,
+  postcode: null,
+  plaats: null,
+  opmerking: null,
+  ontwerp_door_ons: false,
+  qr_codes: null,
+  teksten: null,
+  waarschuwingen: null,
+  lege_logoplek: false,
+  compleet_ontwerp: null,
+  ontwerp_ontbreekt: false,
+  drukbestand_pad: null,
+  drukbestand_achter_pad: null,
+  voorbeeld_pad: null,
+  voorbeeld_achter_pad: null,
+  ontwerp_pad: null,
+  overige_bestanden: null,
+} as const satisfies Partial<AanvraagRow>;
+
 export const VOORBEELD_AANVRAGEN: AanvraagRow[] = [
   {
+    ...ONTWERPTOOL_DEFAULTS,
     id: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
     klant_id: "11111111-1111-1111-1111-111111111111",
     veldtype: "voetbal-zijlijn",
@@ -98,6 +126,7 @@ export const VOORBEELD_AANVRAGEN: AanvraagRow[] = [
     updated_at: dagenGeleden(5),
   },
   {
+    ...ONTWERPTOOL_DEFAULTS,
     id: "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
     klant_id: "22222222-2222-2222-2222-222222222222",
     veldtype: "scorebord",
@@ -111,6 +140,7 @@ export const VOORBEELD_AANVRAGEN: AanvraagRow[] = [
     updated_at: dagenGeleden(3),
   },
   {
+    ...ONTWERPTOOL_DEFAULTS,
     id: "cccccccc-cccc-cccc-cccc-cccccccccccc",
     klant_id: "33333333-3333-3333-3333-333333333333",
     veldtype: "voetbal-zijlijn",
@@ -124,6 +154,7 @@ export const VOORBEELD_AANVRAGEN: AanvraagRow[] = [
     updated_at: dagenGeleden(1),
   },
   {
+    ...ONTWERPTOOL_DEFAULTS,
     id: "dddddddd-dddd-dddd-dddd-dddddddddddd",
     klant_id: "44444444-4444-4444-4444-444444444444",
     veldtype: "hockeyveld",
@@ -137,6 +168,7 @@ export const VOORBEELD_AANVRAGEN: AanvraagRow[] = [
     updated_at: dagenGeleden(3),
   },
   {
+    ...ONTWERPTOOL_DEFAULTS,
     id: "eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee",
     klant_id: "55555555-5555-5555-5555-555555555555",
     veldtype: "scorebord",
@@ -151,6 +183,7 @@ export const VOORBEELD_AANVRAGEN: AanvraagRow[] = [
     updated_at: dagenGeleden(1),
   },
   {
+    ...ONTWERPTOOL_DEFAULTS,
     id: "ffffffff-ffff-ffff-ffff-ffffffffffff",
     klant_id: "66666666-6666-6666-6666-666666666666",
     veldtype: "voetbal-zijlijn",
@@ -166,6 +199,7 @@ export const VOORBEELD_AANVRAGEN: AanvraagRow[] = [
     updated_at: dagenGeleden(2),
   },
   {
+    ...ONTWERPTOOL_DEFAULTS,
     id: "99999999-9999-9999-9999-999999999999",
     klant_id: "77777777-7777-7777-7777-777777777777",
     veldtype: "voetbal-zijlijn",
@@ -179,6 +213,44 @@ export const VOORBEELD_AANVRAGEN: AanvraagRow[] = [
     voorstel_gepland_op: minutenGeleden(360),
     created_at: dagenGeleden(1),
     updated_at: minutenGeleden(360),
+  },
+  // Vanaf hier: aanvragen uit de nieuwe ontwerptool (reclamebord-maker), i.p.v. de oude
+  // testflow hierboven (tekstuele wens + AI-concept). Geen veldtype/wens meer; het drukbestand
+  // komt kant-en-klaar binnen, of de klant vraagt om het voor hem te laten ontwerpen.
+  {
+    ...ONTWERPTOOL_DEFAULTS,
+    id: "a0000000-0000-0000-0000-000000000001",
+    klant_id: "11111111-1111-1111-1111-111111111111",
+    veldtype: null,
+    afmeting: "300 x 100 cm",
+    bord_aanschaf: "nieuw",
+    wens: null,
+    status: "nieuw",
+    bijlage_pad: null,
+    voorstel_gepland_op: minutenGeleden(10),
+    created_at: minutenGeleden(10),
+    updated_at: minutenGeleden(10),
+    opmerking: null,
+    teksten: "Trots hoofdsponsor van VV Oudewater / www.vvoudewater.nl",
+    drukbestand_pad: "/placeholder-ontwerp.svg",
+    voorbeeld_pad: "/placeholder-ontwerp.svg",
+  },
+  {
+    ...ONTWERPTOOL_DEFAULTS,
+    id: "a0000000-0000-0000-0000-000000000002",
+    klant_id: "22222222-2222-2222-2222-222222222222",
+    veldtype: null,
+    afmeting: "200 x 100 cm",
+    bord_aanschaf: "hergebruiken",
+    wens: null,
+    status: "nieuw",
+    bijlage_pad: null,
+    voorstel_gepland_op: minutenGeleden(25),
+    created_at: minutenGeleden(25),
+    updated_at: minutenGeleden(25),
+    ontwerp_door_ons: true,
+    opmerking: "Ons logo, tekst 'HC De Meern' en telefoonnummer. Kleuren: blauw en geel.",
+    overige_bestanden: [{ naam: "logo-hc-de-meern.png", pad: "a0000000-0000-0000-0000-000000000002/logo-hc-de-meern.png" }],
   },
 ];
 

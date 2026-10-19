@@ -60,7 +60,9 @@ export default async function VoorstelPage({ params }: { params: { id: string } 
 
   const design = designs?.[0];
   const laatsteFeedback = feedback?.[0];
-  const veldtypeLabel = VELDTYPE_LABELS[aanvraag.veldtype] ?? aanvraag.veldtype;
+  // Deze pagina bestaat alleen voor de oude wens-gebaseerde AI-flow (de ontwerptool stuurt de
+  // klant niet hierheen) — veldtype is dus in de praktijk altijd gezet.
+  const veldtypeLabel = aanvraag.veldtype ? VELDTYPE_LABELS[aanvraag.veldtype] ?? aanvraag.veldtype : "reclamebord";
   const klantNaam = klant?.naam ?? "";
 
   // Bij goedkeuring gaat de aanvraag direct door naar "nieuw" (de productieflow) — die status

@@ -8,7 +8,7 @@ interface KlantRij {
   bedrijf: string | null;
   email: string;
   telefoon: string | null;
-  provincie: string;
+  provincie: string | null;
   aantalAanvragen: number;
   aantalOpen: number;
   heeftProductieItems: boolean;
@@ -64,7 +64,7 @@ export function KlantenTabel({ rijen }: { rijen: KlantRij[] }) {
                   <td className="px-4 py-3 text-neutral-600">{rij.bedrijf ?? "—"}</td>
                   <td className="px-4 py-3 text-neutral-600">{rij.email}</td>
                   <td className="px-4 py-3 text-neutral-600">{rij.telefoon ?? "—"}</td>
-                  <td className="px-4 py-3 text-neutral-600">{rij.provincie}</td>
+                  <td className="px-4 py-3 text-neutral-600">{rij.provincie ?? "—"}</td>
                   <td className="px-4 py-3">
                     <span className="text-neutral-600">{rij.aantalAanvragen}</span>
                     {rij.aantalOpen > 0 && (

@@ -45,7 +45,13 @@ interface AanvraagKaart {
   // voorstel wacht, en een door de klant al goedgekeurde aanvraag die terugkeert voor productie
   // (zie app/api/aanvragen/[id]/feedback/route.ts). Zonder dit onderscheid lijkt elke "Nieuw"-kaart
   // hetzelfde, terwijl je bij de eerste nog helemaal niet "Start behandeling" zou moeten klikken.
+  // Geldt alleen voor de oude wens-gebaseerde flow — zie isOntwerptool hieronder.
   alGoedgekeurd: boolean;
+  // Een aanvraag uit de nieuwe ontwerptool (reclamebord-maker) kent geen "wacht op voorstel"/
+  // "goedgekeurd door klant" onderscheid: die komt altijd rechtstreeks als "nieuw" binnen, met of
+  // zonder kant-en-klaar drukbestand (zie ontwerpDoorOns).
+  isOntwerptool: boolean;
+  ontwerpDoorOns: boolean;
 }
 
 // Server component: haalt aanvragen, klanten en contentchecks apart op en koppelt ze in JS.
@@ -121,7 +127,8 @@ export default async function InternPage({
 
     kaarten = gefilterd.map((aanvraag) => {
       const klant = klantenById.get(aanvraag.klant_id);
-      const veldtypeLabel = VELDTYPE_LABELS[aanvraag.veldtype] ?? aanvraag.veldtype;
+      // Aanvragen uit de ontwerptool (reclamebord-maker) hebben geen veldtype-indeling meer.
+      const veldtypeLabel = aanvraag.veldtype ? VELDTYPE_LABELS[aanvraag.veldtype] ?? aanvraag.veldtype : "Reclamebord";
 
       return {
         aanvraagId: aanvraag.id,
@@ -135,6 +142,8 @@ export default async function InternPage({
         ingediendOp: new Date(aanvraag.created_at).toLocaleString("nl-NL"),
         heeftGeblokkeerdeCheck: geblokkeerdeAanvraagIds.has(aanvraag.id),
         alGoedgekeurd: goedgekeurdeAanvraagIds.has(aanvraag.id),
+        isOntwerptool: aanvraag.wens === null,
+        ontwerpDoorOns: aanvraag.ontwerp_door_ons,
       };
     });
   } catch (error) {
@@ -246,7 +255,7 @@ export default async function InternPage({
                   <p className="text-xs text-neutral-500">{kaart.provincie}</p>
 
                   <div className="mt-2 flex flex-wrap gap-1">
-                    {kaart.statusWaarde === "nieuw" && (
+                    {kaart.statusWaarde === "nieuw" && !kaart.isOntwerptool && (
                       <span
                         className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${
                           kaart.alGoedgekeurd
@@ -255,6 +264,11 @@ export default async function InternPage({
                         }`}
                       >
                         {kaart.alGoedgekeurd ? "Goedgekeurd door klant" : "Wacht nog op voorstel"}
+                      </span>
+                    )}
+                    {kaart.statusWaarde === "nieuw" && kaart.isOntwerptool && kaart.ontwerpDoorOns && (
+                      <span className="rounded-full bg-brand-oranje/10 px-2 py-0.5 text-[10px] font-medium text-brand-oranje">
+                        Ontwerp nog maken
                       </span>
                     )}
                     {kaart.nieuwBord && (

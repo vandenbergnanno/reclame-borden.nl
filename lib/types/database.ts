@@ -7,7 +7,16 @@
 // zijn nodig omdat @supabase/supabase-js dit exacte vorm verwacht van het `Database`-type
 // (dezelfde vorm als de door de CLI gegenereerde types).
 
-import type { AanvraagStatus, BordAanschaf, DesignStatus, Provincie, Veldtype } from "./domain";
+import type {
+  AanvraagStatus,
+  Bedrukking,
+  BordAanschaf,
+  DesignStatus,
+  Levering,
+  OverigBestand,
+  Provincie,
+  Veldtype,
+} from "./domain";
 
 export interface Database {
   public: {
@@ -19,7 +28,7 @@ export interface Database {
           bedrijf: string | null;
           email: string;
           telefoon: string | null;
-          provincie: Provincie;
+          provincie: Provincie | null;
           created_at: string;
         };
         Insert: {
@@ -28,7 +37,7 @@ export interface Database {
           bedrijf?: string | null;
           email: string;
           telefoon?: string | null;
-          provincie: Provincie;
+          provincie?: Provincie | null;
           created_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["klanten"]["Insert"]>;
@@ -38,26 +47,68 @@ export interface Database {
         Row: {
           id: string;
           klant_id: string;
-          veldtype: Veldtype;
+          veldtype: Veldtype | null;
           afmeting: string;
           bord_aanschaf: BordAanschaf;
-          wens: string;
+          wens: string | null;
           status: AanvraagStatus;
           bijlage_pad: string | null;
           voorstel_gepland_op: string;
+          aantal: number;
+          bedrukking: Bedrukking;
+          kromtrekken: boolean;
+          levering: Levering;
+          straat: string | null;
+          postcode: string | null;
+          plaats: string | null;
+          opmerking: string | null;
+          ontwerp_door_ons: boolean;
+          qr_codes: string | null;
+          teksten: string | null;
+          waarschuwingen: string | null;
+          lege_logoplek: boolean;
+          compleet_ontwerp: string | null;
+          ontwerp_ontbreekt: boolean;
+          drukbestand_pad: string | null;
+          drukbestand_achter_pad: string | null;
+          voorbeeld_pad: string | null;
+          voorbeeld_achter_pad: string | null;
+          ontwerp_pad: string | null;
+          overige_bestanden: OverigBestand[] | null;
           created_at: string;
           updated_at: string;
         };
         Insert: {
           id?: string;
           klant_id: string;
-          veldtype: Veldtype;
+          veldtype?: Veldtype | null;
           afmeting: string;
           bord_aanschaf: BordAanschaf;
-          wens: string;
+          wens?: string | null;
           status?: AanvraagStatus;
           bijlage_pad?: string | null;
           voorstel_gepland_op: string;
+          aantal?: number;
+          bedrukking?: Bedrukking;
+          kromtrekken?: boolean;
+          levering?: Levering;
+          straat?: string | null;
+          postcode?: string | null;
+          plaats?: string | null;
+          opmerking?: string | null;
+          ontwerp_door_ons?: boolean;
+          qr_codes?: string | null;
+          teksten?: string | null;
+          waarschuwingen?: string | null;
+          lege_logoplek?: boolean;
+          compleet_ontwerp?: string | null;
+          ontwerp_ontbreekt?: boolean;
+          drukbestand_pad?: string | null;
+          drukbestand_achter_pad?: string | null;
+          voorbeeld_pad?: string | null;
+          voorbeeld_achter_pad?: string | null;
+          ontwerp_pad?: string | null;
+          overige_bestanden?: OverigBestand[] | null;
           created_at?: string;
           updated_at?: string;
         };

@@ -122,10 +122,14 @@ export async function POST(request: Request, { params }: { params: { id: string 
       .maybeSingle();
 
     const nieuweVersie = (laatsteDesign?.versienummer ?? 0) + 1;
+    // Deze route wordt alleen bereikt voor een aanvraag die al "voorstel_verstuurd" was — en dat
+    // gebeurt alleen via de oude wens-gebaseerde AI-flow (zie lib/types/domain.ts), waar veldtype
+    // en wens altijd ingevuld zijn. De ontwerptool-aanvragen (veldtype/wens = null) komen deze
+    // status helemaal niet in.
     const design = await generateDesign({
       aanvraagId: aanvraag.id,
-      veldtype: aanvraag.veldtype,
-      wens: aanvraag.wens,
+      veldtype: aanvraag.veldtype ?? "plattegrond",
+      wens: aanvraag.wens ?? "",
     });
 
     const { data: nieuwDesign } = await supabase
@@ -144,7 +148,7 @@ export async function POST(request: Request, { params }: { params: { id: string 
         klantEmail: klant.email,
         klantNaam: klant.naam,
         aanvraagId: aanvraag.id,
-        veldtype: aanvraag.veldtype,
+        veldtype: aanvraag.veldtype ?? "plattegrond",
         afmeting: aanvraag.afmeting,
         designUrl: design.opslaglocatie,
         isHerzien: true,
