@@ -20,6 +20,7 @@ const dagenGeleden = (dagen: number) => new Date(NU.getTime() - dagen * 24 * 60 
 export const VOORBEELD_KLANTEN: KlantRow[] = [
   {
     id: "11111111-1111-1111-1111-111111111111",
+    auth_user_id: null,
     naam: "Jan de Boer",
     bedrijf: "VV Oudewater",
     email: "jan@vvoudewater.nl",
@@ -29,6 +30,7 @@ export const VOORBEELD_KLANTEN: KlantRow[] = [
   },
   {
     id: "22222222-2222-2222-2222-222222222222",
+    auth_user_id: null,
     naam: "Marieke Visser",
     bedrijf: "HC De Meern",
     email: "marieke@hcdemeern.nl",
@@ -38,6 +40,7 @@ export const VOORBEELD_KLANTEN: KlantRow[] = [
   },
   {
     id: "33333333-3333-3333-3333-333333333333",
+    auth_user_id: null,
     naam: "Tom Bakker",
     bedrijf: "Bakker Makelaardij",
     email: "tom@bakkermakelaardij.nl",
@@ -47,6 +50,7 @@ export const VOORBEELD_KLANTEN: KlantRow[] = [
   },
   {
     id: "44444444-4444-4444-4444-444444444444",
+    auth_user_id: null,
     naam: "Sanne de Groot",
     bedrijf: "VV Groningen",
     email: "sanne@vvgroningen.nl",
@@ -56,6 +60,7 @@ export const VOORBEELD_KLANTEN: KlantRow[] = [
   },
   {
     id: "55555555-5555-5555-5555-555555555555",
+    auth_user_id: null,
     naam: "Lotte Hendriks",
     bedrijf: "Sportcafé De Kantine",
     email: "lotte@dekantine.nl",
@@ -65,6 +70,7 @@ export const VOORBEELD_KLANTEN: KlantRow[] = [
   },
   {
     id: "66666666-6666-6666-6666-666666666666",
+    auth_user_id: null,
     naam: "Erik Mulder",
     bedrijf: "Tennisclub Smash",
     email: "erik@tcsmash.nl",
@@ -74,6 +80,7 @@ export const VOORBEELD_KLANTEN: KlantRow[] = [
   },
   {
     id: "77777777-7777-7777-7777-777777777777",
+    auth_user_id: null,
     naam: "Dennis Kuipers",
     bedrijf: "Kuipers Garagebedrijf",
     email: "dennis@kuipersgarage.nl",

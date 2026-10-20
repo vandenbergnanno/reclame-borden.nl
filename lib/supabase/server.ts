@@ -26,3 +26,12 @@ export function createServerSupabaseClient() {
 export function isSupabaseGeconfigureerd(): boolean {
   return Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY);
 }
+
+// Los van isSupabaseGeconfigureerd(): de klant-inlog (/inloggen, /mijn-borden) heeft alleen de
+// publieke anon-key nodig (geen service-role key) en kan dus al werken vóórdat de service-role
+// key is ingevuld -- maar zonder een Supabase-project is er uiteraard nog geen Auth om in te
+// loggen. Alleen deze env-vars lezen (geen server-only import), dus ook bruikbaar vanuit een
+// client component.
+export function isSupabaseAuthGeconfigureerd(): boolean {
+  return Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
+}

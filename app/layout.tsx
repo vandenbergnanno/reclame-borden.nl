@@ -25,6 +25,12 @@ export default function RootLayout({ children }: { children: ReactNode }) {
                 <a href="/aanvraag" className="whitespace-nowrap hover:text-brand-groen">
                   Nieuwe aanvraag
                 </a>
+                <a href="/mijn-borden" className="whitespace-nowrap hover:text-brand-groen">
+                  Mijn borden
+                </a>
+                <a href="/inloggen" className="whitespace-nowrap hover:text-brand-groen">
+                  Inloggen
+                </a>
                 <a href="/intern" className="whitespace-nowrap hover:text-brand-groen">
                   Intern overzicht
                 </a>

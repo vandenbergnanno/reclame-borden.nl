@@ -29,6 +29,7 @@ export interface Database {
           email: string;
           telefoon: string | null;
           provincie: Provincie | null;
+          auth_user_id: string | null;
           created_at: string;
         };
         Insert: {
@@ -38,6 +39,7 @@ export interface Database {
           email: string;
           telefoon?: string | null;
           provincie?: Provincie | null;
+          auth_user_id?: string | null;
           created_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["klanten"]["Insert"]>;
