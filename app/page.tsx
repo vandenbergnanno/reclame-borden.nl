@@ -21,7 +21,7 @@ const STAPPEN = [
 const VOORDELEN = [
   {
     titel: "Zelf aan het stuur",
-    omschrijving: "Sleep je logo, typ je tekst en kies je kleuren — rechtstreeks op een voorbeeld van je eigen bord.",
+    omschrijving: "Sleep je logo, typ je tekst en kies je kleuren, rechtstreeks op een voorbeeld van je eigen bord.",
     icoon: <IconPenseel />,
   },
   {
@@ -56,19 +56,16 @@ export default function HomePage() {
             </h1>
             <p className="mt-5 text-lg text-neutral-600">
               Geen dagen wachten op heen-en-weer gemail met een ontwerper. Stel zelf je bord samen
-              — logo, tekst en kleuren — en zie meteen het resultaat. Klaar? Dan staat er
+              met je eigen logo, tekst en kleuren, en zie meteen het resultaat. Klaar? Dan staat er
               automatisch een drukklaar bestand voor je klaar.
             </p>
-            <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-start">
+            <div className="mt-8 flex justify-center sm:justify-start">
               <a
                 href="/aanvraag"
                 className="rounded-full bg-brand-oranje px-6 py-3 font-medium text-white shadow-sm transition hover:opacity-90"
               >
                 Begin met ontwerpen →
               </a>
-              <p className="text-sm text-neutral-500">
-                Geen ontwerper? Kies in de tool voor <span className="font-medium text-brand-zwart">&ldquo;Laat ons het ontwerp maken&rdquo;</span>.
-              </p>
             </div>
           </div>
         </div>
@@ -106,7 +103,7 @@ export default function HomePage() {
             </h2>
             <p className="mt-3 text-neutral-600">
               Geen e-mails heen en weer sturen om kleine aanpassingen door te geven. Jij bepaalt
-              zelf hoe je bord eruitziet en past alles meteen zelf aan — pas als je helemaal
+              zelf hoe je bord eruitziet en past alles meteen zelf aan. Pas als je helemaal
               tevreden bent, verstuur je &rsquo;m.
             </p>
           </div>
