@@ -44,32 +44,32 @@ const VOORDELEN = [
 export default function HomePage() {
   return (
     <div className="space-y-16">
-      <section className="relative overflow-hidden rounded-3xl bg-brand-zwart px-6 py-14 sm:px-12 sm:py-20">
-        <div className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-brand-groen/20 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-24 -left-16 h-72 w-72 rounded-full bg-brand-oranje/20 blur-3xl" />
-        <div className="relative mx-auto max-w-2xl text-center sm:text-left">
-          <div className="mb-8 flex justify-center sm:justify-start">
-            <MediagraafLogo size="lg" donkereAchtergrond />
+      <section className="overflow-hidden rounded-3xl border border-neutral-200 bg-white px-6 py-14 sm:px-12 sm:py-20">
+        <div className="mx-auto grid max-w-4xl items-center gap-10 sm:grid-cols-[auto_1fr]">
+          <div className="flex justify-center">
+            <MediagraafLogo size="lg" />
           </div>
-          <p className="font-semibold uppercase tracking-wide text-brand-groen">Gratis ontwerptool</p>
-          <h1 className="mt-3 text-4xl font-semibold leading-tight text-white sm:text-5xl">
-            Jouw reclamebord, in een paar minuten ontworpen
-          </h1>
-          <p className="mt-5 text-lg text-neutral-300">
-            Geen dagen wachten op heen-en-weer gemail met een ontwerper. Stel zelf je bord samen —
-            logo, tekst en kleuren — en zie meteen het resultaat. Klaar? Dan staat er automatisch
-            een drukklaar bestand voor je klaar.
-          </p>
-          <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-start">
-            <a
-              href="/aanvraag"
-              className="rounded-full bg-brand-oranje px-6 py-3 font-medium text-white shadow-sm transition hover:opacity-90"
-            >
-              Begin met ontwerpen →
-            </a>
-            <p className="text-sm text-neutral-400">
-              Geen ontwerper? Kies in de tool voor <span className="text-white">&ldquo;Laat ons het ontwerp maken&rdquo;</span>.
+          <div className="text-center sm:text-left">
+            <p className="font-semibold uppercase tracking-wide text-brand-groen">Gratis ontwerptool</p>
+            <h1 className="mt-3 text-4xl font-semibold leading-tight text-brand-zwart sm:text-5xl">
+              Jouw reclamebord, in een paar minuten ontworpen
+            </h1>
+            <p className="mt-5 text-lg text-neutral-600">
+              Geen dagen wachten op heen-en-weer gemail met een ontwerper. Stel zelf je bord samen
+              — logo, tekst en kleuren — en zie meteen het resultaat. Klaar? Dan staat er
+              automatisch een drukklaar bestand voor je klaar.
             </p>
+            <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-start">
+              <a
+                href="/aanvraag"
+                className="rounded-full bg-brand-oranje px-6 py-3 font-medium text-white shadow-sm transition hover:opacity-90"
+              >
+                Begin met ontwerpen →
+              </a>
+              <p className="text-sm text-neutral-500">
+                Geen ontwerper? Kies in de tool voor <span className="font-medium text-brand-zwart">&ldquo;Laat ons het ontwerp maken&rdquo;</span>.
+              </p>
+            </div>
           </div>
         </div>
       </section>
