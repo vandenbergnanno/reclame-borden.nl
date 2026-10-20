@@ -13,6 +13,10 @@ import { INTERN_SESSIE_COOKIE } from "@/lib/auth/internSessie";
 function isPubliekeAanvragenRoute(method: string, pathname: string): boolean {
   if (pathname === "/api/aanvragen") return method === "POST";
   if (/^\/api\/aanvragen\/[^/]+\/feedback$/.test(pathname)) return method === "POST";
+  // De reclamebord-maker (zelfbedieningsontwerptool op /aanvraag) dient een aanvraag hierheen in
+  // (POST) en vraagt daarvoor eerst de uploadgrenzen van de server op (GET ?limiet=1) — zie
+  // vraagLimietOp() in lib/ontwerptool/reclamebord-maker.html.
+  if (pathname === "/api/aanvragen/ontwerp") return method === "POST" || method === "GET";
   return false;
 }
 

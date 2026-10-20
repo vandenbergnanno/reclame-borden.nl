@@ -266,3 +266,15 @@ export async function POST(request: Request) {
 
   return Response.json({ ok: true });
 }
+
+// De tool vraagt dit op vóórdat de klant iets verstuurt (vraagLimietOp() in
+// lib/ontwerptool/reclamebord-maker.html) om zelf te bepalen hoe sterk een te groot drukbestand
+// ingepakt moet worden — puur informatief, geen aanvraag-afhandeling hier.
+export async function GET() {
+  return Response.json({
+    ok: true,
+    max: MAX_TOTAAL_BYTES,
+    perBestand: MAX_BESTAND_BYTES,
+    bestanden: MAX_BESTANDEN,
+  });
+}
