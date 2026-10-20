@@ -31,6 +31,12 @@
   .kaart{background:var(--wit);border:1px solid var(--lijn);border-radius:10px;padding:14px}
   .kaart h2{display:flex;align-items:center;gap:8px;margin:0 0 10px;font-size:16px;font-weight:700}
   .stap{display:inline-grid;place-items:center;width:26px;height:26px;border-radius:50%;background:var(--groen-tekst);color:#fff;font-size:14px;font-weight:700;flex:none}
+  .stap-kop{cursor:pointer;user-select:none}
+  .stap-kop .chevron{margin-left:auto;flex:none;width:10px;height:10px;border-right:2px solid var(--grijs);border-bottom:2px solid var(--grijs);transform:rotate(45deg);transition:transform .15s}
+  .kaart.dicht .stap-kop .chevron{transform:rotate(-45deg)}
+  .kaart.dicht .stap-kop{margin-bottom:0 !important}
+  .kaart-body{margin-top:10px}
+  .kaart.dicht .kaart-body{display:none}
   .hint{margin:8px 0 0;color:var(--grijs);font-size:14px}
   .hint a{color:var(--groen-tekst)}
   .tussen{margin:14px 0 6px;font-size:14px;color:var(--grijs);font-weight:600}
@@ -265,7 +271,8 @@
 <div class="app">
   <aside class="paneel">
     <section class="kaart">
-      <h2><span class="stap">1</span>Formaat</h2>
+      <h2 class="stap-kop"><span class="stap">1</span>Formaat<span class="chevron" aria-hidden="true"></span></h2>
+      <div class="kaart-body">
       <div class="formaten" id="formaten"></div>
       <div id="eigenMaat" hidden>
         <div class="rij2">
@@ -275,11 +282,12 @@
         <p class="hint" id="eigenHint"></p>
       </div>
       <label class="vink-paneel"><input type="checkbox" id="tweeDelen"> Bord uit 2 delen <span class="uitleg">(twee borden naast elkaar, met één doorlopend ontwerp)</span></label>
-      <p class="hint" id="tweeDelenHint" hidden>Je ontwerpt nu over de hele breedte van de twee borden samen. De stippellijn in het midden is waar de borden tegen elkaar komen: zet daar liever geen tekst, logo of QR-code overheen. Wij maken er twee losse drukbestanden van.</p>
+      <p class="hint" id="tweeDelenHint" hidden>Je ontwerpt nu over de hele breedte van de twee borden samen. De stippellijn in het midden is waar de borden tegen elkaar komen: zet daar liever geen tekst, logo of QR-code overheen. Wij maken er twee losse drukbestanden van.</p></div>
     </section>
 
     <section class="kaart">
-      <h2><span class="stap">2</span>Achtergrond</h2>
+      <h2 class="stap-kop"><span class="stap">2</span>Achtergrond<span class="chevron" aria-hidden="true"></span></h2>
+      <div class="kaart-body">
       <div class="stalen" id="stalen">
         <label class="eigenkleur">Eigen kleur <input type="color" id="eigenKleur" value="#ffffff" aria-label="Eigen achtergrondkleur"></label>
       </div>
@@ -292,11 +300,12 @@
       </div>
       <p class="hint" id="fotoTip" hidden></p>
       <p class="tussen">Kleurstijl (in één klik)</p>
-      <div class="stalen" id="kleurstijlen"></div>
+      <div class="stalen" id="kleurstijlen"></div></div>
     </section>
 
     <section class="kaart">
-      <h2><span class="stap">3</span>Logo, tekst en vormen</h2>
+      <h2 class="stap-kop"><span class="stap">3</span>Logo, tekst en vormen<span class="chevron" aria-hidden="true"></span></h2>
+      <div class="kaart-body">
       <label class="upload" for="upload" id="uploadLabel">
         <strong>Logo uploaden</strong>
         <span>Elk logobestand: png, jpg, svg, pdf, ai of eps &middot; of sleep het op het bord</span>
@@ -319,15 +328,16 @@
       <p class="tussen">Figuren</p>
       <div class="tegels" id="figuren"></div>
       <p class="tussen">Pictogrammen</p>
-      <div class="tegels" id="pictogrammen"></div>
+      <div class="tegels" id="pictogrammen"></div></div>
     </section>
 
     <section class="kaart">
-      <h2><span class="stap">4</span>Klaar</h2>
+      <h2 class="stap-kop"><span class="stap">4</span>Klaar<span class="chevron" aria-hidden="true"></span></h2>
+      <div class="kaart-body">
       <button class="knop primair" id="verstuur">Aanvraag versturen</button>
       <button class="knop secundair" id="teamDownload" hidden>Drukbestand downloaden (team)</button>
       <p class="hint">Je krijgt altijd eerst een drukproef om goed te keuren. Pas na je akkoord maken we je bord.</p>
-      <p class="hint" id="prijsRegel">Wat kost het? <a id="prijsLink" href="https://reclame-borden.nl/prijs-berekenen/" target="_blank" rel="noopener">Bereken je prijs</a> (opent in een nieuw venster; je ontwerp blijft hier staan).</p>
+      <p class="hint" id="prijsRegel">Wat kost het? <a id="prijsLink" href="https://reclame-borden.nl/prijs-berekenen/" target="_blank" rel="noopener">Bereken je prijs</a> (opent in een nieuw venster; je ontwerp blijft hier staan).</p></div>
     </section>
 
     <section class="kaart hulp">
@@ -4736,6 +4746,26 @@ function maakQrLib(){var t=function(){var t=function(t,r){var e=t,n=g[r],o=null,
   $('toastSluit').addEventListener('click', verbergMelding);
   $('toastSluit').addEventListener('mouseenter', () => clearTimeout(toastTimer));
   $('toastSluit').addEventListener('mouseleave', () => { if ($('toast').classList.contains('zichtbaar')){ clearTimeout(toastTimer); toastTimer = setTimeout(verbergMelding, 3000); } });
+
+  /* ===== Stappen in-/uitklappen =====
+     Zonder dit moest je bij elke stap helemaal naar beneden scrollen om bij de volgende te komen --
+     nu kan een afgeronde stap worden ingeklapt zodat er ruimte vrijkomt. Standaard staat alleen de
+     eerste stap open; de 'Hulp nodig?'-kaart blijft altijd gewoon zichtbaar, dat is geen stap. */
+  const stapKaarten = Array.from(document.querySelectorAll('.paneel > .kaart:not(.hulp)'));
+  stapKaarten.forEach((kaart, index) => {
+    const kop = kaart.querySelector('.stap-kop');
+    if (!kop) return;
+    if (index > 0) kaart.classList.add('dicht');
+    kop.setAttribute('role', 'button');
+    kop.setAttribute('tabindex', '0');
+    kop.setAttribute('aria-expanded', String(index === 0));
+    const wissel = () => {
+      const dichtNu = kaart.classList.toggle('dicht');
+      kop.setAttribute('aria-expanded', String(!dichtNu));
+    };
+    kop.addEventListener('click', wissel);
+    kop.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); wissel(); } });
+  });
 
   /* ===== Start ===== */
   $('merkLink').href = $('terugLink').href = TERUG_URL;
