@@ -4,7 +4,7 @@ import { useState } from "react";
 import { InternLoginForm } from "@/app/intern/login/InternLoginForm";
 import { KlantLoginForm } from "./KlantLoginForm";
 
-type Rol = "klant" | "medewerker";
+type Rol = "klant" | "websitebeheerder";
 
 // Eén inlogpagina voor zowel klanten (eigen account via Supabase Auth, zie KlantLoginForm) als
 // medewerkers (het bestaande gedeelde-wachtwoord-systeem, hergebruikt via InternLoginForm) — op
@@ -25,10 +25,10 @@ export function InloggenTabs() {
         </button>
         <button
           type="button"
-          onClick={() => setRol("medewerker")}
-          className={`flex-1 rounded-md px-3 py-2 transition ${rol === "medewerker" ? "bg-brand-groen text-white" : "text-neutral-500 hover:text-brand-zwart"}`}
+          onClick={() => setRol("websitebeheerder")}
+          className={`flex-1 rounded-md px-3 py-2 transition ${rol === "websitebeheerder" ? "bg-brand-groen text-white" : "text-neutral-500 hover:text-brand-zwart"}`}
         >
-          Medewerker
+          Websitebeheerder
         </button>
       </div>
 
