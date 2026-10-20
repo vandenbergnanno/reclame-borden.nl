@@ -1,5 +1,12 @@
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { createServerAuthClient } from "@/lib/supabase/serverAuth";
+import { checkRateLimit, clientIp, teVeelPogingenResponse } from "@/lib/security/rateLimit";
+
+// Deze route vereist weliswaar al een geldige Supabase-sessie (zie de getUser()-check hieronder),
+// maar een ingelogd account kan 'm nog steeds herhaaldelijk aanroepen om de klanten-tabel te
+// bestoken — dezelfde voorzichtigheid als bij /api/intern/login en /api/aanvragen/ontwerp.
+const MAX_POGINGEN = 10;
+const VENSTER_MS = 15 * 60 * 1000;
 
 // Na een geslaagde Supabase Auth-signup (die vanuit de browser gebeurt, zie app/inloggen) koppelt
 // deze route het account aan een klanten-rij: bestaat die rij al (de klant had eerder al een
@@ -12,6 +19,11 @@ import { createServerAuthClient } from "@/lib/supabase/serverAuth";
 // geverifieerd wie de ingelogde gebruiker daadwerkelijk is, zodat een klant nooit een andere
 // klantrij dan zijn eigen account kan koppelen.
 export async function POST(request: Request) {
+  const rateLimit = checkRateLimit(`account-koppel:${clientIp(request)}`, MAX_POGINGEN, VENSTER_MS);
+  if (!rateLimit.toegestaan) {
+    return teVeelPogingenResponse(rateLimit);
+  }
+
   const authClient = createServerAuthClient();
   const {
     data: { user },
