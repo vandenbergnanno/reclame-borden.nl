@@ -512,6 +512,7 @@
       </div>
       <p class="klein-hint" id="bedrukkingHint" hidden></p>
       <label class="vink"><input type="checkbox" name="kromtrekken" id="fKrom" value="ja"> Extra bescherming tegen kromtrekken <span class="uitleg">(tegen meerprijs, aanbevolen bij enkelzijdig)</span></label>
+      <p class="hint" id="prijsIndicatie"></p>
       <label class="vink"><input type="checkbox" name="hergebruik" id="fHergebruik" value="ja"> Mijn oude bord laten hergebruiken <span class="uitleg">(voordeliger en duurzamer: wij halen je bord op, plakken je nieuwe ontwerp eroverheen en je krijgt weer 5 jaar garantie. Het bord moet schoon en heel zijn, zonder plakletters.)</span></label>
     </fieldset>
 
@@ -639,6 +640,12 @@
     { naam:'244 × 61 cm', b:244, h:61 }
   ];
   const EIGEN = { minB:40, maxB:320, minH:40, maxH:100 };    // cm (breedte volgens reclame-borden.nl: 40 tot 320 cm, hoogte 40 tot 100 cm)
+  // Dezelfde prijzen per cm² als de rekentool op reclame-borden.nl/prijs-berekenen (het
+  // berekende veld van dat prijsformulier, 1-op-1 overgenomen) -- dit is bewust een richtprijs in
+  // de tool zelf, geen vervanging van de echte orderflow: de uiteindelijke prijs/factuur komt nog
+  // steeds van De Mediagraaf na het indienen van de aanvraag.
+  const PRIJS_PER_CM2 = { Enkelzijdig: 0.0092, Dubbelzijdig: 0.0136 };
+  const PRIJS_KROMTREKKEN_PER_CM2 = 0.0024;
   const KLEUREN = ['#ffffff','#f2f2f2','#111111','#1c2b4a','#1c3f94','#5FB238','#2e7d32','#E8792A','#c8102e','#ffd200'];
   const KLEURNAMEN = { '#ffffff':'Wit', '#f2f2f2':'Lichtgrijs', '#111111':'Zwart', '#1c2b4a':'Donkerblauw', '#1c3f94':'Blauw',
                        '#5fb238':'Groen', '#2e7d32':'Donkergroen', '#e8792a':'Oranje', '#c8102e':'Rood', '#ffd200':'Geel' };
@@ -1843,8 +1850,24 @@ function maakQrLib(){var t=function(){var t=function(t,r){var e=t,n=g[r],o=null,
       hint.textContent = 'Wil je een andere achterkant? Klik op Annuleren en daarna boven je bord op "+ Aparte achterkant ontwerpen".';
       hint.hidden = sel.value !== 'Dubbelzijdig';
     }
+    werkPrijsIndicatieBij();
   }
   $('fBedrukking').addEventListener('change', werkBedrukkingBij);
+  function werkPrijsIndicatieBij(){
+    const el = $('prijsIndicatie');
+    if (!el) return;
+    if (doorOns){ el.hidden = true; return; }
+    const breedteCm = enkelB() / 10, hoogteCm = bord.h / 10;
+    const bedrukking = $('fBedrukking').value === 'Dubbelzijdig' ? 'Dubbelzijdig' : 'Enkelzijdig';
+    const prijsPerCm2 = PRIJS_PER_CM2[bedrukking] + (bedrukking === 'Enkelzijdig' && $('fKrom').checked ? PRIJS_KROMTREKKEN_PER_CM2 : 0);
+    const aantal = Math.max(1, Math.round(Number($('fAantal').value) || 1));
+    const totaalBorden = aantal * bordDelen;
+    const totaal = Math.round(breedteCm * hoogteCm * prijsPerCm2 * totaalBorden);
+    el.hidden = false;
+    el.textContent = 'Richtprijs: ongeveer €' + totaal.toLocaleString('nl-NL') + ' (excl. verzending en btw, o.b.v. de prijzen van reclame-borden.nl). De echte prijs bevestigen we bij je drukproef.';
+  }
+  $('fAantal').addEventListener('input', werkPrijsIndicatieBij);
+  $('fKrom').addEventListener('change', werkPrijsIndicatieBij);
   function bouwSjablonen(){
     const lijst = $('sjablonen');
     SJABLONEN.forEach(s => {
@@ -4309,6 +4332,7 @@ function maakQrLib(){var t=function(){var t=function(t,r){var e=t,n=g[r],o=null,
     $('kopieRij').hidden = doorOns || !KOPIE_TOESTAAN || opBeideKanten(metOpknappen).length > 0;
     werkBedrukkingBij();   // eerst ons werk, dan pas een drukbestand
     $('bordSamenvatting').textContent = 'Formaat ' + formaatTekst() + (bordDelen === 2 ? ' (twee drukbestanden)' : '') + (andereKant ? ', met een eigen voor- en achterkant' : '') + (doorOns ? ' (een ander formaat kies je bij stap 1)' : '');
+    werkPrijsIndicatieBij();
     toonControle(); verbergMelding(); vraagLimietOp();
     form.hidden = false; $('aanvraagKlaar').hidden = true; toonFout('');
     vulGegevensIn(); werkLeveringBij();
