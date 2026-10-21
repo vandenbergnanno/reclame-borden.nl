@@ -24,7 +24,13 @@ export async function POST(request: Request) {
     return teVeelPogingenResponse(rateLimit);
   }
 
-  const authClient = createServerAuthClient();
+  let authClient: ReturnType<typeof createServerAuthClient>;
+  try {
+    authClient = createServerAuthClient();
+  } catch (error) {
+    return Response.json({ ok: false, error: error instanceof Error ? error.message : "Supabase is niet geconfigureerd." }, { status: 500 });
+  }
+
   const {
     data: { user },
     error: authFout,
@@ -49,7 +55,12 @@ export async function POST(request: Request) {
     return Response.json({ ok: false, error: "Naam is verplicht." }, { status: 400 });
   }
 
-  const supabase = createServerSupabaseClient();
+  let supabase: ReturnType<typeof createServerSupabaseClient>;
+  try {
+    supabase = createServerSupabaseClient();
+  } catch (error) {
+    return Response.json({ ok: false, error: error instanceof Error ? error.message : "Supabase is niet geconfigureerd." }, { status: 500 });
+  }
 
   const { data: bestaandeKlant, error: zoekFout } = await supabase
     .from("klanten")

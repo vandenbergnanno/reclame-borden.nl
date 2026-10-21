@@ -8,6 +8,12 @@ export const metadata: Metadata = {
   title: "Mijn borden — De Mediagraaf",
 };
 
+// Zonder dit kan Next.js deze pagina bij het bouwen statisch maken (gebeurt zolang er nog geen
+// Supabase-omgevingsvariabelen ingevuld zijn: dan wordt de cookies()-aanroep hieronder nooit bereikt
+// tijdens het bouwen) -- daarna zou iedereen dezelfde, op bouwmoment bevroren pagina te zien krijgen
+// in plaats van zijn eigen inlogstatus en eigen aanvragen.
+export const dynamic = "force-dynamic";
+
 // Server Component, bewust geen middleware-gate (zie middleware.ts): de sessie-check gebeurt hier
 // rechtstreeks, en de rijen die terugkomen zijn al door Row Level Security beperkt tot de eigen
 // klant (supabase/migrations/0003_klant_accounts.sql) -- dus zelfs een verkeerd ingeschatte query

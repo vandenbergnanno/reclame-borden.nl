@@ -28,9 +28,9 @@ export function KlantLoginForm() {
     setFoutmelding(null);
     setMelding(null);
 
-    const supabase = createBrowserSupabaseClient();
-
     try {
+      const supabase = createBrowserSupabaseClient();
+
       if (modus === "inloggen") {
         const { error } = await supabase.auth.signInWithPassword({ email, password: wachtwoord });
         if (error) throw new Error(error.message === "Invalid login credentials" ? "Onjuist e-mailadres of wachtwoord." : error.message);
