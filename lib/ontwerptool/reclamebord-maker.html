@@ -381,6 +381,7 @@
             <textarea id="tekstVeld" rows="1" aria-label="Tekst" spellcheck="true" lang="nl"></textarea>
             <select id="lettertype" aria-label="Lettertype"></select>
             <button class="ikoon" id="vet" title="Vet" aria-label="Vet" aria-pressed="false"><b>B</b></button>
+            <button class="ikoon" id="schuin" title="Cursief" aria-label="Cursief" aria-pressed="false"><i>I</i></button>
             <button class="ikoon" data-uitlijn="left" title="Links uitlijnen" aria-label="Links uitlijnen"><svg viewBox="0 0 16 16"><path d="M2 3h12M2 6.5h8M2 10h12M2 13.5h8"/></svg></button>
             <button class="ikoon" data-uitlijn="center" title="Centreren" aria-label="Centreren"><svg viewBox="0 0 16 16"><path d="M2 3h12M4 6.5h8M2 10h12M4 13.5h8"/></svg></button>
             <button class="ikoon" data-uitlijn="right" title="Rechts uitlijnen" aria-label="Rechts uitlijnen"><svg viewBox="0 0 16 16"><path d="M2 3h12M6 6.5h8M2 10h12M6 13.5h8"/></svg></button>
@@ -767,7 +768,10 @@
   function cm(mm){ return (Math.round(mm/5)/2).toString().replace('.', ',') + ' cm'; }
   function fontString(i, px){
     const l = LETTERTYPES[i.font] || LETTERTYPES[0];
-    return (i.vet && l.b700 ? 'bold ' : '') + px + 'px ' + l.css;
+    // Geen apart cursief lettertypebestand ingebed (zie LETTERTYPES) -- de browser maakt zelf een
+    // schuine variant van het rechtopstaande lettertype (font-synthesis), zowel hier op canvas als
+    // straks in het drukbestand.
+    return (i.vet && l.b700 ? 'bold ' : '') + (i.schuin ? 'italic ' : '') + px + 'px ' + l.css;
   }
   // Lettertypes laden; daarna alles opnieuw tekenen (tot die tijd een reserve-lettertype)
   function laadLettertypes(){
@@ -1036,6 +1040,7 @@
         d.font = Math.round(getal(i.font, 0, LETTERTYPES.length - 1, 0));
         d.uitlijn = ['left', 'center', 'right'].includes(i.uitlijn) ? i.uitlijn : 'center';
         d.vet = !!i.vet;
+        d.schuin = !!i.schuin;
         d.rand = !!i.rand;
         d.schaduw = !!i.schaduw;
       }
@@ -1512,7 +1517,7 @@ function maakQrLib(){var t=function(){var t=function(t,r){var e=t,n=g[r],o=null,
   function maakPlek(x, y, b, h, label){ return { id: volgendeId++, type:'plek', x, y, b, h, label: label || 'Jouw logo' }; }
   function maakVorm(x, y, b, h, kleur){ return { id: volgendeId++, type:'vorm', x, y, b, h, kleur }; }
   function maakTekst(t, opt){
-    const i = Object.assign({ id: volgendeId++, type:'tekst', tekst:t, kleur:'#111111', font:0, vet:true, uitlijn:'center', x:bord.b/2, y:bord.h/2, maat:50 }, opt);
+    const i = Object.assign({ id: volgendeId++, type:'tekst', tekst:t, kleur:'#111111', font:0, vet:true, schuin:false, uitlijn:'center', x:bord.b/2, y:bord.h/2, maat:50 }, opt);
     if (i.voorbeeld) i.voorbeeldTekst = t;      // maakt de klant het veld leeg, dan komt het voorbeeld terug
     return i;
   }
@@ -3185,7 +3190,7 @@ function maakQrLib(){var t=function(){var t=function(t,r){var e=t,n=g[r],o=null,
   const METER_PER_CM = 4;
   const capCache = new Map();
   function capVerhouding(i){
-    const sleutel = (i.font || 0) + (i.vet ? 'v' : '');
+    const sleutel = (i.font || 0) + (i.vet ? 'v' : '') + (i.schuin ? 's' : '');
     if (capCache.has(sleutel)) return capCache.get(sleutel);
     meet.font = fontString(i, 100);
     const m = meet.measureText('H');
@@ -3522,6 +3527,7 @@ function maakQrLib(){var t=function(){var t=function(t,r){var e=t,n=g[r],o=null,
   });
   $('lettertype').addEventListener('change', e => { if (gekozen && gekozen.type === 'tekst'){ bewaar(); const g = gekozen; metAnker(g, () => { g.font = Number(e.target.value); }); werkBalkBij(); teken(); } });
   $('vet').addEventListener('click', () => { if (gekozen && gekozen.type === 'tekst'){ bewaar(); const g = gekozen; metAnker(g, () => { g.vet = !g.vet; }); werkBalkBij(); teken(); } });
+  $('schuin').addEventListener('click', () => { if (gekozen && gekozen.type === 'tekst'){ bewaar(); const g = gekozen; metAnker(g, () => { g.schuin = !g.schuin; }); werkBalkBij(); teken(); } });
   $('tekstRand').addEventListener('click', () => { if (gekozen && gekozen.type === 'tekst'){ bewaar(); gekozen.rand = !gekozen.rand; werkBalkBij(); teken(); opslaanLater(); } });
   $('tekstSchaduw').addEventListener('click', () => { if (gekozen && gekozen.type === 'tekst'){ bewaar(); gekozen.schaduw = !gekozen.schaduw; werkBalkBij(); teken(); opslaanLater(); } });
   document.querySelectorAll('[data-uitlijn]').forEach(b => b.addEventListener('click', () => {
@@ -3638,6 +3644,7 @@ function maakQrLib(){var t=function(){var t=function(t,r){var e=t,n=g[r],o=null,
       veld.rows = Math.min(4, regels(gekozen).length);
       $('lettertype').value = gekozen.font;
       $('vet').setAttribute('aria-pressed', gekozen.vet ? 'true' : 'false');
+      $('schuin').setAttribute('aria-pressed', gekozen.schuin ? 'true' : 'false');
       $('tekstRand').setAttribute('aria-pressed', gekozen.rand ? 'true' : 'false');
       $('tekstSchaduw').setAttribute('aria-pressed', gekozen.schaduw ? 'true' : 'false');
       document.querySelectorAll('[data-uitlijn]').forEach(b => b.setAttribute('aria-pressed', b.dataset.uitlijn === (gekozen.uitlijn || 'center') ? 'true' : 'false'));
