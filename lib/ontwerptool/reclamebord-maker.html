@@ -299,7 +299,7 @@
         <input type="file" id="fotoInvoer" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif" hidden>
       </div>
       <p class="hint" id="fotoTip" hidden></p>
-      <p class="tussen">Kleurstijl (in één klik)</p>
+      <p class="tussen">Kleurencombinatie voor je hele bord</p>
       <div class="stalen" id="kleurstijlen"></div></div>
     </section>
 
@@ -1692,7 +1692,7 @@ function maakQrLib(){var t=function(){var t=function(t,r){var e=t,n=g[r],o=null,
       const b = document.createElement('button');
       b.type = 'button'; b.className = 'staal';
       b.style.background = 'linear-gradient(135deg, ' + s.bg + ' 0 54%, ' + s.accent + ' 54% 100%)';
-      b.title = s.naam; b.setAttribute('aria-label', 'Kleurstijl ' + s.naam.toLowerCase());
+      b.title = s.naam; b.setAttribute('aria-label', 'Kleurencombinatie ' + s.naam.toLowerCase());
       b.addEventListener('click', () => toepassenKleurstijl(s));
       el.appendChild(b);
     });
