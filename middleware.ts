@@ -1,3 +1,4 @@
+import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { INTERN_SESSIE_COOKIE } from "@/lib/auth/internSessie";
 
@@ -20,8 +21,46 @@ function isPubliekeAanvragenRoute(method: string, pathname: string): boolean {
   return false;
 }
 
-export function middleware(request: NextRequest) {
+// Ververst de Supabase-sessiecookies van de klant (ingeloggen/inloggen) op elke request. Een
+// Server Component mag zelf geen cookies zetten (zie lib/supabase/serverAuth.ts) -- zonder dit
+// zou een verlopen toegangstoken daar wel ververst worden voor die ene aanvraag, maar de nieuwe
+// cookies nooit teruggeschreven worden naar de browser. Bij token-rotatie (standaard bij Supabase
+// Auth) maakt dat het oude, inmiddels ingetrokken refreshtoken de volgende keer ongeldig -- de
+// klant wordt dan zonder duidelijke reden uitgelogd. Alleen relevant voor de klant-routes; /intern
+// gebruikt een heel ander, eigen sessiesysteem (zie INTERN_SESSIE_COOKIE) en heeft dit niet nodig.
+async function verversSupabaseSessie(request: NextRequest): Promise<NextResponse> {
+  let response = NextResponse.next({ request });
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !anonKey) return response;
+
+  const supabase = createServerClient(url, anonKey, {
+    cookies: {
+      getAll() {
+        return request.cookies.getAll();
+      },
+      setAll(cookiesToSet) {
+        cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
+        response = NextResponse.next({ request });
+        cookiesToSet.forEach(({ name, value, options }) => response.cookies.set(name, value, options));
+      },
+    },
+  });
+
+  // Het resultaat zelf is hier niet nodig (dat leest elke pagina apart via createServerAuthClient);
+  // deze aanroep bestaat puur om Supabase de kans te geven een verlopen token te verversen en de
+  // nieuwe cookies via setAll() hierboven op de response te zetten. Moet afgewacht worden: setAll()
+  // herschrijft `response` pas zodra deze aanroep klaar is.
+  await supabase.auth.getUser();
+  return response;
+}
+
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  if (pathname === "/inloggen" || pathname === "/mijn-borden") {
+    return await verversSupabaseSessie(request);
+  }
 
   if (pathname === "/intern/login") {
     return NextResponse.next();
@@ -51,5 +90,5 @@ export function middleware(request: NextRequest) {
 // sommen) — zie de uitleg bij isPubliekeAanvragenRoute hierboven voor waarom dat de veiligere
 // default is.
 export const config = {
-  matcher: ["/intern/:path*", "/api/aanvragen", "/api/aanvragen/:path*"],
+  matcher: ["/intern/:path*", "/api/aanvragen", "/api/aanvragen/:path*", "/inloggen", "/mijn-borden"],
 };
