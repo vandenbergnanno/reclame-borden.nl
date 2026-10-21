@@ -335,6 +335,8 @@
       <h2 class="stap-kop"><span class="stap">4</span>Klaar<span class="chevron" aria-hidden="true"></span></h2>
       <div class="kaart-body">
       <button class="knop primair" id="verstuur">Aanvraag versturen</button>
+      <button type="button" class="knop secundair" id="proefDownload">Proefversie downloaden (voor sponsors)</button>
+      <p class="hint">Handig om eerst goedkeuring te vragen: een kleine, duidelijk gemerkte afbeelding van je bord &mdash; geen drukklaar bestand.</p>
       <button class="knop secundair" id="teamDownload" hidden>Drukbestand downloaden (team)</button>
       <p class="hint">Je krijgt altijd eerst een drukproef om goed te keuren. Pas na je akkoord maken we je bord.</p>
       <p class="hint" id="prijsRegel">Wat kost het? <a id="prijsLink" href="https://reclame-borden.nl/prijs-berekenen/" target="_blank" rel="noopener">Bereken je prijs</a> (opent in een nieuw venster; je ontwerp blijft hier staan).</p></div>
@@ -4185,6 +4187,46 @@ function maakQrLib(){var t=function(){var t=function(t,r){var e=t,n=g[r],o=null,
     tekenScene(c.getContext('2d'), k, { bord, achtergrond: kant.achtergrond, achtergrondFoto: kant.achtergrondFoto, items: kant.items }, true);
     return new Promise(r => c.toBlob(r, 'image/png'));
   }
+
+  // Kleine, duidelijk gemerkte JPG om vooraf aan sponsors/bestuur te laten zien -- bewust NIET het
+  // drukklare bestand (zie KOPIE_TOESTAAN hierboven): lage resolutie, zware compressie en een
+  // watermerk erover, zodat niemand hiermee zelf kan laten drukken in plaats van een aanvraag in
+  // te dienen.
+  function tekenProefWatermerk(ctx, breedte, hoogte){
+    ctx.save();
+    ctx.globalAlpha = 0.16;
+    ctx.fillStyle = '#d32f2f';
+    ctx.font = 'bold ' + Math.max(18, Math.round(breedte / 13)) + 'px Arial, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.translate(breedte / 2, hoogte / 2);
+    ctx.rotate(-Math.PI / 9);
+    const tekst = 'PROEFVERSIE \u2013 NIET VOOR DRUK';
+    const stap = Math.max(60, Math.round(breedte / 4));
+    for (let y = -hoogte * 1.5; y < hoogte * 1.5; y += stap) ctx.fillText(tekst, 0, y);
+    ctx.restore();
+  }
+  async function maakProefversie(){
+    const kant = kantData(zijde);
+    const breed = 900, k = breed / bord.b;
+    const c = document.createElement('canvas');
+    c.width = breed; c.height = Math.round(bord.h * k);
+    const ctx = c.getContext('2d');
+    tekenScene(ctx, k, { bord, achtergrond: kant.achtergrond, achtergrondFoto: kant.achtergrondFoto, items: kant.items }, true);
+    tekenProefWatermerk(ctx, c.width, c.height);
+    return new Promise(r => c.toBlob(r, 'image/jpeg', 0.45));
+  }
+  $('proefDownload').addEventListener('click', async () => {
+    if (bordLeeg()){ melding('Je bord is nog leeg. Kies een indeling of voeg een logo of tekst toe.'); return; }
+    const knop = $('proefDownload'); const oudeTekst = knop.textContent;
+    knop.disabled = true; knop.textContent = 'Proefversie maken\u2026';
+    try {
+      const blob = await maakProefversie();
+      downloadBlob(blob, 'reclamebord-proefversie-' + Math.round(enkelB() / 10) + 'x' + Math.round(bord.h / 10) + 'cm.jpg');
+    } finally {
+      knop.disabled = false; knop.textContent = oudeTekst;
+    }
+  });
   // Duidelijk vraagvenster (in plaats van het kleine venster van de browser)
   const vraagDlg = $('vraagDlg');
   let vraagRij = Promise.resolve();
