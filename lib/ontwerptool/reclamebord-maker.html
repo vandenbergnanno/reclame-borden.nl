@@ -692,6 +692,7 @@
   let zijde = 'voor';              // welke kant op het scherm staat: 'voor' of 'achter'
   let items = [];                 // posities in mm, middelpunt, vanaf de snijlijn linksboven
   let gekozen = null;
+  let meegekozen = [];   // extra onderdelen die samen met `gekozen` meeverplaatst/verwijderd worden (shift+klik of aanslepen)
   let actie = null;
   let hulplijn = { x:null, y:null };   // plek (mm) van een hulplijn tijdens het slepen
   let schaal = 1;                 // css-pixels per mm in het voorbeeld
@@ -2090,6 +2091,20 @@ function maakQrLib(){var t=function(){var t=function(t,r){var e=t,n=g[r],o=null,
       ctx.restore();
     }
 
+    // Meegekozen onderdelen (shift+klik of sleepkader): dunne ononderbroken rand, geen hoekjes
+    // (die horen alleen bij `gekozen`, want alleen dat onderdeel kun je apart schalen/bewerken).
+    if (meegekozen.length){
+      ctx.save();
+      ctx.strokeStyle = '#5FB238';
+      ctx.lineWidth = 1.5*dpr;
+      meegekozen.forEach(i => {
+        if (i === bewerkItem) return;
+        const m = afmeting(i), pad = 4*dpr;
+        ctx.strokeRect(a + (i.x - m.w/2)*k - pad, a + (i.y - m.h/2)*k - pad, m.w*k + 2*pad, m.h*k + 2*pad);
+      });
+      ctx.restore();
+    }
+
     // Selectie met hoekjes
     if (gekozen && gekozen !== bewerkItem){
       const m = afmeting(gekozen);
@@ -2108,6 +2123,20 @@ function maakQrLib(){var t=function(){var t=function(t,r){var e=t,n=g[r],o=null,
         ctx.fillRect(hx - hs/2, hy - hs/2, hs, hs);
         ctx.strokeRect(hx - hs/2, hy - hs/2, hs, hs);
       });
+      ctx.restore();
+    }
+
+    // Sleepkader (marquee): om meerdere onderdelen tegelijk aan te wijzen
+    if (actie && actie.soort === 'kader'){
+      const x0 = Math.min(actie.x0, actie.x1)*k, x1 = Math.max(actie.x0, actie.x1)*k;
+      const y0 = Math.min(actie.y0, actie.y1)*k, y1 = Math.max(actie.y0, actie.y1)*k;
+      ctx.save();
+      ctx.fillStyle = 'rgba(95,178,56,.12)';
+      ctx.fillRect(a + x0, a + y0, x1 - x0, y1 - y0);
+      ctx.strokeStyle = '#5FB238';
+      ctx.lineWidth = 1*dpr;
+      ctx.setLineDash([5*dpr, 3*dpr]);
+      ctx.strokeRect(a + x0, a + y0, x1 - x0, y1 - y0);
       ctx.restore();
     }
   }
@@ -3621,9 +3650,12 @@ function maakQrLib(){var t=function(){var t=function(t,r){var e=t,n=g[r],o=null,
   function kies(item){
     if (bewerkItem && bewerkItem !== item) sluitBewerken();
     gekozen = item;
+    meegekozen = [];
     werkBalkBij();
     teken();
   }
+  function selectieGroep(){ return [gekozen, ...meegekozen].filter(Boolean); }
+
 
   function werkBalkBij(){
     $('balkLeeg').hidden = !!gekozen;
@@ -3704,11 +3736,12 @@ function maakQrLib(){var t=function(){var t=function(t,r){var e=t,n=g[r],o=null,
   }
   function verwijder(){
     if (!gekozen) return;
-    const wat = omschrijving(gekozen);
+    const groep = selectieGroep();
+    const wat = groep.length > 1 ? groep.length + ' onderdelen zijn' : omschrijving(gekozen) + ' is';
     bewaar();
-    items = items.filter(i => i !== gekozen);
+    items = items.filter(i => !groep.includes(i));
     kies(null);
-    melding(wat + ' is weggehaald. Per ongeluk? Klik op "Ongedaan".', 8000);
+    melding(wat + ' weggehaald. Per ongeluk? Klik op "Ongedaan".', 8000);
   }
   $('verwijder').addEventListener('click', verwijder);
   $('verdeelKnop').addEventListener('click', () => {
@@ -3884,8 +3917,27 @@ function maakQrLib(){var t=function(){var t=function(t,r){var e=t,n=g[r],o=null,
         : { soort:'rek', ox: gekozen.x - h.sx*m.w/2, oy: gekozen.y - h.sy*m.h/2, voor: momentopname() };
     } else {
       const i = raak(p);
-      kies(i);
-      if (i) actie = { soort:'sleep', dx: p.x - i.x, dy: p.y - i.y, voor: momentopname() };
+      // Shift+klik: onderdeel toevoegen aan (of verwijderen uit) de huidige selectie, zonder iets
+      // te verslepen -- net als in Canva/PowerPoint. Een volgende (gewone) sleep op een onderdeel
+      // dat al in de selectie zit, verplaatst dan de hele groep in één keer.
+      if (e.shiftKey && i){
+        if (i !== gekozen){
+          const idx = meegekozen.indexOf(i);
+          if (idx >= 0) meegekozen.splice(idx, 1);
+          else if (gekozen) meegekozen.push(i);
+          else kies(i);
+        }
+        werkBalkBij(); teken();
+        return;
+      }
+      const inGroep = i && (i === gekozen || meegekozen.includes(i));
+      if (!inGroep) kies(i);
+      if (i) actie = { soort:'sleep', dx: p.x - i.x, dy: p.y - i.y, grijp: i, voor: momentopname() };
+      else {
+        // Op leeg bord beginnen met slepen: een sleepkader om meerdere onderdelen tegelijk te kiezen
+        kies(null);
+        actie = { soort:'kader', x0: p.x, y0: p.y, x1: p.x, y1: p.y };
+      }
     }
     if (actie) vang(e.pointerId);
   });
@@ -3907,15 +3959,22 @@ function maakQrLib(){var t=function(){var t=function(t,r){var e=t,n=g[r],o=null,
       return;
     }
     actie.veranderd = true;
-    if (actie.soort === 'sleep'){
+    if (actie.soort === 'kader'){
+      actie.x1 = p.x; actie.y1 = p.y;
+      teken();
+    } else if (actie.soort === 'sleep'){
       let nx = p.x - actie.dx, ny = p.y - actie.dy;
       const vang = 8/schaal;
       const sx = vastklikken(nx, 'x', vang), sy = vastklikken(ny, 'y', vang);
       hulplijn.x = sx ? sx.lijn : null; hulplijn.y = sy ? sy.lijn : null;
       if (sx) nx = sx.pos;
       if (sy) ny = sy.pos;
-      gekozen.x = nx; gekozen.y = ny;
-      binnenBord(gekozen);
+      const g = actie.grijp;
+      const dx = nx - g.x, dy = ny - g.y;
+      g.x = nx; g.y = ny;
+      binnenBord(g);
+      // De rest van de selectie (shift+klik of sleepkader) verschuift gelijk mee.
+      selectieGroep().forEach(o => { if (o !== g){ o.x += dx; o.y += dy; binnenBord(o); } });
       teken();
     } else if (actie.soort === 'schaal'){
       const f = Math.hypot(p.x - gekozen.x, p.y - gekozen.y) / actie.d0;
@@ -3951,8 +4010,25 @@ function maakQrLib(){var t=function(){var t=function(t,r){var e=t,n=g[r],o=null,
     kandidaten.forEach(k => { const d = Math.abs(k.pos - p); if (d < vang && (!beste || d < beste.d)) beste = { ...k, d }; });
     return beste;
   }
+  // Een sleepkader wijzigt het ontwerp niet (alleen de selectie) -- dus geen stap in de
+  // ongedaan-maken-geschiedenis, in tegenstelling tot de andere acties hieronder.
+  function voltooiKader(k){
+    const x0 = Math.min(k.x0, k.x1), x1 = Math.max(k.x0, k.x1);
+    const y0 = Math.min(k.y0, k.y1), y1 = Math.max(k.y0, k.y1);
+    if (x1 - x0 < 3/schaal && y1 - y0 < 3/schaal) return;   // nauwelijks gesleept: geen kader
+    const gevonden = items.filter(i => {
+      const m = afmeting(i);
+      return (i.x + m.w/2) >= x0 && (i.x - m.w/2) <= x1 && (i.y + m.h/2) >= y0 && (i.y - m.h/2) <= y1;
+    });
+    if (!gevonden.length) return;
+    kies(gevonden[0]);
+    meegekozen = gevonden.slice(1);
+    werkBalkBij();
+  }
   function stop(){
-    if (actie && actie.veranderd){
+    if (actie && actie.soort === 'kader'){
+      voltooiKader(actie);
+    } else if (actie && actie.veranderd){
       geschiedenis.push(actie.voor); if (geschiedenis.length > 80) geschiedenis.shift();
       toekomst = []; laatsteSleutel = null; formaatBasis = null; werkTerugdraaiBij(); opslaanLater();
     }
@@ -3986,7 +4062,7 @@ function maakQrLib(){var t=function(){var t=function(t,r){var e=t,n=g[r],o=null,
     if (!gekozen) return;
     if (ctrl && toets === 'd'){ e.preventDefault(); $('kopie').click(); return; }
     const stap = e.shiftKey ? 100 : 10;
-    const schuif = (dx, dy) => { e.preventDefault(); bewaar('schuif' + gekozen.id); gekozen.x += dx; gekozen.y += dy; binnenBord(gekozen); teken(); };
+    const schuif = (dx, dy) => { e.preventDefault(); bewaar('schuif' + gekozen.id); selectieGroep().forEach(i => { i.x += dx; i.y += dy; binnenBord(i); }); teken(); };
     // Een tekst is gekozen en de klant begint te typen: meteen in de tekst typen (zoals in Word of PowerPoint)
     const opBord = e.target === document.body || e.target === canvas;
     if (opBord && gekozen.type === 'tekst' && e.key.length === 1 && !ctrl && !e.altKey){ openBewerken(gekozen, !gekozen.voorbeeld); return; }
