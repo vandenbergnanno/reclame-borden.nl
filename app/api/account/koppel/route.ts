@@ -51,10 +51,6 @@ export async function POST(request: Request) {
   const bedrijf = typeof body.bedrijf === "string" ? body.bedrijf.trim() : "";
   const telefoon = typeof body.telefoon === "string" ? body.telefoon.trim() : "";
 
-  if (!naam) {
-    return Response.json({ ok: false, error: "Naam is verplicht." }, { status: 400 });
-  }
-
   let supabase: ReturnType<typeof createServerSupabaseClient>;
   try {
     supabase = createServerSupabaseClient();
@@ -82,16 +78,41 @@ export async function POST(request: Request) {
       );
     }
 
-    const { error: updateFout } = await supabase
-      .from("klanten")
-      .update({ auth_user_id: user.id, naam, bedrijf: bedrijf || null, telefoon: telefoon || null })
-      .eq("id", bestaandeKlant.id);
+    // Deze klantrij bestaat al (een eerdere gastaanvraag) en heeft dus al eigen gegevens/aanvragen
+    // die na het koppelen zichtbaar worden op /mijn-borden. De EERSTE keer koppelen (auth_user_id
+    // nog leeg) mag daarom alleen bij een BEVESTIGD e-mailadres -- staat e-mailbevestiging in het
+    // Supabase-project uit (iets wat deze route zelf niet kan afdwingen), dan zou anders iedereen
+    // met iemands e-mailadres kunnen inloggen en meteen diens aanvragen, adres en telefoonnummer
+    // te zien krijgen. Is deze rij al aan dit account gekoppeld (een gewone, latere login), dan is
+    // er niets opnieuw te bevestigen.
+    if (!bestaandeKlant.auth_user_id && !user.email_confirmed_at) {
+      return Response.json(
+        { ok: false, error: "Bevestig eerst je e-mailadres via de link die je per mail hebt gekregen. Daarna koppelen we je account aan je eerdere aanvragen." },
+        { status: 403 }
+      );
+    }
+
+    // Geen velden overschrijven die nu leeg binnenkomen (bijvoorbeeld een gewone login, waarbij
+    // naam/bedrijf/telefoon niet worden meegestuurd) -- anders zou een al bekende naam per ongeluk
+    // leeggemaakt worden.
+    const updateVelden: { auth_user_id: string; naam?: string; bedrijf?: string | null; telefoon?: string | null } = {
+      auth_user_id: user.id,
+    };
+    if (naam) updateVelden.naam = naam;
+    if (bedrijf) updateVelden.bedrijf = bedrijf;
+    if (telefoon) updateVelden.telefoon = telefoon;
+
+    const { error: updateFout } = await supabase.from("klanten").update(updateVelden).eq("id", bestaandeKlant.id);
 
     if (updateFout) {
       return Response.json({ ok: false, error: updateFout.message }, { status: 500 });
     }
 
     return Response.json({ ok: true });
+  }
+
+  if (!naam) {
+    return Response.json({ ok: false, error: "Naam is verplicht." }, { status: 400 });
   }
 
   const { error: insertFout } = await supabase.from("klanten").insert({

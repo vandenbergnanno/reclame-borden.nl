@@ -34,6 +34,19 @@ export function KlantLoginForm() {
       if (modus === "inloggen") {
         const { error } = await supabase.auth.signInWithPassword({ email, password: wachtwoord });
         if (error) throw new Error(error.message === "Invalid login credentials" ? "Onjuist e-mailadres of wachtwoord." : error.message);
+        // Best effort: als deze klant (bijvoorbeeld na het bevestigen van zijn e-mailadres) nog
+        // niet gekoppeld was aan een eerdere gastaanvraag, gebeurt dat hier alsnog. Mislukt dit,
+        // dan mag het inloggen zelf gewoon doorgaan -- /mijn-borden laat dan voorlopig geen
+        // eerdere aanvragen zien in plaats van de klant helemaal te blokkeren.
+        try {
+          await fetch("/api/account/koppel", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({}),
+          });
+        } catch {
+          // zie hierboven
+        }
         router.push("/mijn-borden");
         router.refresh();
         return;
