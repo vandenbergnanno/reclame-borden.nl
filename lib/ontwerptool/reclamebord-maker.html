@@ -439,6 +439,7 @@
             <button class="klein" id="vooraan">Naar voren</button>
             <button class="klein" id="achteraan">Naar achteren</button>
             <button class="klein" id="kopie">Kopie</button>
+            <button class="klein" id="kopieKant" hidden>Ook op andere kant zetten</button>
             <button class="klein gevaar" id="verwijder">Verwijder</button>
           </div>
           <span class="kwaliteit" id="kwaliteit"></span>
@@ -3698,6 +3699,7 @@ function maakQrLib(){var t=function(){var t=function(t,r){var e=t,n=g[r],o=null,
     $('witGroep').hidden = !(t === 'logo' && !heelOntwerp(gekozen) && (gekozen.witteRand || gekozen.voorWit));
     $('teamBronGroep').hidden = !(teamModus && gekozen.bron);
     $('verdeelGroep').hidden = !(t === 'logo' && !heelOntwerp(gekozen) && items.filter(i => i.type === 'logo' && !heelOntwerp(i)).length >= 2);
+    $('kopieKant').hidden = !andereKant;
     if (t === 'logo'){
       $('witKnop').textContent = gekozen.voorWit ? 'Witte achtergrond terugzetten' : 'Witte achtergrond weghalen';
       $('witKnop').classList.toggle('vol', !gekozen.voorWit && !!gekozen.witteRand && !lichteAchtergrond());
@@ -3787,6 +3789,23 @@ function maakQrLib(){var t=function(){var t=function(t,r){var e=t,n=g[r],o=null,
     if (k.type === 'plek' && k.bron) k.kopieVan = gekozen.kopieVan || gekozen.id;   // zelfde bestand, maar op twee plekken
     binnenBord(k);
     items.push(k); kies(k);
+  });
+  // Bij een eigen achterkant (zie maakAchterkant) staat die apart in andereKant.items -- dit zet een
+  // kopie van de huidige selectie (bijvoorbeeld een sponsorlogo) op precies dezelfde plek op de
+  // andere kant, zodat je niet twee keer hetzelfde logo hoeft te uploaden en positioneren.
+  $('kopieKant').addEventListener('click', () => {
+    if (!gekozen || !andereKant) return;
+    bewaar();
+    const groep = selectieGroep();
+    const kopieën = groep.map(i => {
+      const k = { ...i, id: volgendeId++ };
+      if (k.type === 'plek' && k.bron) k.kopieVan = i.kopieVan || i.id;
+      return k;
+    });
+    andereKant.items.push(...kopieën);
+    opslaanLater();
+    const andereNaam = zijde === 'voor' ? 'achterkant' : 'voorkant';
+    melding((kopieën.length > 1 ? kopieën.length + ' onderdelen staan' : omschrijving(gekozen) + ' staat') + ' nu ook op de ' + andereNaam + '.', 6000);
   });
   // Plaats-knoppen: tegen een kant of in het midden. Vlakken gaan tot in de afloop.
   document.querySelectorAll('[data-plaats]').forEach(b => b.addEventListener('click', () => {
