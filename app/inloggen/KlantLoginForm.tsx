@@ -182,6 +182,21 @@ export function KlantLoginForm() {
         >
           {bezig ? "Bezig..." : modus === "inloggen" ? "Inloggen" : "Account aanmaken"}
         </button>
+
+        {modus === "account_aanmaken" && (
+          <p className="text-center text-xs text-neutral-500">
+            Met een account aanmaken ga je akkoord met ons{" "}
+            <a
+              href="https://reclame-borden.nl/privacybeleid/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline hover:text-brand-groen"
+            >
+              privacybeleid
+            </a>
+            .
+          </p>
+        )}
       </form>
     </div>
   );

@@ -4,10 +4,12 @@ import { useEffect, useState } from "react";
 
 const OPSLAGSLEUTEL = "mediagraaf_cookiemelding_gezien";
 
-// De enige cookie op deze site is de functionele inlogsessie voor /intern (zie
-// lib/auth/internSessie.ts) — geen tracking/advertentiecookies, dus geen "weigeren"-knop nodig.
-// localStorage i.p.v. een cookie om dit te onthouden: dat voorkomt de ironie van een cookie
-// plaatsen om te melden dat er cookies zijn, en werkt prima voor een puur lokale voorkeur.
+// Alle cookies op deze site zijn functioneel: de inlogsessie voor /intern (zie
+// lib/auth/internSessie.ts) en, sinds klantaccounts (/inloggen, /mijn-borden), de
+// Supabase Auth-sessiecookies van ingelogde klanten — geen tracking/advertentiecookies, dus geen
+// "weigeren"-knop nodig. localStorage i.p.v. een cookie om dit te onthouden: dat voorkomt de
+// ironie van een cookie plaatsen om te melden dat er cookies zijn, en werkt prima voor een puur
+// lokale voorkeur.
 export function CookieMelding() {
   const [zichtbaar, setZichtbaar] = useState(false);
 
@@ -37,9 +39,10 @@ export function CookieMelding() {
     <div className="fixed inset-x-0 bottom-0 z-50 border-t border-neutral-200 bg-white px-4 py-4 shadow-[0_-4px_12px_rgba(0,0,0,0.08)] sm:px-6">
       <div className="mx-auto flex max-w-4xl flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-neutral-700">
-          Deze site gebruikt alleen een functionele cookie om medewerkers op{" "}
-          <code className="rounded bg-neutral-100 px-1">/intern</code> ingelogd te houden. Geen
-          tracking- of advertentiecookies.
+          Deze site gebruikt alleen functionele cookies: om medewerkers op{" "}
+          <code className="rounded bg-neutral-100 px-1">/intern</code> ingelogd te houden, en om
+          klanten op <code className="rounded bg-neutral-100 px-1">/mijn-borden</code> ingelogd te
+          houden. Geen tracking- of advertentiecookies.
         </p>
         <button
           type="button"
