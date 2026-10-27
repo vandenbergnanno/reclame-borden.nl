@@ -143,6 +143,28 @@ export default function HomePage() {
         </div>
       </section>
 
+      <section className="rounded-2xl border border-neutral-200 bg-white p-6 text-center sm:p-8">
+        <h2 className="text-xl font-semibold text-brand-zwart">Al eerder een bord laten maken?</h2>
+        <p className="mx-auto mt-2 max-w-xl text-sm text-neutral-600">
+          Maak een gratis account aan en zie al je aanvragen en hun status op één plek terug, zodat
+          je niet hoeft te bellen of mailen om te weten waar je bestelling staat.
+        </p>
+        <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
+          <a
+            href="/inloggen"
+            className="rounded-full bg-brand-groen px-5 py-2.5 text-sm font-medium text-white shadow-sm transition hover:opacity-90"
+          >
+            Account aanmaken
+          </a>
+          <a
+            href="/inloggen"
+            className="text-sm font-medium text-brand-zwart underline hover:text-brand-groen"
+          >
+            Ik heb al een account
+          </a>
+        </div>
+      </section>
+
       <p className="text-center text-sm text-neutral-500">
         Ben je van De Mediagraaf?{" "}
         <a href="/intern" className="font-medium text-brand-zwart underline hover:text-brand-groen">
