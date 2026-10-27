@@ -13,9 +13,12 @@ import {
   BORD_AANSCHAF_LABELS,
   VELDTYPE_LABELS,
   type AanvraagStatus,
+  type Bedrukking,
 } from "@/lib/types/domain";
 import { StatusActieKnop } from "./StatusActieKnop";
 import { LiveVerversen } from "./LiveVerversen";
+import { telLooptVastAanvragen } from "@/lib/intern/looptVast";
+import { schatPrijs } from "@/lib/intern/omzetSchatting";
 
 export const metadata: Metadata = {
   title: "Intern overzicht — Mediagraaf Conceptor",
@@ -52,6 +55,12 @@ interface AanvraagKaart {
   // zonder kant-en-klaar drukbestand (zie ontwerpDoorOns).
   isOntwerptool: boolean;
   ontwerpDoorOns: boolean;
+  // Ruwe velden (naast de al opgemaakte velden hierboven) voor de omzetschatting en de
+  // "langst wachtend"-KPI in het dashboard bovenaan deze pagina.
+  afmetingRuw: string;
+  aantal: number;
+  bedrukking: Bedrukking;
+  ingediendOpRuw: string;
 }
 
 // Server component: haalt aanvragen, klanten en contentchecks apart op en koppelt ze in JS.
@@ -144,6 +153,10 @@ export default async function InternPage({
         alGoedgekeurd: goedgekeurdeAanvraagIds.has(aanvraag.id),
         isOntwerptool: aanvraag.wens === null,
         ontwerpDoorOns: aanvraag.ontwerp_door_ons,
+        afmetingRuw: aanvraag.afmeting,
+        aantal: aanvraag.aantal,
+        bedrukking: aanvraag.bedrukking,
+        ingediendOpRuw: aanvraag.created_at,
       };
     });
   } catch (error) {
@@ -157,6 +170,25 @@ export default async function InternPage({
     },
     {} as Record<AanvraagStatus, number>
   );
+
+  // Dashboard-kengetallen bovenaan de pagina: wat je als eerste wilt zien bij het inloggen,
+  // vergelijkbaar met wat eigenaren van kleine bedrijven doorgaans als eerste checken (openstaand
+  // werk, omzet die daarin zit, en wat vastloopt of te lang blijft liggen) in plaats van meteen
+  // door losse aanvragen te moeten klikken.
+  const openstaandeKaarten = kaarten.filter((kaart) => kaart.statusWaarde !== "gemaakt");
+  const geschatteOmzet = openstaandeKaarten.reduce((totaal, kaart) => {
+    if (kaart.ontwerpDoorOns) return totaal; // prijs wordt achteraf bepaald, telt niet mee in de schatting
+    const prijs = schatPrijs(kaart.afmetingRuw, kaart.aantal, kaart.bedrukking);
+    return prijs === null ? totaal : totaal + prijs;
+  }, 0);
+  const oudsteOpenstaande = openstaandeKaarten.reduce<string | null>((oudste, kaart) => {
+    if (!oudste || kaart.ingediendOpRuw < oudste) return kaart.ingediendOpRuw;
+    return oudste;
+  }, null);
+  const langstWachtendDagen = oudsteOpenstaande
+    ? Math.max(0, Math.floor((Date.now() - new Date(oudsteOpenstaande).getTime()) / (1000 * 60 * 60 * 24)))
+    : null;
+  const looptVastAantal = foutmelding ? 0 : await telLooptVastAanvragen();
 
   const zichtbareKaarten = kaarten.filter((kaart) => kaart.statusWaarde === actieveStatus);
   if (actieveStatus === "gemaakt") {
@@ -205,6 +237,42 @@ export default async function InternPage({
 
       {!foutmelding && (
         <>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="rounded-lg border border-neutral-200 bg-white p-4">
+              <p className="text-xs font-medium uppercase tracking-wide text-neutral-500">Openstaand</p>
+              <p className="mt-1 text-2xl font-semibold text-brand-zwart">{openstaandeKaarten.length}</p>
+              <p className="text-xs text-neutral-500">nog niet klaar voor levering</p>
+            </div>
+            <div className="rounded-lg border border-neutral-200 bg-white p-4">
+              <p className="text-xs font-medium uppercase tracking-wide text-neutral-500">Geschatte omzet</p>
+              <p className="mt-1 text-2xl font-semibold text-brand-zwart">
+                &euro;{geschatteOmzet.toLocaleString("nl-NL")}
+              </p>
+              <p className="text-xs text-neutral-500">in openstaande aanvragen, excl. btw</p>
+            </div>
+            <div className="rounded-lg border border-neutral-200 bg-white p-4">
+              <p className="text-xs font-medium uppercase tracking-wide text-neutral-500">Langst wachtend</p>
+              <p className="mt-1 text-2xl font-semibold text-brand-zwart">
+                {langstWachtendDagen === null ? "—" : `${langstWachtendDagen} d.`}
+              </p>
+              <p className="text-xs text-neutral-500">oudste openstaande aanvraag</p>
+            </div>
+            <a
+              href="/intern/concepten"
+              className={`rounded-lg border p-4 transition ${
+                looptVastAantal > 0
+                  ? "border-brand-oranje/40 bg-brand-oranje/5 hover:border-brand-oranje"
+                  : "border-neutral-200 bg-white hover:border-neutral-300"
+              }`}
+            >
+              <p className="text-xs font-medium uppercase tracking-wide text-neutral-500">Loopt vast</p>
+              <p className={`mt-1 text-2xl font-semibold ${looptVastAantal > 0 ? "text-brand-oranje" : "text-brand-zwart"}`}>
+                {looptVastAantal}
+              </p>
+              <p className="text-xs text-neutral-500">concepten die een medewerker nodig hebben</p>
+            </a>
+          </div>
+
           <div className="flex flex-wrap gap-2">
             {PRODUCTIE_STATUSSEN.map((status) => (
               <a
