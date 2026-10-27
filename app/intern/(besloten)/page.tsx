@@ -15,7 +15,7 @@ import {
   type AanvraagStatus,
   type Bedrukking,
 } from "@/lib/types/domain";
-import { StatusActieKnop } from "./StatusActieKnop";
+import { AanvraagKaarten } from "./AanvraagKaarten";
 import { LiveVerversen } from "./LiveVerversen";
 import { telLooptVastAanvragen } from "@/lib/intern/looptVast";
 import { schatPrijs } from "@/lib/intern/omzetSchatting";
@@ -33,7 +33,7 @@ function isProductieStatus(waarde: string | undefined): waarde is AanvraagStatus
   return typeof waarde === "string" && (PRODUCTIE_STATUSSEN as readonly string[]).includes(waarde);
 }
 
-interface AanvraagKaart {
+export interface AanvraagKaart {
   aanvraagId: string;
   klantNaam: string;
   bedrijf: string | null;
@@ -298,71 +298,7 @@ export default async function InternPage({
               <span className="text-sm text-neutral-400">({zichtbareKaarten.length})</span>
             </div>
 
-            {zichtbareKaarten.length === 0 && (
-              <p className="rounded-lg border border-dashed border-neutral-200 p-4 text-center text-sm text-neutral-400">
-                Geen aanvragen in deze status.
-              </p>
-            )}
-
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {zichtbareKaarten.map((kaart) => (
-                <div key={kaart.aanvraagId} className="rounded-lg border border-neutral-200 bg-white p-3 shadow-sm">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0">
-                      <p className="truncate font-medium text-brand-zwart">{kaart.klantNaam}</p>
-                      {kaart.bedrijf && <p className="truncate text-xs text-neutral-500">{kaart.bedrijf}</p>}
-                    </div>
-                    <StatusActieKnop
-                      aanvraagId={kaart.aanvraagId}
-                      klantNaam={kaart.klantNaam}
-                      huidigeStatus={kaart.statusWaarde}
-                    />
-                  </div>
-
-                  <p className="mt-2 text-xs text-neutral-600">{kaart.veldtype}</p>
-                  <p className="text-xs text-neutral-500">{kaart.provincie}</p>
-
-                  <div className="mt-2 flex flex-wrap gap-1">
-                    {kaart.statusWaarde === "nieuw" && !kaart.isOntwerptool && (
-                      <span
-                        className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${
-                          kaart.alGoedgekeurd
-                            ? "bg-brand-groen/10 text-brand-groen"
-                            : "bg-neutral-100 text-neutral-500"
-                        }`}
-                      >
-                        {kaart.alGoedgekeurd ? "Goedgekeurd door klant" : "Wacht nog op voorstel"}
-                      </span>
-                    )}
-                    {kaart.statusWaarde === "nieuw" && kaart.isOntwerptool && kaart.ontwerpDoorOns && (
-                      <span className="rounded-full bg-brand-oranje/10 px-2 py-0.5 text-[10px] font-medium text-brand-oranje">
-                        Ontwerp nog maken
-                      </span>
-                    )}
-                    {kaart.nieuwBord && (
-                      <span className="rounded-full bg-brand-oranje/10 px-2 py-0.5 text-[10px] font-medium text-brand-oranje">
-                        {kaart.bordAanschaf}
-                      </span>
-                    )}
-                    {kaart.heeftGeblokkeerdeCheck && (
-                      <span className="rounded-full bg-brand-oranje/10 px-2 py-0.5 text-[10px] font-medium text-brand-oranje">
-                        Te controleren
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="mt-2 flex items-center justify-between">
-                    <span className="text-[10px] text-neutral-400">{kaart.ingediendOp}</span>
-                    <a
-                      href={`/intern/${kaart.aanvraagId}`}
-                      className="text-xs font-medium text-brand-groen hover:underline"
-                    >
-                      Bekijken →
-                    </a>
-                  </div>
-                </div>
-              ))}
-            </div>
+            <AanvraagKaarten kaarten={zichtbareKaarten} />
           </div>
         </>
       )}
