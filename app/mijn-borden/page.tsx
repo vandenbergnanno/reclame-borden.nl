@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { createServerAuthClient } from "@/lib/supabase/serverAuth";
 import { isSupabaseAuthGeconfigureerd } from "@/lib/supabase/server";
 import { AANVRAAG_STATUS_KLEUREN, AANVRAAG_STATUS_LABELS } from "@/lib/types/domain";
+import { AccountActies } from "./AccountActies";
 
 export const metadata: Metadata = {
   title: "Mijn borden — De Mediagraaf",
@@ -93,6 +94,8 @@ export default async function MijnBordenPage() {
           ))}
         </ul>
       )}
+
+      <AccountActies />
     </div>
   );
 }
