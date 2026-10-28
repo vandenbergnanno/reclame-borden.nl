@@ -121,7 +121,14 @@ export function KlantLoginForm() {
       }
 
       // Account aanmaken
-      const { data, error } = await supabase.auth.signUp({ email, password: wachtwoord });
+      // emailRedirectTo: zonder dit stuurt Supabase na het klikken op de bevestigingslink naar de
+      // "Site URL" uit de projectinstellingen, die niet per se (nog) goed staat ingesteld --
+      // hiermee komt de klant altijd terug op onze eigen inlogpagina, waar hij meteen kan inloggen.
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password: wachtwoord,
+        options: { emailRedirectTo: `${window.location.origin}/inloggen` },
+      });
       if (error) throw new Error(error.message);
 
       if (!data.session) {
