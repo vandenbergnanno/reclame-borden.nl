@@ -250,6 +250,9 @@
     .balk{flex-wrap:wrap}
     .balk-links{flex-basis:100%}
     .sjablonen{grid-template-columns:1fr 1fr}
+    /* Onderin zou de melding de knoppen Kopie/Verwijder van het geselecteerde onderdeel kunnen bedekken:
+       op een telefoon laten we hem daarom bovenin verschijnen, net onder de kopbalk. */
+    .toast{bottom:auto;top:max(12px, env(safe-area-inset-top,0px) + 8px);transform:translateY(-20px)}
   }
 </style>
 
@@ -444,6 +447,7 @@
           <span class="kwaliteit" id="kwaliteit"></span>
           <button class="klein" id="kleurFix" hidden>Maak de tekst leesbaar</button>
           <button class="klein" id="logoFix" hidden>Zet een wit vlak achter mijn logo</button>
+          <button class="klein" id="scherpFix" hidden>Wij maken je logo scherp voor je</button>
         </div>
       </div>
       <div class="terugdraai">
@@ -818,9 +822,11 @@
     const w = Math.max(...rs.map(r => meet.measureText(r || ' ').width)) / 100 * i.maat;
     return { w: Math.max(w, i.maat*0.3), h: i.maat * (0.9 + (rs.length - 1) * REGEL) };
   }
-  // Hoe breed (mm) een logo maximaal mag worden zonder wazig te worden
+  // Hoe breed (mm) een logo maximaal mag worden zonder wazig te worden.
+  // Heeft de klant gevraagd of wij het scherp maken (vraagScherpmaken), dan geldt die grens niet meer:
+  // dat werk doen wij dan zelf, voor het bord gedrukt wordt.
   function scherpTot(i){
-    return (i.type === 'logo' && !i.vector) ? i.pixelB / MIN_DPI * 25.4 : Infinity;
+    return (i.type === 'logo' && !i.vector && !i.vraagScherpmaken) ? i.pixelB / MIN_DPI * 25.4 : Infinity;
   }
   function grenzen(i){
     const v = marge(i), vrijB = bord.b - 2*v, vrijH = bord.h - 2*v;
@@ -1277,6 +1283,29 @@
     if (r) return { x: r.x, y: r.y, schaal: r.w / w, vrij: true };
     const k = andere.length;
     return { x: bord.b/2 + ((k % 5) - 2) * bord.b * 0.07, y: bord.h/2 + ((k % 3) - 1) * bord.h * 0.08, schaal: 1, vrij: false };
+  }
+  // Een extra logo het liefst netjes naast een logo zetten dat er al staat (zelfde hoogte, ernaast),
+  // in plaats van waar toevallig nog ruimte vrij is: dat oogt veel rustiger dan een logo dat ergens
+  // klein in een hoekje belandt. Lukt dat nergens zonder iets te raken, dan valt voegLogoToe terug
+  // op plekVoorNieuw hierboven.
+  function plekNaastLogo(w, h, bestaand){
+    const v = VEILIG, gat = Math.min(bord.b, bord.h) * 0.04;
+    const botst = (x, y) => items.some(i => {
+      if (isAchtergrondDeel(i)) return false;
+      const mi = afmeting(i);
+      const ox = Math.min(x + w/2, i.x + mi.w/2) - Math.max(x - w/2, i.x - mi.w/2);
+      const oy = Math.min(y + h/2, i.y + mi.h/2) - Math.max(y - h/2, i.y - mi.h/2);
+      return ox > 0 && oy > 0;
+    });
+    for (const logo of bestaand){
+      const m = afmeting(logo), y = logo.y;
+      if (y - h/2 < v || y + h/2 > bord.h - v) continue;
+      for (const x of [logo.x + m.w/2 + gat + w/2, logo.x - m.w/2 - gat - w/2]){
+        if (x - w/2 < v || x + w/2 > bord.b - v) continue;
+        if (!botst(x, y)) return { x, y, schaal: 1, vrij: true };
+      }
+    }
+    return null;
   }
   // Alle vrije rechthoeken die niet groter kunnen (per rij van het raster), in mm
   function vrijeVakken(negeer){
@@ -2108,7 +2137,9 @@ function maakQrLib(){var t=function(){var t=function(t,r){var e=t,n=g[r],o=null,
     // Selectie met hoekjes
     if (gekozen && gekozen !== bewerkItem){
       const m = afmeting(gekozen);
-      const pad = 4*dpr;
+      // Op een telefoon (grove pointer) zijn de hoekjes groter om goed te kunnen raken, maar moeten ze
+      // verder van de tekst af staan: anders bedekken ze bij een kort woord bijna de hele tekst zelf.
+      const pad = (grof ? 10 : 4)*dpr;
       const x = a + (gekozen.x - m.w/2)*k - pad, y = a + (gekozen.y - m.h/2)*k - pad;
       const w = m.w*k + 2*pad, h = m.h*k + 2*pad;
       ctx.save();
@@ -2374,9 +2405,12 @@ function maakQrLib(){var t=function(){var t=function(t,r){var e=t,n=g[r],o=null,
       if (plek){
         vulPlek(plek, item);
       } else {
-        // Op een vrije plek, zodat een tweede logo niet precies over het eerste valt (dan lijkt het alsof het eerste weg is)
+        // Op een vrije plek, zodat een tweede logo niet precies over het eerste valt (dan lijkt het alsof het eerste weg is).
+        // Staat er al een logo, dan proberen we eerst netjes ernaast (zelfde hoogte); past dat nergens, dan de grootste vrije ruimte.
         const std = Math.min(bord.b * 0.35, bord.h * 0.7 / verh, scherpTot(item));
-        const p = plekVoorNieuw(std, std * verh, Math.min(1, Math.max(bord.b * 0.08, 150) / std));
+        const bestaandeLogos = items.filter(i => i.type === 'logo' && !heelOntwerp(i));
+        const p = (bestaandeLogos.length && plekNaastLogo(std, std * verh, bestaandeLogos))
+          || plekVoorNieuw(std, std * verh, Math.min(1, Math.max(bord.b * 0.08, 150) / std));
         item.maat = std * p.schaal; item.x = p.x; item.y = p.y;
         binnenBord(item);
         items.push(item);
@@ -3207,6 +3241,7 @@ function maakQrLib(){var t=function(){var t=function(t,r){var e=t,n=g[r],o=null,
     const weg = (actie && i._weg !== undefined) ? i._weg : (i._weg = logoWegval(i));
     if (weg > LOGO_WEG) return { klasse:'slecht', tekst:'Je logo valt (voor een deel) weg tegen de achtergrond. Kies een andere achtergrond, of zet er een wit vlak achter.' };
     if (i.scherp && i.img === i.scherp) return { klasse:'goed', tekst:'Automatisch scherp gemaakt: elke maat kan' };
+    if (i.vraagScherpmaken) return { klasse:'info', tekst:'Wij maken je logo scherp. Je kunt het zo groot maken als je wilt, je krijgt eerst een drukproef.' };
     if (opMaxMaat(i)) return { klasse:'info', tekst:'Groter wordt wazig. Met een groter bestand of een pdf kan je logo groter.' };
     return { klasse:'goed', tekst:'Scherp genoeg om te drukken' };
   }
@@ -3371,14 +3406,17 @@ function maakQrLib(){var t=function(){var t=function(t,r){var e=t,n=g[r],o=null,
     return uit;
   }
   // Liggen twee onderdelen (tekst, logo, logoplek) over elkaar heen?
+  // Een logo (of logoplek) raakt sneller als "overlap" dan twee stukken tekst: een logo dat voor
+  // een deel achter iets anders verdwijnt, is altijd een probleem, ook als het maar een klein randje is.
   function overlappen(){
     const telt = items.filter(i => !heelOntwerp(i) && (i.type === 'tekst' || i.type === 'logo' || i.type === 'plek' || i.type === 'qr'));
     const vak = i => { const m = afmeting(i); return { x0: i.x - m.w/2, x1: i.x + m.w/2, y0: i.y - m.h/2, y1: i.y + m.h/2, opp: m.w * m.h }; };
     for (let a = 0; a < telt.length; a++){
       for (let b = a + 1; b < telt.length; b++){
         const A = vak(telt[a]), B = vak(telt[b]);
+        const metLogo = telt[a].type === 'logo' || telt[a].type === 'plek' || telt[b].type === 'logo' || telt[b].type === 'plek';
         const ox = Math.min(A.x1, B.x1) - Math.max(A.x0, B.x0), oy = Math.min(A.y1, B.y1) - Math.max(A.y0, B.y0);
-        if (ox > 0 && oy > 0 && ox * oy > 0.12 * Math.min(A.opp, B.opp)) return [telt[a], telt[b]];
+        if (ox > 0 && oy > 0 && ox * oy > (metLogo ? 0.02 : 0.12) * Math.min(A.opp, B.opp)) return [telt[a], telt[b]];
       }
     }
     return null;
@@ -3716,6 +3754,7 @@ function maakQrLib(){var t=function(){var t=function(t,r){var e=t,n=g[r],o=null,
     k.className = 'kwaliteit' + (q ? ' ' + q.klasse : '');
     k.textContent = q ? q.tekst : '';
     $('logoFix').hidden = !(t === 'logo' && q && q.klasse === 'slecht');
+    $('scherpFix').hidden = !(t === 'logo' && !heelOntwerp(gekozen) && opMaxMaat(gekozen) && !gekozen.vraagScherpmaken);
     const fix = t === 'tekst' ? tekstProblemen(gekozen).find(x => x.soort === 'kleur') : (isIkoon(gekozen) && ikoonWegval(gekozen) ? gekozen._lb : null);
     $('kleurFix').hidden = !fix;
     if (fix){
@@ -3853,6 +3892,16 @@ function maakQrLib(){var t=function(){var t=function(t,r){var e=t,n=g[r],o=null,
     bewaar(); gekozen.kleur = $('kleurFix').dataset.kleur; gekozen._lb = null;
     if (gekozen.type === 'figuur') laadFiguur(gekozen);
     werkBalkBij(); teken();
+  });
+  // De klant kiest ervoor dat wij het logo handmatig scherper (laten) maken in plaats van zelf een groter
+  // bestand te zoeken. We zetten dit op het onderdeel (vraagScherpmaken) zodat het meegaat als "moet opgeknapt
+  // worden" (zie moetOpknappen hierboven): dezelfde melding en dezelfde beperking als bij een los aangeleverd
+  // bestand dat wij nog op de juiste plek moeten zetten.
+  $('scherpFix').addEventListener('click', () => {
+    if (!gekozen || gekozen.type !== 'logo') return;
+    bewaar(); gekozen.vraagScherpmaken = true;
+    werkBalkBij(); teken();
+    melding('Genoteerd: wij maken je logo scherp voor je. Je kunt het rustig groter maken.', 8000);
   });
   $('draaiFiguur').addEventListener('click', () => {
     const i = gekozen;
@@ -4388,13 +4437,13 @@ function maakQrLib(){var t=function(){var t=function(t,r){var e=t,n=g[r],o=null,
     const punten = [];   // [tekst, onderdeel om te laten zien]
     const kort = i => '"' + regels(i)[0].slice(0, 40) + (regels(i)[0].length > 40 ? '...' : '') + '"';
     items.filter(i => i.type === 'tekst').forEach(i => {
+      // Voorbeeldtekst (nog niet aangepast) kan alsnog een slechte kleur of te kleine letters hebben --
+      // dat blijft zo als de klant straks zijn eigen tekst intypt, dus die controles slaan we niet over.
       if (i.voorbeeld) punten.push(['Er staat nog voorbeeldtekst op je bord: ' + kort(i) + '.', i]);
-      else {
-        tekstProblemen(i).forEach(pr => punten.push([pr.soort === 'kleur'
-          ? 'De tekst ' + kort(i) + ' is slecht leesbaar, de kleur lijkt te veel op de achtergrond.'
-          : 'De tekst ' + kort(i) + ' heeft kleine letters (' + cm(hoofdletter(i)) + ' hoog). Die zijn maar tot ongeveer ' + leesAfstand(i) + ' meter te lezen.', i]));
-        tikfoutjes(i.tekst).forEach(f => punten.push([f, i]));
-      }
+      tekstProblemen(i).forEach(pr => punten.push([pr.soort === 'kleur'
+        ? 'De tekst ' + kort(i) + ' is slecht leesbaar, de kleur lijkt te veel op de achtergrond.'
+        : 'De tekst ' + kort(i) + ' heeft kleine letters (' + cm(hoofdletter(i)) + ' hoog). Die zijn maar tot ongeveer ' + leesAfstand(i) + ' meter te lezen.', i]));
+      if (!i.voorbeeld) tikfoutjes(i.tekst).forEach(f => punten.push([f, i]));
     });
     items.filter(i => i.type === 'logo' && !heelOntwerp(i)).forEach(i => { if (logoWegval(i) > LOGO_WEG) punten.push(['Je logo valt (voor een deel) weg tegen de achtergrond. Bijvoorbeeld een donkere naam op een donkere achtergrond.', i]); });
     items.filter(heelOntwerp).forEach(i => {
@@ -4803,6 +4852,12 @@ function maakQrLib(){var t=function(){var t=function(t,r){var e=t,n=g[r],o=null,
       teGrootVoorMail = [];
       const netjes = n => String(n || 'logo').replace(/["<>\r\n\t]/g, "'").slice(0, 100);
       const opknapLijst = andereKant ? [...metKant('voor', metOpknappen).map(i => [i, '']), ...metKant('achter', metOpknappen).map(i => [i, '(achterkant) '])] : metOpknappen().map(i => [i, '']);
+      // Logo's waarvan de klant op het bord heeft aangegeven dat wij ze scherper moeten maken
+      // (de knop "Wij maken je logo scherp voor je" bij een logo dat op zijn eigen bestand groter is dan scherp kan).
+      alleItems().filter(i => i.type === 'logo' && i.vraagScherpmaken).forEach(i => {
+        const m = afmeting(i);
+        notities.push('- Logo "' + netjes(i.naam) + '": scherper maken, klant wil het ' + Math.round(m.w/10) + ' x ' + Math.round(m.h/10) + ' cm groot gebruiken.');
+      });
       for (const [i, kantTekst] of opknapLijst){
         const m = afmeting(i);
         notities.push('- ' + kantTekst + '"' + netjes(i.bestandNaam) + '": zelf plaatsen op de plek "Je logo komt hier" (ca. ' + Math.round(m.w/10) + ' x ' + Math.round(m.h/10) + ' cm, ' +
