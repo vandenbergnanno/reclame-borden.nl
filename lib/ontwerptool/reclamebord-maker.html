@@ -3894,9 +3894,8 @@ function maakQrLib(){var t=function(){var t=function(t,r){var e=t,n=g[r],o=null,
     werkBalkBij(); teken();
   });
   // De klant kiest ervoor dat wij het logo handmatig scherper (laten) maken in plaats van zelf een groter
-  // bestand te zoeken. We zetten dit op het onderdeel (vraagScherpmaken) zodat het meegaat als "moet opgeknapt
-  // worden" (zie moetOpknappen hierboven): dezelfde melding en dezelfde beperking als bij een los aangeleverd
-  // bestand dat wij nog op de juiste plek moeten zetten.
+  // bestand te zoeken: vraagScherpmaken heft de scherpte-limiet op (zie scherpTot hierboven) en zorgt
+  // voor een notitie voor het team bij het versturen van de aanvraag.
   $('scherpFix').addEventListener('click', () => {
     if (!gekozen || gekozen.type !== 'logo') return;
     bewaar(); gekozen.vraagScherpmaken = true;
