@@ -1678,6 +1678,59 @@ function maakQrLib(){var t=function(){var t=function(t,r){var e=t,n=g[r],o=null,
         const tel = passend(maakTekst('06 - 12 34 56 78', { voorbeeld:true, kleur:'#c8102e', maat:H*0.3, x:B/2, y:H*0.57 }), B*0.9);
         const web = passend(maakTekst('www.jouwwebsite.nl', { voorbeeld:true, vet:false, kleur:'#555555', maat:H*0.09, x:B/2, y:H*0.85 }), B*0.8);
         return { achtergrond:'#ffffff', items:[ kop, tel, web ] };
+      } },
+    { naam:'Merkkleur met logo', maak:(B,H) => {
+        const logo = maakPlek(B/2, H*0.42, B*0.5, H*0.56);
+        const slogan = passend(maakTekst('Jouw slogan', { voorbeeld:true, vet:false, kleur:'#ffffff', rand:true, maat:H*0.11, x:B/2, y:H*0.86 }), B*0.7);
+        return { achtergrond:'#E8792A', items:[ logo, slogan ] };
+      } },
+    { naam:'Ronde badge met naam', maak:(B,H) => {
+        const d = Math.min(H*0.82, B*0.32), cx = B - VEILIG - d/2, cy = H/2;
+        const naam = passend(maakTekst('Jouw bedrijfsnaam', { voorbeeld:true, kleur:'#1c2b4a', uitlijn:'left', maat:H*0.22, y:H/2 }), B*0.5);
+        linkerkant(naam, VEILIG);
+        return { achtergrond:'#f3ece0', items:[
+          Object.assign(maakFiguur('cirkel', cx, cy, d, '#ffffff'), { sjabloon:true }),
+          naam,
+          maakPlek(cx, cy, d*0.72, d*0.72)
+        ] };
+      } },
+    { naam:'Diensten met toelichting', maak:(B,H) => {
+        const naam = passend(maakTekst('JOUW BEDRIJFSNAAM', { voorbeeld:true, uitlijn:'left', maat:H*0.2, y:H/2 }), B*0.3);
+        linkerkant(naam, B*0.3);
+        const lst = [ maakPlek(B*0.12, H/2, B*0.18, H*0.64), naam ];
+        [['Dienst één', 'Korte toelichting hier'], ['Dienst twee', 'Korte toelichting hier']].forEach((d, n) => {
+          const y0 = H*0.32 + n*H*0.4;
+          const kop = passend(maakTekst(d[0], { voorbeeld:true, kleur:'#1c2b4a', uitlijn:'left', maat:H*0.14, y:y0 }), B*0.3);
+          const sub = passend(maakTekst(d[1], { voorbeeld:true, vet:false, kleur:'#777777', uitlijn:'left', maat:H*0.09, y:y0 + H*0.15 }), B*0.3);
+          linkerkant(kop, B*0.68); linkerkant(sub, B*0.68);
+          lst.push(kop, sub);
+        });
+        return { achtergrond:'#ffffff', items: lst };
+      } },
+    { naam:'Foto van je pand met adres', maak:(B,H) => {
+        const naam = passend(maakTekst('JOUW BEDRIJFSNAAM', { voorbeeld:true, uitlijn:'left', maat:H*0.16, y:H*0.3 }), B*0.26);
+        const slogan = passend(maakTekst('Jouw slogan', { voorbeeld:true, vet:false, kleur:'#555555', uitlijn:'left', maat:H*0.095, y:H*0.52 }), B*0.26);
+        linkerkant(naam, VEILIG); linkerkant(slogan, VEILIG);
+        const fotoB = B*0.6, fotoX = B - VEILIG - fotoB/2;
+        const adres = passend(maakTekst('Straatnaam 1, 1234 AB Plaatsnaam', { voorbeeld:true, kleur:'#ffffff', rand:true, uitlijn:'left', maat:H*0.09, y:H - VEILIG - H*0.08 }), fotoB*0.85);
+        linkerkant(adres, fotoX - fotoB/2 + B*0.03);
+        return { achtergrond:'#ffffff', items:[ naam, slogan, maakPlek(fotoX, H/2, fotoB, H - 2*VEILIG, 'Foto van je pand'), adres ] };
+      } },
+    { naam:'Contactbalk onderaan', maak:(B,H) => {
+        const logoB = H*0.5;
+        const naam = passend(maakTekst('JOUW BEDRIJFSNAAM', { voorbeeld:true, uitlijn:'left', maat:H*0.22, y:H*0.34 }), B*0.6);
+        linkerkant(naam, VEILIG + logoB*1.2);
+        const balkH = H*0.22, balkY = H - VEILIG - balkH/2;
+        const tekst = passend(maakTekst('06 - 12 34 56 78   ·   www.jouwwebsite.nl   ·   Plaatsnaam', { voorbeeld:true, kleur:'#ffffff', maat:H*0.09, x:B/2, y:balkY }), B - 2*VEILIG - B*0.04);
+        return { achtergrond:'#ffffff', items:[ maakPlek(VEILIG + logoB/2, H*0.34, logoB, logoB*0.78), naam, maakVorm(B/2, balkY, B - 2*VEILIG, balkH, '#1c2b4a'), tekst ] };
+      } },
+    { naam:'Meerdere vestigingen', maak:(B,H) => {
+        const naam = passend(maakTekst('JOUW BEDRIJFSNAAM', { voorbeeld:true, uitlijn:'left', maat:H*0.22, y:H*0.28 }), B*0.6);
+        linkerkant(naam, VEILIG);
+        const slogan = passend(maakTekst('Jouw slogan hier', { voorbeeld:true, vet:false, kleur:'#555555', uitlijn:'left', maat:H*0.12, y:H*0.52 }), B*0.6);
+        linkerkant(slogan, VEILIG);
+        const vestigingen = passend(maakTekst('Plaats één  /  Plaats twee  /  Plaats drie  /  jouwwebsite.nl', { voorbeeld:true, kleur:'#1c2b4a', maat:H*0.09, x:B/2, y:H*0.86 }), B*0.9);
+        return { achtergrond:'#ffffff', items:[ maakPlek(B - VEILIG - B*0.14, H*0.4, B*0.24, H*0.5), naam, slogan, vestigingen ] };
       } }
   ];
 
