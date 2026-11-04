@@ -7,10 +7,25 @@ import { checkRateLimit, clientIp, teVeelPogingenResponse } from "@/lib/security
 const MAX_POGINGEN = 5;
 const VENSTER_MS = 15 * 60 * 1000;
 
+// Dit endpoint kent geen individuele accounts/e-mailadressen (zie INTERN_WACHTWOORD: één gedeeld
+// wachtwoord voor alle medewerkers) -- een limiet "per e-mailadres" is hier dus niet van
+// toepassing. Om hetzelfde doel te bereiken (het ene gedeelde wachtwoord beschermen tegen iemand
+// die de IP-limiet hierboven omzeilt door vanaf veel verschillende echte IP's te proberen, bijv.
+// een botnet) staat er daarnaast een limiet op het totaal aantal pogingen over ALLE IP's samen:
+// ruimer dan de IP-limiet (legitieme collega's op verschillende locaties mogen elkaar niet in de
+// weg zitten), maar begrenst wél een brede, verspreide aanval op dat ene wachtwoord.
+const MAX_POGINGEN_TOTAAL = 30;
+const VENSTER_TOTAAL_MS = 60 * 60 * 1000;
+
 export async function POST(request: Request) {
-  const rateLimit = checkRateLimit(`login:${clientIp(request)}`, MAX_POGINGEN, VENSTER_MS);
+  const rateLimit = await checkRateLimit(`login:${clientIp(request)}`, MAX_POGINGEN, VENSTER_MS);
   if (!rateLimit.toegestaan) {
     return teVeelPogingenResponse(rateLimit);
+  }
+
+  const rateLimitTotaal = await checkRateLimit("login:totaal", MAX_POGINGEN_TOTAAL, VENSTER_TOTAAL_MS);
+  if (!rateLimitTotaal.toegestaan) {
+    return teVeelPogingenResponse(rateLimitTotaal);
   }
 
   const verwachtWachtwoord = process.env.INTERN_WACHTWOORD;

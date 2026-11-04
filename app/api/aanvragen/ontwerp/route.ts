@@ -43,10 +43,62 @@ function isGeldigEmailFormaat(waarde: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(waarde);
 }
 
+// Controleert het onzichtbare/"managed" Turnstile-token dat de ontwerptool meestuurt (zie
+// laadTurnstile() in lib/ontwerptool/reclamebord-maker.html) bij Cloudflare's eigen
+// verificatie-endpoint.
+//
+// Ontbreekt TURNSTILE_SECRET_KEY (zie .env.example), dan hangt het gedrag af van de omgeving:
+// - in productie (NODE_ENV=production) is dat een configuratiefout, geen "nog niet ingesteld" --
+//   we weigeren dan elke aanvraag en loggen een duidelijke fout, in plaats van stilzwijgend alles
+//   door te laten (zoals bij een optionele dienst als REPLICATE_API_TOKEN elders: hier gaat het
+//   om de enige verdediging tegen spamscripts, dus "geen sleutel" mag nooit onopgemerkt "geen
+//   controle" betekenen);
+// - in development (`next dev`) laten we het verzoek wel door, met een duidelijke waarschuwing in
+//   de serverconsole, zodat lokaal ontwikkelen zonder Cloudflare-account (of zonder de officiële
+//   testsleutels uit .env.example) niet meteen vastloopt.
+//
+// Is Cloudflare zelf even onbereikbaar (de sleutel is wél ingesteld, maar het verificatieverzoek
+// zelf mislukt), dan laten we het verzoek wel door (fail-open) -- een storing bij Cloudflare mag
+// nooit alle klanten blokkeren.
+async function verifieerTurnstile(token: string, ip: string): Promise<boolean> {
+  const secret = process.env.TURNSTILE_SECRET_KEY;
+  if (!secret) {
+    if (process.env.NODE_ENV === "production") {
+      console.error(
+        "TURNSTILE_SECRET_KEY ontbreekt in productie -- aanvragen worden geweigerd totdat dit is ingesteld (zie .env.example)."
+      );
+      return false;
+    }
+    console.warn(
+      "TURNSTILE_SECRET_KEY is niet ingesteld -- de bot-check wordt overgeslagen (alleen toegestaan buiten productie, zie .env.example)."
+    );
+    return true;
+  }
+  if (!token) return false;
+
+  try {
+    const response = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({ secret, response: token, remoteip: ip }),
+    });
+    const data = (await response.json()) as { success?: boolean };
+    return data.success === true;
+  } catch (err) {
+    console.warn("Turnstile-verificatie mislukt (Cloudflare onbereikbaar?), verzoek toch doorgelaten:", err);
+    return true;
+  }
+}
+
 export async function POST(request: Request) {
-  const rateLimit = checkRateLimit(`aanvraag-ontwerp:${clientIp(request)}`, MAX_AANVRAGEN_PER_UUR, 60 * 60 * 1000);
+  const rateLimit = await checkRateLimit(`aanvraag-ontwerp:${clientIp(request)}`, MAX_AANVRAGEN_PER_UUR, 60 * 60 * 1000);
   if (!rateLimit.toegestaan) {
-    return fout("Te veel pogingen. Probeer het over een paar minuten opnieuw.", 429);
+    // Retry-After erbij (net als teVeelPogingenResponse elders), maar met het eigen
+    // { ok, fout }-contract van dit endpoint in plaats van { ok, error } -- zie de uitleg bovenaan dit bestand.
+    return Response.json(
+      { ok: false, fout: "Te veel pogingen. Probeer het over een paar minuten opnieuw." },
+      { status: 429, headers: { "Retry-After": String(rateLimit.resetOverSeconden) } }
+    );
   }
 
   let formData: FormData;
@@ -62,6 +114,10 @@ export async function POST(request: Request) {
   // het script niet dat de honeypot is gevonden.
   if (tekst(formData, "website") !== "") {
     return Response.json({ ok: true });
+  }
+
+  if (!(await verifieerTurnstile(tekst(formData, "cf_turnstile_token"), clientIp(request)))) {
+    return fout("We konden niet controleren of je geen geautomatiseerd script bent. Laad de pagina opnieuw en probeer het nogmaals.", 403);
   }
 
   const naam = tekst(formData, "naam");

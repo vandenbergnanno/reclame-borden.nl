@@ -266,9 +266,32 @@ export interface Database {
           },
         ];
       };
+      rate_limieten: {
+        Row: {
+          sleutel: string;
+          aantal: number;
+          reset_op: string;
+        };
+        Insert: {
+          sleutel: string;
+          aantal?: number;
+          reset_op: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["rate_limieten"]["Insert"]>;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
-    Functions: Record<string, never>;
+    Functions: {
+      rate_limit_tik: {
+        Args: { p_sleutel: string; p_venster_ms: number };
+        Returns: { aantal: number; reset_op: string }[];
+      };
+      rate_limiet_opruimen: {
+        Args: Record<string, never>;
+        Returns: undefined;
+      };
+    };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;
   };

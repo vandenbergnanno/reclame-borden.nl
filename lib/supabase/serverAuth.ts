@@ -21,6 +21,13 @@ export function createServerAuthClient() {
   const cookieStore = cookies();
 
   return createServerClient<Database>(url, anonKey, {
+    // Zie de uitleg bij createServerSupabaseClient() in lib/supabase/server.ts: zonder dit kan
+    // Next.js' eigen fetch-cache een eerder antwoord hergebruiken, ook op een dynamische pagina --
+    // hier zou dat betekenen dat een klant op /mijn-borden een verouderde status van zijn eigen
+    // aanvraag te zien krijgt.
+    global: {
+      fetch: (input, init) => fetch(input, { ...init, cache: "no-store" }),
+    },
     cookies: {
       getAll() {
         return cookieStore.getAll();

@@ -26,7 +26,7 @@ const VOORDELEN = [
   },
   {
     titel: "Kant-en-klare sjablonen",
-    omschrijving: "Geen zin om vanaf nul te beginnen? Kies een van de veertien indelingen als startpunt.",
+    omschrijving: "Geen zin om vanaf nul te beginnen? Kies een van de twintig indelingen als startpunt.",
     icoon: <IconRaster />,
   },
   {
@@ -151,7 +151,7 @@ export default function HomePage() {
         </p>
         <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
           <a
-            href="/inloggen"
+            href="/inloggen?modus=account_aanmaken"
             className="rounded-full bg-brand-groen px-5 py-2.5 text-sm font-medium text-white shadow-sm transition hover:opacity-90"
           >
             Account aanmaken

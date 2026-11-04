@@ -19,7 +19,7 @@ const VENSTER_MS = 15 * 60 * 1000;
 // geverifieerd wie de ingelogde gebruiker daadwerkelijk is, zodat een klant nooit een andere
 // klantrij dan zijn eigen account kan koppelen.
 export async function POST(request: Request) {
-  const rateLimit = checkRateLimit(`account-koppel:${clientIp(request)}`, MAX_POGINGEN, VENSTER_MS);
+  const rateLimit = await checkRateLimit(`account-koppel:${clientIp(request)}`, MAX_POGINGEN, VENSTER_MS);
   if (!rateLimit.toegestaan) {
     return teVeelPogingenResponse(rateLimit);
   }

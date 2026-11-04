@@ -10,7 +10,7 @@ const VENSTER_MS = 15 * 60 * 1000;
 // aangeleverd/ingevuld. Interne verwerkingsgegevens (content_checks, designs, verstuurde e-mails)
 // horen niet bij "zijn eigen gegevens" in deze zin en blijven hier dus buiten beschouwing.
 export async function GET(request: Request) {
-  const rateLimit = checkRateLimit(`account-exporteren:${clientIp(request)}`, MAX_POGINGEN, VENSTER_MS);
+  const rateLimit = await checkRateLimit(`account-exporteren:${clientIp(request)}`, MAX_POGINGEN, VENSTER_MS);
   if (!rateLimit.toegestaan) {
     return teVeelPogingenResponse(rateLimit);
   }

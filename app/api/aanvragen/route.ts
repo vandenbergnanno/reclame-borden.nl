@@ -44,7 +44,7 @@ function isGeldigEmailFormaat(waarde: string): boolean {
 }
 
 export async function POST(request: Request) {
-  const rateLimit = checkRateLimit(`aanvraag:${clientIp(request)}`, MAX_AANVRAGEN_PER_UUR, 60 * 60 * 1000);
+  const rateLimit = await checkRateLimit(`aanvraag:${clientIp(request)}`, MAX_AANVRAGEN_PER_UUR, 60 * 60 * 1000);
   if (!rateLimit.toegestaan) {
     return teVeelPogingenResponse(rateLimit);
   }

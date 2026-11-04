@@ -16,7 +16,7 @@ const MAX_FEEDBACKTEKST_LENGTE = 2000;
 // genereert en verstuurt de AI automatisch een herzien concept terwijl de aanvraag gewoon
 // "voorstel_verstuurd" blijft. De klantreactie zelf blijft bewaard als rij in `feedback`.
 export async function POST(request: Request, { params }: { params: { id: string } }) {
-  const rateLimit = checkRateLimit(`feedback:${clientIp(request)}`, 20, 60 * 60 * 1000);
+  const rateLimit = await checkRateLimit(`feedback:${clientIp(request)}`, 20, 60 * 60 * 1000);
   if (!rateLimit.toegestaan) {
     return teVeelPogingenResponse(rateLimit);
   }

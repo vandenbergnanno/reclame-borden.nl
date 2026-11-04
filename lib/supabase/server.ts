@@ -17,6 +17,16 @@ export function createServerSupabaseClient() {
 
   return createClient<Database>(url, serviceRoleKey, {
     auth: { persistSession: false },
+    // Next.js patcht de globale fetch() om server-side requests te cachen (de "Data Cache"), ook
+    // als de aanroepende pagina `dynamic = "force-dynamic"` heeft -- dat voorkomt alléén het
+    // cachen van de RSC-payload zelf, niet per se van elke losse fetch erbinnen. Gezien is dit
+    // de supabase-js-client juist belangrijk is voor écht actuele data (bijv. een statuswijziging
+    // die een medewerker net heeft opgeslagen), zetten we expliciet `cache: "no-store"` op elke
+    // request die deze client doet, in plaats van te vertrouwen op het dynamic-gedrag van de
+    // aanroepende pagina.
+    global: {
+      fetch: (input, init) => fetch(input, { ...init, cache: "no-store" }),
+    },
   });
 }
 

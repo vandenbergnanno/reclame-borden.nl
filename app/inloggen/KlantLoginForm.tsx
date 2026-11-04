@@ -1,10 +1,26 @@
 "use client";
 
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
+import Script from "next/script";
 import { createBrowserSupabaseClient } from "@/lib/supabase/browserClient";
 
+declare global {
+  interface Window {
+    turnstile?: {
+      render: (container: string | Element, options: Record<string, unknown>) => string;
+      reset: (widgetId: string) => void;
+    };
+  }
+}
+
 type Modus = "inloggen" | "account_aanmaken";
+
+// Site key van Cloudflare Turnstile (zie .env.example) -- een publieke sleutel, mag in de browser.
+// Leeg = CAPTCHA staat (nog) niet aan; dan wordt ook nooit een widget geladen en blijft
+// captchaToken altijd leeg, wat prima is zolang "Enable CAPTCHA protection" in het Supabase-
+// dashboard ook uit staat (zie de uitleg die hierover met de gebruiker is gedeeld).
+const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
 
 // Dit inloggen gaat rechtstreeks vanuit de browser naar Supabase (geen eigen server-route, dus ook
 // geen eigen IP-gebaseerde rate limiting zoals bij /api/intern/login). Deze afremming is daarom
@@ -36,6 +52,44 @@ function schrijfPogingen(aantal: number, geblokkeerdTot: number) {
   }
 }
 
+// Bij "Account aanmaken" zonder directe sessie (e-mailbevestiging vereist, zie hieronder) kan
+// /api/account/koppel nog niet aangeroepen worden: die vereist een ingelogde sessie, en die is er
+// pas ná het bevestigen. We bewaren naam/bedrijf/telefoon daarom tijdelijk, zodat de eerstvolgende
+// geslaagde login in DEZELFDE browser (na het klikken op de bevestigingslink) ze alsnog kan
+// meesturen -- zonder dit zou /api/account/koppel bij die eerste login met een lege naam
+// aanroepen, en zonder bestaande klantenrij (nieuw account, geen eerdere gastaanvraag) geeft die
+// route dan een 400 "Naam is verplicht" terug: er komt dan nooit een klantenrij voor dit account.
+const WACHTENDE_SIGNUP_SLEUTEL = "mediagraaf_klant_wachtend_op_bevestiging";
+
+function schrijfWachtendeSignup(email: string, naam: string, bedrijf: string, telefoon: string) {
+  try {
+    window.sessionStorage.setItem(WACHTENDE_SIGNUP_SLEUTEL, JSON.stringify({ email, naam, bedrijf, telefoon }));
+  } catch {
+    // Zie schrijfPogingen hierboven: zonder sessionStorage werkt deze koppeling straks niet,
+    // maar dat is dan hetzelfde (bestaande) gedrag als vóór deze aanvulling.
+  }
+}
+
+function leesWachtendeSignup(email: string): { naam: string; bedrijf: string; telefoon: string } | null {
+  try {
+    const ruw = window.sessionStorage.getItem(WACHTENDE_SIGNUP_SLEUTEL);
+    if (!ruw) return null;
+    const data = JSON.parse(ruw);
+    if (data.email !== email) return null;
+    return { naam: data.naam || "", bedrijf: data.bedrijf || "", telefoon: data.telefoon || "" };
+  } catch {
+    return null;
+  }
+}
+
+function wisWachtendeSignup() {
+  try {
+    window.sessionStorage.removeItem(WACHTENDE_SIGNUP_SLEUTEL);
+  } catch {
+    // zie hierboven
+  }
+}
+
 // Gebruikt Supabase Auth rechtstreeks vanuit de browser (geen eigen wachtwoordopslag, zie de
 // migratie 0003_klant_accounts.sql) voor zowel inloggen als een nieuw account aanmaken. Na een
 // geslaagde signup koppelen we het account aan een klanten-rij via /api/account/koppel (met de
@@ -53,6 +107,37 @@ export function KlantLoginForm() {
   const [melding, setMelding] = useState<string | null>(null);
   const [geblokkeerdTot, setGeblokkeerdTot] = useState(0);
   const [resterendeSeconden, setResterendeSeconden] = useState(0);
+
+  // Een link kan rechtstreeks naar "Account aanmaken" wijzen (?modus=account_aanmaken, zie de
+  // knop op de homepage) -- window.location.search lezen in plaats van useSearchParams() omdat
+  // dat laatste een Suspense-boundary rond deze client component zou vereisen, puur voor iets wat
+  // toch alleen in de browser relevant is.
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get("modus") === "account_aanmaken") {
+      setModus("account_aanmaken");
+    }
+  }, []);
+
+  // Onzichtbare Turnstile-widget: één keer renderen zodra het script geladen is, en na elke
+  // poging resetten (een Supabase-captchaToken is maar één keer bruikbaar) zodat er voor de
+  // volgende poging weer een vers token klaarstaat.
+  const turnstileWidgetId = useRef<string | null>(null);
+  const turnstileToken = useRef("");
+  function laadTurnstile() {
+    if (!TURNSTILE_SITE_KEY || turnstileWidgetId.current !== null || !window.turnstile) return;
+    turnstileWidgetId.current = window.turnstile.render("#klantTurnstile", {
+      sitekey: TURNSTILE_SITE_KEY,
+      // Geen `size` meegeven: "invisible" is geen geldige waarde voor dat veld (de widget-api
+      // gooit er anders een fout op) -- of de widget onzichtbaar is, hangt af van het widget-type
+      // (Managed/Non-Interactive/Invisible) dat bij deze sitekey hoort in het Cloudflare-dashboard.
+      callback: (token: string) => { turnstileToken.current = token; },
+      "error-callback": () => { turnstileToken.current = ""; },
+      "expired-callback": () => {
+        turnstileToken.current = "";
+        if (turnstileWidgetId.current !== null) window.turnstile?.reset(turnstileWidgetId.current);
+      },
+    });
+  }
 
   useEffect(() => {
     setGeblokkeerdTot(leesPogingen().geblokkeerdTot);
@@ -79,11 +164,18 @@ export function KlantLoginForm() {
     setFoutmelding(null);
     setMelding(null);
 
+    // Elk token is maar één keer bruikbaar bij Supabase -- na deze poging (ongeacht de uitkomst)
+    // alvast resetten, zodat er een vers token klaarstaat tegen de tijd dat de klant opnieuw
+    // probeert. Zonder site key is widgetId nooit gezet en doet dit niets.
+    const captchaToken = turnstileToken.current || undefined;
+    if (turnstileWidgetId.current !== null) window.turnstile?.reset(turnstileWidgetId.current);
+    turnstileToken.current = "";
+
     try {
       const supabase = createBrowserSupabaseClient();
 
       if (modus === "inloggen") {
-        const { error } = await supabase.auth.signInWithPassword({ email, password: wachtwoord });
+        const { error } = await supabase.auth.signInWithPassword({ email, password: wachtwoord, options: { captchaToken } });
         if (error) {
           // Alleen een fout wachtwoord/e-mailadres telt mee voor de afremming -- een
           // configuratiefout (zie hierboven) of iets anders mag niet onterecht meetellen.
@@ -106,12 +198,18 @@ export function KlantLoginForm() {
         // niet gekoppeld was aan een eerdere gastaanvraag, gebeurt dat hier alsnog. Mislukt dit,
         // dan mag het inloggen zelf gewoon doorgaan -- /mijn-borden laat dan voorlopig geen
         // eerdere aanvragen zien in plaats van de klant helemaal te blokkeren.
+        // Was dit account net aangemaakt (zie de signup-tak hieronder) en wacht het nog op de
+        // eerste koppeling, dan sturen we de toen opgeslagen naam/bedrijf/telefoon alsnog mee --
+        // anders wordt er voor een gloednieuw account (geen eerdere gastaanvraag) nooit een
+        // klantenrij aangemaakt, zie de uitleg bij schrijfWachtendeSignup hierboven.
+        const wachtendeSignup = leesWachtendeSignup(email);
         try {
           await fetch("/api/account/koppel", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({}),
+            body: JSON.stringify(wachtendeSignup ?? {}),
           });
+          wisWachtendeSignup();
         } catch {
           // zie hierboven
         }
@@ -127,14 +225,17 @@ export function KlantLoginForm() {
       const { data, error } = await supabase.auth.signUp({
         email,
         password: wachtwoord,
-        options: { emailRedirectTo: `${window.location.origin}/inloggen` },
+        options: { emailRedirectTo: `${window.location.origin}/inloggen`, captchaToken },
       });
       if (error) throw new Error(error.message);
 
       if (!data.session) {
         // Het Supabase-project vraagt om e-mailbevestiging voordat er een sessie is -- de
         // koppeling met de klantenrij (hieronder) kan dan nog niet, dat gebeurt automatisch
-        // zodra de klant voor het eerst inlogt ná het bevestigen van zijn e-mailadres.
+        // zodra de klant voor het eerst inlogt ná het bevestigen van zijn e-mailadres (zie de
+        // inloggen-tak hierboven). Bewaar naam/bedrijf/telefoon vast, zodat die eerste koppeling
+        // dan nog steeds een klantenrij kan aanmaken in plaats van op een lege naam te stranden.
+        schrijfWachtendeSignup(email, naam, bedrijf, telefoon);
         setMelding("Check je e-mail om je account te bevestigen. Daarna kun je hier inloggen.");
         setBezig(false);
         return;
@@ -160,6 +261,10 @@ export function KlantLoginForm() {
 
   return (
     <div>
+      {TURNSTILE_SITE_KEY && (
+        <Script src="https://challenges.cloudflare.com/turnstile/v0/api.js" strategy="afterInteractive" onLoad={laadTurnstile} />
+      )}
+      <div id="klantTurnstile" className="absolute h-0 w-0 overflow-hidden" />
       <div className="mb-4 flex gap-1 rounded-lg bg-neutral-100 p-1 text-sm font-medium">
         <button
           type="button"

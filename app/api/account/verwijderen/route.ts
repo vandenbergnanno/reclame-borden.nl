@@ -11,7 +11,7 @@ const VENSTER_MS = 15 * 60 * 1000;
 // en het account zelf (Supabase Auth) worden verwijderd. Een klant kan na deze actie niet meer
 // inloggen en ziet op /mijn-borden niets meer, maar De Mediagraaf intern wel (zie /intern/klanten).
 export async function POST(request: Request) {
-  const rateLimit = checkRateLimit(`account-verwijderen:${clientIp(request)}`, MAX_POGINGEN, VENSTER_MS);
+  const rateLimit = await checkRateLimit(`account-verwijderen:${clientIp(request)}`, MAX_POGINGEN, VENSTER_MS);
   if (!rateLimit.toegestaan) {
     return teVeelPogingenResponse(rateLimit);
   }
