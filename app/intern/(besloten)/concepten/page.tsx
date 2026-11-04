@@ -12,7 +12,7 @@ import { VerwerkGeplandeVoorstellenKnop } from "../VerwerkGeplandeVoorstellenKno
 import { LiveVerversen } from "../LiveVerversen";
 
 export const metadata: Metadata = {
-  title: "Concepten — Mediagraaf Conceptor",
+  title: "Concepten — reclame-borden.nl Conceptor",
 };
 
 // Zelfde reden als /intern: live data, dus niet statisch prerenderen.

@@ -21,7 +21,7 @@ import { telLooptVastAanvragen } from "@/lib/intern/looptVast";
 import { schatPrijs } from "@/lib/intern/omzetSchatting";
 
 export const metadata: Metadata = {
-  title: "Intern overzicht — Mediagraaf Conceptor",
+  title: "Intern overzicht — reclame-borden.nl Conceptor",
 };
 
 // Zonder dit rendert Next.js deze pagina als statische HTML tijdens `next build` (met de

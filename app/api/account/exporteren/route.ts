@@ -86,7 +86,7 @@ export async function GET(request: Request) {
   return new Response(JSON.stringify(export_, null, 2), {
     headers: {
       "Content-Type": "application/json",
-      "Content-Disposition": `attachment; filename="mijn-gegevens-de-mediagraaf.json"`,
+      "Content-Disposition": `attachment; filename="mijn-gegevens-reclame-borden-nl.json"`,
     },
   });
 }

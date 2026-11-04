@@ -5,11 +5,11 @@ import { checkRateLimit, clientIp, teVeelPogingenResponse } from "@/lib/security
 const MAX_POGINGEN = 5;
 const VENSTER_MS = 15 * 60 * 1000;
 
-// AVG "recht op vergetelheid" voor klant-accounts. Optie A (bewust gekozen door De Mediagraaf):
+// AVG "recht op vergetelheid" voor klant-accounts. Optie A (bewust gekozen door reclame-borden.nl):
 // de aanvragen zelf blijven bestaan -- nodig voor garantie/boekhouding, en toegestaan onder de
 // AVG zolang ze niet meer aan de persoon te herleiden zijn -- maar de koppeling met het account
 // en het account zelf (Supabase Auth) worden verwijderd. Een klant kan na deze actie niet meer
-// inloggen en ziet op /mijn-borden niets meer, maar De Mediagraaf intern wel (zie /intern/klanten).
+// inloggen en ziet op /mijn-borden niets meer, maar reclame-borden.nl intern wel (zie /intern/klanten).
 export async function POST(request: Request) {
   const rateLimit = await checkRateLimit(`account-verwijderen:${clientIp(request)}`, MAX_POGINGEN, VENSTER_MS);
   if (!rateLimit.toegestaan) {

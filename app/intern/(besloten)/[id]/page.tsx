@@ -20,7 +20,7 @@ import { ConceptBewerken } from "./ConceptBewerken";
 import { EmailBewerken } from "./EmailBewerken";
 
 export const metadata: Metadata = {
-  title: "Aanvraag — Mediagraaf Conceptor",
+  title: "Aanvraag — reclame-borden.nl Conceptor",
 };
 
 // Live gegevens per aanvraag, dus net als /intern bewust niet statisch prerenderen.

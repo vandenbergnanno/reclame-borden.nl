@@ -1,4 +1,4 @@
--- Fundament-schema voor de conceptdesign-tool van De Mediagraaf.
+-- Fundament-schema voor de conceptdesign-tool van reclame-borden.nl.
 -- Bewust eenvoudig gehouden: dit is een eerste opzet die in latere fases wordt uitgebreid
 -- (RLS-policies, extra kolommen, koppeltabellen) zodra er een echt Supabase-project aan hangt.
 --
@@ -118,7 +118,7 @@ create table if not exists designdatabase (
   toegevoegd_op timestamptz not null default now()
 );
 
-comment on table designdatabase is 'Bestaande, niet-AI-gemaakte ontwerpen van De Mediagraaf zelf. Later handmatig gevuld en gebruikt als trainings-/referentiedata voor de stijl van gegenereerde achtergronden.';
+comment on table designdatabase is 'Bestaande, niet-AI-gemaakte ontwerpen van reclame-borden.nl zelf. Later handmatig gevuld en gebruikt als trainings-/referentiedata voor de stijl van gegenereerde achtergronden.';
 
 -- ---------------------------------------------------------------------------
 -- feedback

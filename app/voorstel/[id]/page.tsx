@@ -6,7 +6,7 @@ import { VELDTYPE_LABELS } from "@/lib/types/domain";
 import { VoorstelActies } from "./VoorstelActies";
 
 export const metadata: Metadata = {
-  title: "Jouw voorstel — De Mediagraaf",
+  title: "Jouw voorstel — reclame-borden.nl",
 };
 
 // Live status, dus niet statisch prerenderen (zelfde reden als /intern).
@@ -71,8 +71,8 @@ export default async function VoorstelPage({ params }: { params: { id: string } 
     return (
       <Kader titel="Bedankt voor je goedkeuring!">
         <p className="text-sm text-neutral-700">
-          Je hebt het concept-ontwerp voor je {veldtypeLabel.toLowerCase()} goedgekeurd. De
-          Mediagraaf gaat ermee verder — je hoort van ons zodra het bord klaar is.
+          Je hebt het concept-ontwerp voor je {veldtypeLabel.toLowerCase()} goedgekeurd.
+          reclame-borden.nl gaat ermee verder — je hoort van ons zodra het bord klaar is.
         </p>
       </Kader>
     );

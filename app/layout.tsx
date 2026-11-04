@@ -5,7 +5,7 @@ import { CookieMelding } from "@/components/CookieMelding";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "De Mediagraaf — Conceptor",
+  title: "reclame-borden.nl — Conceptor",
   description: "Interne prototype-tool voor het aanvragen en beoordelen van reclamebord-ontwerpen.",
 };
 
@@ -18,7 +18,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             <nav className="mx-auto flex max-w-4xl flex-wrap items-center justify-between gap-x-3 gap-y-2">
               <a href="/" className="flex shrink-0 items-center gap-2">
                 <MediagraafLogo size="sm" />
-                <span className="hidden text-sm font-semibold text-brand-zwart sm:inline">De Mediagraaf</span>
+                <span className="hidden text-sm font-semibold text-brand-zwart sm:inline">reclame-borden.nl</span>
                 <span className="hidden text-sm text-neutral-400 sm:inline">· Conceptor</span>
               </a>
               <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-brand-zwart sm:gap-4 sm:text-sm">
@@ -39,7 +39,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           </header>
           <main className="mx-auto w-full max-w-4xl flex-1 px-6 py-10">{children}</main>
           <footer className="px-6 py-4 text-center text-xs text-neutral-500">
-            Prototype — De Mediagraaf
+            Prototype — reclame-borden.nl
           </footer>
         </div>
         <CookieMelding />

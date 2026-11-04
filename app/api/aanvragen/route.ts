@@ -172,7 +172,7 @@ export async function POST(request: Request) {
 
   // Placeholder-checks: puur informatief. Een aanvraag start altijd gewoon op "nieuw" — de tool
   // verbiedt of belooft zelf niets. Een gevonden probleem wordt als "Te controleren" getoond op
-  // het interne overzicht (zie content_checks hieronder), zodat De Mediagraaf het kan bekijken
+  // het interne overzicht (zie content_checks hieronder), zodat reclame-borden.nl het kan bekijken
   // zonder dat de klant hoeft te wachten op een aparte beoordeling.
   // - analyzeRequest: gevonden contactgegevens (sommige klanten willen dat bewust op het bord).
   // - controleerAfmetingBeschikbaarheid: een nieuw bord in een afwijkende maat moet eerst

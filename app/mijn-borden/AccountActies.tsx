@@ -6,7 +6,7 @@ import { createBrowserSupabaseClient } from "@/lib/supabase/browserClient";
 
 // AVG-rechten voor de klant: eigen gegevens downloaden (inzagerecht) en het account verwijderen
 // (recht op vergetelheid). Verwijderen koppelt alleen het account los; de aanvragen zelf blijven
-// bestaan voor De Mediagraaf (zie app/api/account/verwijderen/route.ts) -- dat wordt hieronder ook
+// bestaan voor reclame-borden.nl (zie app/api/account/verwijderen/route.ts) -- dat wordt hieronder ook
 // expliciet aan de klant uitgelegd, anders lijkt "account verwijderen" alsof ook de bestelgeschiedenis
 // verdwijnt.
 export function AccountActies() {
@@ -28,7 +28,7 @@ export function AccountActies() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = "mijn-gegevens-de-mediagraaf.json";
+      a.download = "mijn-gegevens-reclame-borden-nl.json";
       document.body.appendChild(a);
       a.click();
       a.remove();
@@ -88,8 +88,8 @@ export function AccountActies() {
         ) : (
           <div className="flex flex-wrap items-center gap-2 rounded border border-red-200 bg-red-50 px-3 py-2">
             <p className="text-sm text-red-700">
-              Weet je het zeker? Je kunt dan niet meer inloggen. Je aanvragen blijven wel bewaard bij De
-              Mediagraaf zelf (voor garantie en boekhouding), maar jij kunt ze daarna niet meer terugzien.
+              Weet je het zeker? Je kunt dan niet meer inloggen. Je aanvragen blijven wel bewaard bij
+              reclame-borden.nl zelf (voor garantie en boekhouding), maar jij kunt ze daarna niet meer terugzien.
             </p>
             <button
               type="button"

@@ -5,7 +5,7 @@ import { CONCEPT_STATUSSEN, PRODUCTIE_STATUSSEN } from "@/lib/types/domain";
 import { KlantenTabel } from "./KlantenTabel";
 
 export const metadata: Metadata = {
-  title: "Klanten — Mediagraaf Conceptor",
+  title: "Klanten — reclame-borden.nl Conceptor",
 };
 
 // Zelfde reden als bij /intern: live data, dus niet statisch prerenderen.

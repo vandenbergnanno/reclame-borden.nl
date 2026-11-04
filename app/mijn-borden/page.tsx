@@ -6,7 +6,7 @@ import { AANVRAAG_STATUS_KLEUREN, AANVRAAG_STATUS_LABELS } from "@/lib/types/dom
 import { AccountActies } from "./AccountActies";
 
 export const metadata: Metadata = {
-  title: "Mijn borden — De Mediagraaf",
+  title: "Mijn borden — reclame-borden.nl",
 };
 
 // Zonder dit kan Next.js deze pagina bij het bouwen statisch maken (gebeurt zolang er nog geen
@@ -25,7 +25,7 @@ export default async function MijnBordenPage() {
       <div className="space-y-4">
         <h1 className="text-2xl font-semibold text-brand-zwart">Mijn borden</h1>
         <p className="text-sm text-neutral-600">
-          Klantaccounts zijn nog niet actief op deze omgeving. Neem contact op met De Mediagraaf voor de status van
+          Klantaccounts zijn nog niet actief op deze omgeving. Neem contact op met reclame-borden.nl voor de status van
           je aanvraag.
         </p>
       </div>

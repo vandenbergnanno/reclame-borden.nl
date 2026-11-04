@@ -168,7 +168,7 @@ values
   (
     'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
     (select id from designs where aanvraag_id = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb' and versienummer = 1),
-    'Je concept-ontwerp van De Mediagraaf is klaar!',
+    'Je concept-ontwerp van reclame-borden.nl is klaar!',
     '<p>Hoi Marieke Visser,</p><p>Goed nieuws! We hebben een concept-ontwerp gemaakt voor jouw Scorebord (200 x 100 cm).</p>',
     'Hoi Marieke Visser, goed nieuws! We hebben een concept-ontwerp gemaakt voor jouw Scorebord (200 x 100 cm). Bekijk je voorstel via /voorstel/bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb.',
     false
@@ -176,7 +176,7 @@ values
   (
     'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee',
     (select id from designs where aanvraag_id = 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee' and versienummer = 1),
-    'Je concept-ontwerp van De Mediagraaf is klaar!',
+    'Je concept-ontwerp van reclame-borden.nl is klaar!',
     '<p>Hoi Lotte Hendriks,</p><p>Goed nieuws! We hebben een concept-ontwerp gemaakt voor jouw Scorebord (200 x 100 cm).</p>',
     'Hoi Lotte Hendriks, goed nieuws! We hebben een concept-ontwerp gemaakt voor jouw Scorebord (200 x 100 cm). Bekijk je voorstel via /voorstel/eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee.',
     false
@@ -184,7 +184,7 @@ values
   (
     'ffffffff-ffff-ffff-ffff-ffffffffffff',
     (select id from designs where aanvraag_id = 'ffffffff-ffff-ffff-ffff-ffffffffffff' and versienummer = 1),
-    'Je concept-ontwerp van De Mediagraaf is klaar!',
+    'Je concept-ontwerp van reclame-borden.nl is klaar!',
     '<p>Hoi Erik Mulder,</p><p>Goed nieuws! We hebben een concept-ontwerp gemaakt voor jouw Voetbalveld (zijlijn) (300 x 100 cm).</p>',
     'Hoi Erik Mulder, goed nieuws! We hebben een concept-ontwerp gemaakt voor jouw Voetbalveld (zijlijn) (300 x 100 cm). Bekijk je voorstel via /voorstel/ffffffff-ffff-ffff-ffff-ffffffffffff.',
     false
@@ -192,7 +192,7 @@ values
   (
     'ffffffff-ffff-ffff-ffff-ffffffffffff',
     (select id from designs where aanvraag_id = 'ffffffff-ffff-ffff-ffff-ffffffffffff' and versienummer = 2),
-    'Je herziene concept-ontwerp van De Mediagraaf is klaar!',
+    'Je herziene concept-ontwerp van reclame-borden.nl is klaar!',
     '<p>Hoi Erik Mulder,</p><p>We hebben je feedback verwerkt en een nieuw concept-ontwerp gemaakt voor jouw Voetbalveld (zijlijn) (300 x 100 cm).</p>',
     'Hoi Erik Mulder, we hebben je feedback verwerkt en een nieuw concept-ontwerp gemaakt voor jouw Voetbalveld (zijlijn) (300 x 100 cm). Bekijk je voorstel via /voorstel/ffffffff-ffff-ffff-ffff-ffffffffffff.',
     false
@@ -200,7 +200,7 @@ values
   (
     'ffffffff-ffff-ffff-ffff-ffffffffffff',
     (select id from designs where aanvraag_id = 'ffffffff-ffff-ffff-ffff-ffffffffffff' and versienummer = 3),
-    'Je herziene concept-ontwerp van De Mediagraaf is klaar!',
+    'Je herziene concept-ontwerp van reclame-borden.nl is klaar!',
     '<p>Hoi Erik Mulder,</p><p>We hebben je feedback verwerkt en een nieuw concept-ontwerp gemaakt voor jouw Voetbalveld (zijlijn) (300 x 100 cm).</p>',
     'Hoi Erik Mulder, we hebben je feedback verwerkt en een nieuw concept-ontwerp gemaakt voor jouw Voetbalveld (zijlijn) (300 x 100 cm). Bekijk je voorstel via /voorstel/ffffffff-ffff-ffff-ffff-ffffffffffff.',
     false

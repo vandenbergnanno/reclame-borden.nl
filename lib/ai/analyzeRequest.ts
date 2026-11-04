@@ -2,7 +2,7 @@ export interface ContentCheckResult {
   probleem: string;
   // Geen automatische afkeuring van de klant — dit toont alleen een "Te controleren"-signaal op
   // het interne overzicht, de aanvraag loopt er verder gewoon doorheen. Sommige klanten willen
-  // bewust wél hun telefoonnummer op het bord; dat is een afweging die De Mediagraaf zelf per
+  // bewust wél hun telefoonnummer op het bord; dat is een afweging die reclame-borden.nl zelf per
   // klant maakt, niet iets wat de tool voor iedereen hard zou moeten afkeuren.
   geblokkeerd: boolean;
   toelichting: string;

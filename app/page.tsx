@@ -166,7 +166,7 @@ export default function HomePage() {
       </section>
 
       <p className="text-center text-sm text-neutral-500">
-        Ben je van De Mediagraaf?{" "}
+        Ben je van reclame-borden.nl?{" "}
         <a href="/intern" className="font-medium text-brand-zwart underline hover:text-brand-groen">
           Bekijk het interne overzicht
         </a>

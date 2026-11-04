@@ -2,7 +2,7 @@ import { STANDAARD_AFMETINGEN, type BordAanschaf } from "@/lib/types/domain";
 import type { ContentCheckResult } from "./analyzeRequest";
 
 // Bij een nieuw bord in een afwijkende maat (niet een van de standaardmaten) weet de tool niet of
-// De Mediagraaf zo'n bord daadwerkelijk bij de leverancier kan bestellen. Dit houdt de
+// reclame-borden.nl zo'n bord daadwerkelijk bij de leverancier kan bestellen. Dit houdt de
 // aanvraagflow zelf niet tegen (het voorstel wordt gewoon automatisch gegenereerd en verstuurd
 // zoals altijd) — het toont alleen een "Te controleren"-signaal op het interne overzicht, zodat
 // een medewerker dit kan nagaan. Bij "hergebruiken" speelt dit niet: de klant heeft het bord al,

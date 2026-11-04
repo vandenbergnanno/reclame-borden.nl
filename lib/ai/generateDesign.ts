@@ -50,7 +50,7 @@ export async function generateDesign(input: GenerateDesignInput): Promise<Genera
 // 1. Bouw een prompt uit `input.veldtype` en (het niet-tekstuele deel van) `input.wens`.
 // 2. Gebruik idealiter een model dat gefinetuned/gestuurd is op de bestaande designs uit de
 //    `designdatabase`-tabel (bijv. via image-to-image met een referentiedesign, of een eigen
-//    getraind model) zodat het resultaat op de stijl van De Mediagraaf lijkt.
+//    getraind model) zodat het resultaat op de stijl van reclame-borden.nl lijkt.
 // 3. Roep de Replicate API aan (zie https://replicate.com/docs) en wacht het resultaat af.
 async function genereerAchtergrondMetReplicate(
   _input: GenerateDesignInput,

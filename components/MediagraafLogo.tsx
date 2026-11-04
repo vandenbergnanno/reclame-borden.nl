@@ -17,7 +17,7 @@ export function MediagraafLogo({ size = "sm" }: { size?: keyof typeof HOOGTE }) 
   return (
     <Image
       src="/mediagraaf-logo.png"
-      alt="De Mediagraaf"
+      alt="reclame-borden.nl"
       width={breedte}
       height={hoogte}
       style={{ height: hoogte, width: breedte }}

@@ -63,7 +63,7 @@ export async function sendProposalEmail(input: SendProposalEmailInput): Promise<
     };
   }
 
-  const afzender = process.env.RESEND_AFZENDER ?? "De Mediagraaf <onboarding@resend.dev>";
+  const afzender = process.env.RESEND_AFZENDER ?? "reclame-borden.nl <onboarding@resend.dev>";
   const resend = new Resend(resendApiKey);
 
   const { error } = await resend.emails.send({

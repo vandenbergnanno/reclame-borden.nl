@@ -31,8 +31,8 @@ const ZWART = "#111111";
 export function bouwVoorstelEmail(input: VoorstelEmailInput): VoorstelEmailContent {
   const veldtypeLabel = VELDTYPE_LABELS[input.veldtype] ?? input.veldtype;
   const onderwerp = input.isHerzien
-    ? "Je herziene concept-ontwerp van De Mediagraaf is klaar!"
-    : "Je concept-ontwerp van De Mediagraaf is klaar!";
+    ? "Je herziene concept-ontwerp van reclame-borden.nl is klaar!"
+    : "Je concept-ontwerp van reclame-borden.nl is klaar!";
   const introTekst = input.isHerzien
     ? `We hebben je feedback verwerkt en een nieuw concept-ontwerp gemaakt voor jouw <strong>${veldtypeLabel}</strong> (${input.afmeting}). Bekijk het hieronder.`
     : `Goed nieuws! We hebben een concept-ontwerp gemaakt voor jouw <strong>${veldtypeLabel}</strong> (${input.afmeting}). Bekijk het hieronder.`;
@@ -50,7 +50,7 @@ export function bouwVoorstelEmail(input: VoorstelEmailInput): VoorstelEmailConte
           <table role="presentation" width="480" cellpadding="0" cellspacing="0" style="background-color:#ffffff;border-radius:12px;overflow:hidden;">
             <tr>
               <td style="background-color:${ZWART};padding:20px 24px;">
-                <span style="color:#ffffff;font-size:16px;font-weight:bold;">De Mediagraaf <span style="color:${GROEN};">Conceptor</span></span>
+                <span style="color:#ffffff;font-size:16px;font-weight:bold;">reclame-borden.nl <span style="color:${GROEN};">Conceptor</span></span>
               </td>
             </tr>
             <tr>
@@ -84,7 +84,7 @@ export function bouwVoorstelEmail(input: VoorstelEmailInput): VoorstelEmailConte
             </tr>
             <tr>
               <td style="padding:16px 24px;background-color:#fafafa;">
-                <p style="font-size:11px;color:#999999;margin:0;">De Mediagraaf — Oudewater</p>
+                <p style="font-size:11px;color:#999999;margin:0;">reclame-borden.nl — Oudewater</p>
               </td>
             </tr>
           </table>
@@ -104,7 +104,7 @@ export function bouwVoorstelEmail(input: VoorstelEmailInput): VoorstelEmailConte
     `Bekijk je voorstel en reageer erop via: ${input.voorstelUrl}`,
     "",
     "Met vriendelijke groet,",
-    "De Mediagraaf",
+    "reclame-borden.nl",
   ].join("\n");
 
   return { onderwerp, html, text };

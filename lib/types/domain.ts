@@ -15,7 +15,7 @@ export const VELDTYPE_LABELS: Record<Veldtype, string> = {
 };
 
 // TODO: dit zijn placeholder-afmetingen — de stagebegeleider bepaalt nog welke maten De
-// Mediagraaf daadwerkelijk als standaard voert. Vervang deze lijst zodra dat bekend is.
+// reclame-borden.nl daadwerkelijk als standaard voert. Vervang deze lijst zodra dat bekend is.
 // De klant kan in het formulier altijd ook zelf een afmeting intypen via "Anders, namelijk...".
 export const STANDAARD_AFMETINGEN = ["200 x 100 cm", "300 x 100 cm", "400 x 100 cm", "600 x 100 cm"] as const;
 
@@ -24,7 +24,7 @@ export const STANDAARD_AFMETINGEN = ["200 x 100 cm", "300 x 100 cm", "400 x 100 
 export const AFMETING_ANDERS = "anders" as const;
 
 // Heeft de klant zelf al een bruikbaar bord staan, of moet er een nieuwe komen? Relevant voor
-// De Mediagraaf omdat een nieuw bord (materiaal + montage) extra kosten met zich meebrengt.
+// reclame-borden.nl omdat een nieuw bord (materiaal + montage) extra kosten met zich meebrengt.
 export const BORD_AANSCHAF_OPTIES = ["hergebruiken", "nieuw"] as const;
 
 export type BordAanschaf = (typeof BORD_AANSCHAF_OPTIES)[number];

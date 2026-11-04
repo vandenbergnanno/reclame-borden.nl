@@ -1,4 +1,4 @@
-// Merkkleuren van De Mediagraaf. Ook toegepast in tailwind.config.ts als `brand.groen` /
+// Merkkleuren van reclame-borden.nl. Ook toegepast in tailwind.config.ts als `brand.groen` /
 // `brand.oranje` / `brand.zwart` — gebruik die Tailwind-classes in components, en deze
 // constanten alleen waar je de hex-waarde direct nodig hebt (bijv. buiten Tailwind).
 export const BRAND_COLORS = {
