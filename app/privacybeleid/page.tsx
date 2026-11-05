@@ -51,7 +51,7 @@ export default function PrivacybeleidPagina() {
           </li>
           <li>
             <strong>Cloudflare Turnstile</strong> — een onzichtbare controle die bots en misbruik
-            tegenhoudt bij het versturen van formulieren en bij in- en registreren. Zie Cloudflare's{" "}
+            tegenhoudt bij het versturen van formulieren en bij in- en registreren. Zie Cloudflare&apos;s{" "}
             <a
               href="https://www.cloudflare.com/turnstile-privacy-policy/"
               className="text-brand-groen underline"
