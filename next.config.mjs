@@ -1,3 +1,5 @@
+import { withSentryConfig } from "@sentry/nextjs/config";
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   experimental: {
@@ -25,4 +27,14 @@ const nextConfig = {
   },
 };
 
-export default nextConfig;
+export default withSentryConfig(nextConfig, {
+  // Alleen build-logging van Sentry's eigen webpack-plugin onderdrukken, geen invloed op de app zelf.
+  silent: true,
+  org: "reclame-bordennl",
+  project: "javascript-nextjs",
+  // Geen auth token geconfigureerd (zie .env.example) -- source maps worden dan niet geüpload naar
+  // Sentry, stacktraces blijven wel werken maar tonen geminificeerde code. Later toe te voegen via
+  // SENTRY_AUTH_TOKEN zodra er een deployment is.
+  widenClientFileUpload: true,
+  tunnelRoute: "/monitoring",
+});

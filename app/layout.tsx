@@ -39,7 +39,10 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           </header>
           <main className="mx-auto w-full max-w-4xl flex-1 px-6 py-10">{children}</main>
           <footer className="px-6 py-4 text-center text-xs text-neutral-500">
-            Prototype — reclame-borden.nl
+            Prototype — reclame-borden.nl ·{" "}
+            <a href="/privacybeleid" className="underline hover:text-brand-groen">
+              Privacybeleid
+            </a>
           </footer>
         </div>
         <CookieMelding />
