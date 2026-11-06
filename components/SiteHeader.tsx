@@ -51,7 +51,7 @@ export function SiteHeader() {
             Nieuwe aanvraag
           </a>
           {ingelogd ? (
-            <a href="/mijn-borden" className="whitespace-nowrap hover:text-brand-groen">
+            <a href="/mijn-account" className="whitespace-nowrap hover:text-brand-groen">
               Mijn account
             </a>
           ) : (
