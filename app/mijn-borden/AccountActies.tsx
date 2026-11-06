@@ -60,8 +60,6 @@ export function AccountActies() {
 
   return (
     <div className="space-y-3 rounded border border-neutral-200 p-4">
-      <h2 className="font-medium text-brand-zwart">Mijn gegevens</h2>
-
       {foutmelding && (
         <p className="rounded border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700">{foutmelding}</p>
       )}

@@ -1,13 +1,41 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { MediagraafLogo } from "@/components/MediagraafLogo";
+import { createBrowserSupabaseClient } from "@/lib/supabase/browserClient";
 
 // Op /intern heeft InternLayout (app/intern/(besloten)/layout.tsx) al zijn eigen sub-navigatie +
 // uitlogknop -- deze publieke klantnavigatie (nieuwe aanvraag, inloggen, enz.) hoort daar niet
 // nogmaals bovenop, dat was onnodig verwarrend voor medewerkers.
 export function SiteHeader() {
   const pathname = usePathname();
+
+  // Onbekend bij de allereerste render (server weet dit niet) -- totdat de sessie-check klaar is,
+  // laten we "Inloggen" gewoon staan; dat is hooguit een halve seconde fout, nooit andersom (nooit
+  // "Mijn account" tonen aan iemand die niet is ingelogd).
+  const [ingelogd, setIngelogd] = useState(false);
+
+  useEffect(() => {
+    let actief = true;
+    let supabase: ReturnType<typeof createBrowserSupabaseClient>;
+    try {
+      supabase = createBrowserSupabaseClient();
+    } catch {
+      return; // Supabase nog niet geconfigureerd (zie .env.example) -- dan blijft het gewoon "Inloggen"
+    }
+    supabase.auth.getSession().then(({ data }) => {
+      if (actief) setIngelogd(!!data.session);
+    });
+    const { data: subscriptie } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (actief) setIngelogd(!!session);
+    });
+    return () => {
+      actief = false;
+      subscriptie.subscription.unsubscribe();
+    };
+  }, []);
+
   if (pathname?.startsWith("/intern")) return null;
 
   return (
@@ -22,9 +50,15 @@ export function SiteHeader() {
           <a href="/aanvraag" className="whitespace-nowrap hover:text-brand-groen">
             Nieuwe aanvraag
           </a>
-          <a href="/inloggen" className="whitespace-nowrap hover:text-brand-groen">
-            Inloggen
-          </a>
+          {ingelogd ? (
+            <a href="/mijn-borden" className="whitespace-nowrap hover:text-brand-groen">
+              Mijn account
+            </a>
+          ) : (
+            <a href="/inloggen" className="whitespace-nowrap hover:text-brand-groen">
+              Inloggen
+            </a>
+          )}
         </div>
       </nav>
     </header>
