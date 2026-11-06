@@ -19,12 +19,14 @@ import { createServerAuthClient } from "@/lib/supabase/serverAuth";
 // check in /api/aanvragen/ontwerp accepteert dan ook alles, zolang TURNSTILE_SECRET_KEY óók leeg is.
 // De ontwerptool is alleen voor klanten met een account: zonder dat zou iemand een bord kunnen
 // ontwerpen en versturen zonder dat wij weten van wie het is, en zonder dat de klant het later op
-// /mijn-borden kan terugzien. Geen sessie? Dan terug naar /inloggen, met een link terug hierheen
-// zodat de klant na het inloggen/account aanmaken gewoon verdergaat waar hij gebleven was.
+// /mijn-borden kan terugzien. Geen sessie? Dan naar /account-aanmaken (niet /inloggen) -- wie hier
+// voor het eerst komt heeft vrijwel nooit al een account, dus "account aanmaken" is het logische
+// startpunt (met een link naar inloggen voor wie dat wél heeft, zie KlantLoginForm). `daarna`
+// zorgt dat je na het aanmaken/inloggen gewoon verdergaat waar je was.
 export async function GET() {
   const supabase = createServerAuthClient();
   const { data } = await supabase.auth.getUser();
-  if (!data.user) redirect("/inloggen?daarna=/aanvraag");
+  if (!data.user) redirect("/account-aanmaken?daarna=/aanvraag");
 
   const html = await readFile(path.join(process.cwd(), "lib/ontwerptool/reclamebord-maker.html"), "utf-8");
   const metSiteKey = html.replace("__TURNSTILE_SITE_KEY__", process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? "");

@@ -9,6 +9,7 @@ import {
 import {
   AANVRAAG_STATUS_KLEUREN,
   AANVRAAG_STATUS_LABELS,
+  AFGEROND_STATUSSEN,
   PRODUCTIE_STATUSSEN,
   BORD_AANSCHAF_LABELS,
   VELDTYPE_LABELS,
@@ -175,7 +176,7 @@ export default async function InternPage({
   // vergelijkbaar met wat eigenaren van kleine bedrijven doorgaans als eerste checken (openstaand
   // werk, omzet die daarin zit, en wat vastloopt of te lang blijft liggen) in plaats van meteen
   // door losse aanvragen te moeten klikken.
-  const openstaandeKaarten = kaarten.filter((kaart) => kaart.statusWaarde !== "gemaakt");
+  const openstaandeKaarten = kaarten.filter((kaart) => !AFGEROND_STATUSSEN.includes(kaart.statusWaarde));
   const geschatteOmzet = openstaandeKaarten.reduce((totaal, kaart) => {
     if (kaart.ontwerpDoorOns) return totaal; // prijs wordt achteraf bepaald, telt niet mee in de schatting
     const prijs = schatPrijs(kaart.afmetingRuw, kaart.aantal, kaart.bedrukking);
@@ -191,7 +192,7 @@ export default async function InternPage({
   const looptVastAantal = foutmelding ? 0 : await telLooptVastAanvragen();
 
   const zichtbareKaarten = kaarten.filter((kaart) => kaart.statusWaarde === actieveStatus);
-  if (actieveStatus === "gemaakt") {
+  if (AFGEROND_STATUSSEN.includes(actieveStatus)) {
     zichtbareKaarten.sort((a, b) => a.provincie.localeCompare(b.provincie, "nl"));
   }
 

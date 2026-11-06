@@ -41,7 +41,7 @@ export const BORD_AANSCHAF_LABELS: Record<BordAanschaf, string> = {
 // productieflow), afwijzing laat de AI automatisch een herzien concept terugmailen terwijl de
 // aanvraag gewoon "voorstel_verstuurd" blijft. De klantreactie zelf blijft wel bewaard, als rij
 // in de `feedback`-tabel (zie `feedback.goedgekeurd`).
-export const AANVRAAG_STATUSSEN = ["nieuw", "in_behandeling", "voorstel_verstuurd", "gemaakt"] as const;
+export const AANVRAAG_STATUSSEN = ["nieuw", "in_behandeling", "voorstel_verstuurd", "gemaakt", "verstuurd"] as const;
 
 export type AanvraagStatus = (typeof AANVRAAG_STATUSSEN)[number];
 
@@ -50,6 +50,7 @@ export const AANVRAAG_STATUS_LABELS: Record<AanvraagStatus, string> = {
   in_behandeling: "In behandeling",
   voorstel_verstuurd: "Voorstel verstuurd",
   gemaakt: "Klaar voor levering",
+  verstuurd: "Verstuurd",
 };
 
 // Eén plek voor de statuskleuren, zodat de statustabbladen, tabelbadges en detailpagina er
@@ -59,12 +60,18 @@ export const AANVRAAG_STATUS_KLEUREN: Record<AanvraagStatus, string> = {
   in_behandeling: "bg-amber-100 text-amber-700",
   voorstel_verstuurd: "bg-purple-100 text-purple-700",
   gemaakt: "bg-teal-100 text-teal-700",
+  verstuurd: "bg-neutral-200 text-neutral-700",
 };
 
 // /intern (Aanvragen) toont alleen de fysieke productieflow als vakjes: tegen de tijd dat een
 // aanvraag hier binnenkomt, is het voorstel door de klant al goedgekeurd. De klant-mailflow zelf
 // (voorstel versturen, wachten op reactie, eventueel herzien) staat apart op /intern/concepten.
-export const PRODUCTIE_STATUSSEN: readonly AanvraagStatus[] = ["nieuw", "in_behandeling", "gemaakt"];
+export const PRODUCTIE_STATUSSEN: readonly AanvraagStatus[] = ["nieuw", "in_behandeling", "gemaakt", "verstuurd"];
+
+// Een aanvraag in een van deze statussen is helemaal klaar (bord staat bij de klant) en telt dus
+// niet meer mee als "openstaand" werk -- gebruikt in /intern (dashboard-kengetallen) en
+// /intern/klanten (per-klant tellingen).
+export const AFGEROND_STATUSSEN: readonly AanvraagStatus[] = ["gemaakt", "verstuurd"];
 
 // /intern/concepten toont de aanvragen die nog in de klant-mailflow zitten: een voorstel is
 // gegenereerd en verstuurd, en er wordt gewacht op (of gereageerd op) een klantreactie.
@@ -81,6 +88,7 @@ export const LOOPT_VAST_VANAF = 2;
 export const VOLGENDE_PRODUCTIESTATUS: Partial<Record<AanvraagStatus, { status: AanvraagStatus; label: string }>> = {
   nieuw: { status: "in_behandeling", label: "Start behandeling" },
   in_behandeling: { status: "gemaakt", label: "Markeer als klaar voor levering" },
+  gemaakt: { status: "verstuurd", label: "Markeer als verstuurd" },
 };
 
 // Nederlandse provincies, gebruikt om te bepalen waar een klant/bord naartoe moet. De klant kiest

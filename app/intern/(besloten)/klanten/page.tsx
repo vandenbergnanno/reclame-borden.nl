@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { createServerSupabaseClient, isSupabaseGeconfigureerd } from "@/lib/supabase/server";
 import { VOORBEELD_AANVRAGEN, VOORBEELD_KLANTEN } from "@/lib/demo/voorbeelddata";
-import { CONCEPT_STATUSSEN, PRODUCTIE_STATUSSEN } from "@/lib/types/domain";
+import { AFGEROND_STATUSSEN, CONCEPT_STATUSSEN, PRODUCTIE_STATUSSEN } from "@/lib/types/domain";
 import { KlantenTabel } from "./KlantenTabel";
 
 export const metadata: Metadata = {
@@ -60,7 +60,7 @@ export default async function KlantenPage() {
         telefoon: klant.telefoon,
         provincie: klant.provincie,
         aantalAanvragen: aanvragenVanKlant.length,
-        aantalOpen: aanvragenVanKlant.filter((aanvraag) => aanvraag.status !== "gemaakt").length,
+        aantalOpen: aanvragenVanKlant.filter((aanvraag) => !AFGEROND_STATUSSEN.includes(aanvraag.status)).length,
         heeftProductieItems: aanvragenVanKlant.some((aanvraag) =>
           (PRODUCTIE_STATUSSEN as readonly string[]).includes(aanvraag.status)
         ),
