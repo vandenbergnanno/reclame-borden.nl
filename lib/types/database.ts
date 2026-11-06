@@ -78,6 +78,7 @@ export interface Database {
           voorbeeld_achter_pad: string | null;
           ontwerp_pad: string | null;
           overige_bestanden: OverigBestand[] | null;
+          gewijzigd_door_klant_op: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -113,6 +114,7 @@ export interface Database {
           voorbeeld_achter_pad?: string | null;
           ontwerp_pad?: string | null;
           overige_bestanden?: OverigBestand[] | null;
+          gewijzigd_door_klant_op?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -264,6 +266,30 @@ export interface Database {
             columns: ["design_id"];
             isOneToOne: false;
             referencedRelation: "designs";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      aanvraag_versies: {
+        Row: {
+          id: string;
+          aanvraag_id: string;
+          data: Record<string, unknown>;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          aanvraag_id: string;
+          data: Record<string, unknown>;
+          created_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["aanvraag_versies"]["Insert"]>;
+        Relationships: [
+          {
+            foreignKeyName: "aanvraag_versies_aanvraag_id_fkey";
+            columns: ["aanvraag_id"];
+            isOneToOne: false;
+            referencedRelation: "aanvragen";
             referencedColumns: ["id"];
           },
         ];

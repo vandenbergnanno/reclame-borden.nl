@@ -37,6 +37,7 @@ export default async function AanvraagDetailPage({ params }: { params: { id: str
   let designs: typeof VOORBEELD_DESIGNS | null;
   let feedback: typeof VOORBEELD_FEEDBACK | null;
   let emails: typeof VOORBEELD_EMAILS | null;
+  let versies: { id: string; data: Record<string, unknown>; created_at: string }[] | null = null;
   // Bestandspaden in de database zijn kale Supabase Storage-paden (de bucket is bewust privé, zie
   // SUPABASE_STORAGE_BUCKET) -- pas na het omzetten naar een tijdelijke ondertekende link kan de
   // browser ze echt laden. Zonder dit stond hier eerder alleen de kale bestandsnaam.
@@ -87,13 +88,14 @@ export default async function AanvraagDetailPage({ params }: { params: { id: str
       notFound();
     }
 
-    const [{ data: klantData }, { data: contentChecksData }, { data: designsData }, { data: feedbackData }, { data: emailsData }] =
+    const [{ data: klantData }, { data: contentChecksData }, { data: designsData }, { data: feedbackData }, { data: emailsData }, { data: versiesData }] =
       await Promise.all([
         supabase.from("klanten").select("*").eq("id", aanvraag.klant_id).maybeSingle(),
         supabase.from("content_checks").select("*").eq("aanvraag_id", aanvraag.id).order("created_at", { ascending: false }),
         supabase.from("designs").select("*").eq("aanvraag_id", aanvraag.id).order("versienummer", { ascending: true }),
         supabase.from("feedback").select("*").eq("aanvraag_id", aanvraag.id).order("created_at", { ascending: false }),
         supabase.from("emails").select("*").eq("aanvraag_id", aanvraag.id).order("verzonden_op", { ascending: true }),
+        supabase.from("aanvraag_versies").select("*").eq("aanvraag_id", aanvraag.id).order("created_at", { ascending: false }),
       ]);
 
     klant = klantData;
@@ -101,6 +103,7 @@ export default async function AanvraagDetailPage({ params }: { params: { id: str
     designs = designsData;
     feedback = feedbackData;
     emails = emailsData;
+    versies = versiesData;
 
     const overigePaden = aanvraag.overige_bestanden?.map((b) => b.pad) ?? [];
     const [
@@ -159,6 +162,11 @@ export default async function AanvraagDetailPage({ params }: { params: { id: str
         <p className="mt-1 text-sm text-neutral-600">
           Ingediend op {new Date(aanvraag.created_at).toLocaleString("nl-NL")}
         </p>
+        {aanvraag.gewijzigd_door_klant_op && (
+          <p className="mt-2 inline-block rounded bg-brand-oranje/10 px-2.5 py-1 text-xs font-medium text-brand-oranje">
+            Gewijzigd door klant op {new Date(aanvraag.gewijzigd_door_klant_op).toLocaleString("nl-NL")}
+          </p>
+        )}
       </div>
 
       <section className="rounded-xl border border-neutral-200 bg-white p-5 shadow-sm">
@@ -467,6 +475,37 @@ export default async function AanvraagDetailPage({ params }: { params: { id: str
         )}
       </section>
         </>
+      )}
+
+      {versies && versies.length > 0 && (
+        <section className="rounded-xl border border-neutral-200 bg-white p-5 shadow-sm">
+          <h2 className="mb-2 font-semibold text-brand-zwart">Eerdere versies</h2>
+          <p className="mb-3 text-xs text-neutral-500">
+            Zo zag deze aanvraag eruit vóór een wijziging door de klant. Geen vergelijking (diff), alleen de volledige
+            oude gegevens.
+          </p>
+          <ul className="space-y-3">
+            {versies.map((versie) => (
+              <li key={versie.id} className="rounded-lg border border-neutral-200 p-3 text-sm">
+                <p className="mb-1 font-medium text-brand-zwart">
+                  Versie van {new Date(versie.created_at).toLocaleString("nl-NL")}
+                </p>
+                <dl className="grid gap-1 sm:grid-cols-2">
+                  <Rij label="Afmeting" waarde={String(versie.data.afmeting ?? "—")} />
+                  <Rij label="Aantal" waarde={String(versie.data.aantal ?? "—")} />
+                  <Rij label="Bedrukking" waarde={String(versie.data.bedrukking ?? "—")} />
+                  <Rij label="Levering" waarde={String(versie.data.levering ?? "—")} />
+                </dl>
+                {typeof versie.data.opmerking === "string" && versie.data.opmerking && (
+                  <p className="mt-2 whitespace-pre-wrap text-neutral-700">
+                    <span className="font-medium text-brand-zwart">Opmerking: </span>
+                    {versie.data.opmerking}
+                  </p>
+                )}
+              </li>
+            ))}
+          </ul>
+        </section>
       )}
     </div>
   );

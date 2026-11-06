@@ -18,6 +18,10 @@ function isPubliekeAanvragenRoute(method: string, pathname: string): boolean {
   // (POST) en vraagt daarvoor eerst de uploadgrenzen van de server op (GET ?limiet=1) — zie
   // vraagLimietOp() in lib/ontwerptool/reclamebord-maker.html.
   if (pathname === "/api/aanvragen/ontwerp") return method === "POST" || method === "GET";
+  // Een klant past zijn eigen, nog "nieuw"-status-aanvraag aan (zie app/api/aanvragen/[id]/klant-
+  // bewerken/route.ts) -- die route doet zijn EIGEN klant-sessie-/eigenaarschap-/statuscontrole,
+  // dit laat 'm alleen voorbij de medewerkers-wachtwoordpoort hieronder.
+  if (/^\/api\/aanvragen\/[^/]+\/klant-bewerken$/.test(pathname)) return method === "PATCH";
   return false;
 }
 
@@ -58,7 +62,7 @@ async function verversSupabaseSessie(request: NextRequest): Promise<NextResponse
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  if (pathname === "/inloggen" || pathname === "/mijn-borden") {
+  if (pathname === "/inloggen" || pathname === "/mijn-borden" || pathname === "/mijn-account" || pathname === "/account-aanmaken") {
     return await verversSupabaseSessie(request);
   }
 
@@ -90,5 +94,13 @@ export async function middleware(request: NextRequest) {
 // sommen) — zie de uitleg bij isPubliekeAanvragenRoute hierboven voor waarom dat de veiligere
 // default is.
 export const config = {
-  matcher: ["/intern/:path*", "/api/aanvragen", "/api/aanvragen/:path*", "/inloggen", "/mijn-borden"],
+  matcher: [
+    "/intern/:path*",
+    "/api/aanvragen",
+    "/api/aanvragen/:path*",
+    "/inloggen",
+    "/mijn-borden",
+    "/mijn-account",
+    "/account-aanmaken",
+  ],
 };

@@ -141,6 +141,25 @@ export default async function MijnBordenPagina() {
                   Download drukbestand
                 </a>
               )}
+
+              <div className="mt-3 border-t border-neutral-100 pt-3">
+                {aanvraag.status === "nieuw" ? (
+                  <a
+                    href={`/aanvraag?bewerk=${aanvraag.id}`}
+                    className="inline-block rounded border border-neutral-300 px-3 py-1.5 text-sm font-medium text-brand-zwart hover:border-brand-groen"
+                  >
+                    Aanpassen
+                  </a>
+                ) : (
+                  <p className="text-sm text-neutral-500">
+                    Deze aanvraag is al in productie. Wil je nog iets wijzigen? Mail naar{" "}
+                    <a href="mailto:info@demediagraaf.nl" className="text-brand-groen underline">
+                      info@demediagraaf.nl
+                    </a>
+                    .
+                  </p>
+                )}
+              </div>
             </li>
           ))}
         </ul>
