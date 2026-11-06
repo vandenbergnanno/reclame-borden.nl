@@ -124,6 +124,45 @@ export function KlantLoginForm({ vasteModus }: { vasteModus?: Modus } = {}) {
     if (daarna && daarna.startsWith("/")) daarnaRef.current = daarna;
   }, []);
 
+  // Koppelen aan een klantenrij (zie de uitleg bij schrijfWachtendeSignup) en doorsturen -- gebruikt
+  // door zowel de handmatige login hieronder als de automatische check bij het laden van de pagina
+  // (zie de volgende useEffect): een klant die net op de bevestigingslink in zijn e-mail heeft
+  // geklikt, is daarmee al ingelogd (Supabase zet de sessie vanuit de link zelf) en hoeft dan niet
+  // ook nog het wachtwoord opnieuw in te typen.
+  async function koppelEnGaVerder(emailVanSessie: string) {
+    const wachtendeSignup = leesWachtendeSignup(emailVanSessie);
+    try {
+      await fetch("/api/account/koppel", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(wachtendeSignup ?? {}),
+      });
+      wisWachtendeSignup();
+    } catch {
+      // zie schrijfPogingen hierboven: koppelen mag best eens mislukken, inloggen zelf niet.
+    }
+    router.push(daarnaRef.current);
+    router.refresh();
+  }
+
+  // Automatisch verdergaan als er al een sessie is bij het laden van deze pagina -- dat is het
+  // geval vlak na het klikken op de bevestigingslink in de e-mail (emailRedirectTo wijst hierheen,
+  // zie de signup-tak hieronder): Supabase zet de sessie dan al vanuit de link zelf, dus zonder dit
+  // zou de klant alsnog handmatig opnieuw moeten inloggen met het wachtwoord dat hij net heeft
+  // gekozen, terwijl hij feitelijk al is ingelogd.
+  useEffect(() => {
+    let actief = true;
+    (async () => {
+      const supabase = createBrowserSupabaseClient();
+      const { data } = await supabase.auth.getSession();
+      if (actief && data.session?.user.email) {
+        await koppelEnGaVerder(data.session.user.email);
+      }
+    })();
+    return () => { actief = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- alleen bij het laden van de pagina checken
+  }, []);
+
   // Onzichtbare Turnstile-widget: één keer renderen zodra het script geladen is, en na elke
   // poging resetten (een Supabase-captchaToken is maar één keer bruikbaar) zodat er voor de
   // volgende poging weer een vers token klaarstaat.
@@ -200,27 +239,7 @@ export function KlantLoginForm({ vasteModus }: { vasteModus?: Modus } = {}) {
         }
         schrijfPogingen(0, 0);
         setGeblokkeerdTot(0);
-        // Best effort: als deze klant (bijvoorbeeld na het bevestigen van zijn e-mailadres) nog
-        // niet gekoppeld was aan een eerdere gastaanvraag, gebeurt dat hier alsnog. Mislukt dit,
-        // dan mag het inloggen zelf gewoon doorgaan -- /mijn-borden laat dan voorlopig geen
-        // eerdere aanvragen zien in plaats van de klant helemaal te blokkeren.
-        // Was dit account net aangemaakt (zie de signup-tak hieronder) en wacht het nog op de
-        // eerste koppeling, dan sturen we de toen opgeslagen naam/bedrijf/telefoon alsnog mee --
-        // anders wordt er voor een gloednieuw account (geen eerdere gastaanvraag) nooit een
-        // klantenrij aangemaakt, zie de uitleg bij schrijfWachtendeSignup hierboven.
-        const wachtendeSignup = leesWachtendeSignup(email);
-        try {
-          await fetch("/api/account/koppel", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(wachtendeSignup ?? {}),
-          });
-          wisWachtendeSignup();
-        } catch {
-          // zie hierboven
-        }
-        router.push(daarnaRef.current);
-        router.refresh();
+        await koppelEnGaVerder(email);
         return;
       }
 

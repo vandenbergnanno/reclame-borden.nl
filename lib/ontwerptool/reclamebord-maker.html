@@ -498,12 +498,12 @@
       <legend>Je gegevens</legend>
       <p class="klein-hint" style="margin:4px 0 0">Velden met een * moet je invullen.</p>
       <div class="rij">
-        <label>Naam *<input type="text" name="naam" id="fNaam" required autocomplete="name"></label>
-        <label>Vereniging of bedrijf<input type="text" name="bedrijf" id="fBedrijf" autocomplete="organization"></label>
+        <label>Naam *<input type="text" name="naam" id="fNaam" required autocomplete="name" value="__KLANT_NAAM__"></label>
+        <label>Vereniging of bedrijf<input type="text" name="bedrijf" id="fBedrijf" autocomplete="organization" value="__KLANT_BEDRIJF__"></label>
       </div>
       <div class="rij">
-        <label>E-mail *<input type="email" name="email" id="fEmail" required autocomplete="email"></label>
-        <label>Telefoon<input type="tel" name="telefoon" id="fTelefoon" autocomplete="tel"></label>
+        <label>E-mail *<input type="email" name="email" id="fEmail" required autocomplete="email" value="__KLANT_EMAIL__"></label>
+        <label>Telefoon<input type="tel" name="telefoon" id="fTelefoon" autocomplete="tel" value="__KLANT_TELEFOON__"></label>
       </div>
       <label class="vink"><input type="checkbox" id="fOnthoud"> Onthoud mijn gegevens op deze computer <span class="uitleg">(handig als je later nog een bord bestelt; niet aanzetten op een computer die je met anderen deelt)</span></label>
     </fieldset>
