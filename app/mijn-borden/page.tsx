@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { createServerAuthClient } from "@/lib/supabase/serverAuth";
 import { createServerSupabaseClient, isSupabaseAuthGeconfigureerd } from "@/lib/supabase/server";
 import { naarOndertekendeLink } from "@/lib/supabase/bestandsLinks";
-import { AANVRAAG_STATUS_KLEUREN, AANVRAAG_STATUS_LABELS } from "@/lib/types/domain";
+import { AANVRAAG_STATUS_KLEUREN, AANVRAAG_STATUS_LABELS, type AanvraagStatus } from "@/lib/types/domain";
 
 export const metadata: Metadata = {
   title: "Mijn borden — reclame-borden.nl",
@@ -75,14 +75,15 @@ export default async function MijnBordenPagina() {
       )
     : null;
 
+  // Onderhanden: nog status "nieuw", dus nog aan te passen (zie app/api/aanvragen/[id]/klant-
+  // bewerken/route.ts) -- dit telt als "nog niet afgemaakt". Alles daarna is al in productie en
+  // staat op slot; dat groepje komt hieronder als "Afgemaakte borden".
+  const onderhanden = aanvragen?.filter((a) => a.status === "nieuw") ?? [];
+  const afgemaakt = aanvragen?.filter((a) => a.status !== "nieuw") ?? [];
+
   return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-semibold text-brand-zwart">Mijn borden</h1>
-        <a href="/mijn-account" className="mt-1 inline-block text-sm text-brand-groen hover:underline">
-          Mijn account →
-        </a>
-      </div>
+    <div className="space-y-10">
+      <h1 className="text-2xl font-semibold text-brand-zwart">Mijn borden</h1>
 
       {!aanvragen || aanvragen.length === 0 ? (
         <div className="rounded border border-neutral-200 bg-neutral-50 p-6 text-center text-sm text-neutral-500">
@@ -93,77 +94,118 @@ export default async function MijnBordenPagina() {
           .
         </div>
       ) : (
-        <ul className="space-y-3">
-          {aanvragen.map((aanvraag) => (
-            <li key={aanvraag.id} className="rounded border border-neutral-200 p-4">
-              <div className="flex items-center justify-between gap-4">
-                <div>
-                  <p className="font-medium text-brand-zwart">
-                    {aanvraag.afmeting} · {aanvraag.aantal}×
-                  </p>
-                  <p className="text-sm text-neutral-500">
-                    Aangevraagd op {new Date(aanvraag.created_at).toLocaleDateString("nl-NL")}
-                  </p>
-                  {aanvraag.levering === "Bezorgen" && (aanvraag.straat || aanvraag.plaats) && (
-                    <p className="mt-1 text-sm text-neutral-500">
-                      Bezorgadres: {[aanvraag.straat, [aanvraag.postcode, aanvraag.plaats].filter(Boolean).join(" ")]
-                        .filter(Boolean)
-                        .join(", ")}
-                    </p>
-                  )}
-                  {aanvraag.levering === "Zelf ophalen in Oudewater" && (
-                    <p className="mt-1 text-sm text-neutral-500">Zelf ophalen in Oudewater</p>
-                  )}
-                </div>
-                <span
-                  className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium ${AANVRAAG_STATUS_KLEUREN[aanvraag.status]}`}
-                >
-                  {AANVRAAG_STATUS_LABELS[aanvraag.status]}
-                </span>
-              </div>
-
-              {aanvraag.voorbeeldUrl && (
-                // eslint-disable-next-line @next/next/no-img-element -- tijdelijke ondertekende Storage-link, geen vaste breedte/hoogte nodig
-                <img
-                  src={aanvraag.voorbeeldUrl}
-                  alt={`Voorbeeld van je bord (${aanvraag.afmeting})`}
-                  className="mt-3 w-full rounded border border-neutral-200 object-contain"
-                />
-              )}
-
-              {aanvraag.drukbestandUrl && (
-                <a
-                  href={aanvraag.drukbestandUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="mt-2 inline-block text-sm font-medium text-brand-groen hover:underline"
-                >
-                  Download drukbestand
-                </a>
-              )}
-
-              <div className="mt-3 border-t border-neutral-100 pt-3">
-                {aanvraag.status === "nieuw" ? (
-                  <a
-                    href={`/aanvraag?bewerk=${aanvraag.id}`}
-                    className="inline-block rounded border border-neutral-300 px-3 py-1.5 text-sm font-medium text-brand-zwart hover:border-brand-groen"
+        <>
+          {onderhanden.length > 0 && (
+            <section className="space-y-3">
+              <h2 className="text-sm font-semibold uppercase tracking-wide text-neutral-500">
+                Nog niet afgemaakt
+              </h2>
+              <ul className="space-y-3">
+                {onderhanden.map((aanvraag) => (
+                  <li
+                    key={aanvraag.id}
+                    className="rounded border-2 border-dashed border-brand-groen/50 bg-brand-groen/5 p-4"
                   >
-                    Aanpassen
-                  </a>
-                ) : (
-                  <p className="text-sm text-neutral-500">
-                    Deze aanvraag is al in productie. Wil je nog iets wijzigen? Mail naar{" "}
-                    <a href="mailto:info@demediagraaf.nl" className="text-brand-groen underline">
-                      info@demediagraaf.nl
+                    <AanvraagKaart aanvraag={aanvraag} />
+                    <a
+                      href={`/aanvraag?bewerk=${aanvraag.id}`}
+                      className="mt-3 inline-block rounded bg-brand-groen px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-groen/90"
+                    >
+                      Verder werken
                     </a>
-                    .
-                  </p>
-                )}
-              </div>
-            </li>
-          ))}
-        </ul>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+
+          {afgemaakt.length > 0 && (
+            <section className="space-y-3">
+              <h2 className="text-sm font-semibold uppercase tracking-wide text-neutral-500">Afgemaakte borden</h2>
+              <ul className="space-y-3">
+                {afgemaakt.map((aanvraag) => (
+                  <li key={aanvraag.id} className="rounded border border-neutral-200 p-4">
+                    <AanvraagKaart aanvraag={aanvraag} />
+                    <p className="mt-3 text-sm text-neutral-500">
+                      Deze aanvraag is al in productie. Wil je nog iets wijzigen? Mail naar{" "}
+                      <a href="mailto:info@demediagraaf.nl" className="text-brand-groen underline">
+                        info@demediagraaf.nl
+                      </a>
+                      .
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+        </>
       )}
     </div>
+  );
+}
+
+interface AanvraagKaartData {
+  id: string;
+  afmeting: string;
+  aantal: number;
+  status: AanvraagStatus;
+  created_at: string;
+  levering: string | null;
+  straat: string | null;
+  postcode: string | null;
+  plaats: string | null;
+  voorbeeldUrl: string | null;
+  drukbestandUrl: string | null;
+}
+
+function AanvraagKaart({ aanvraag }: { aanvraag: AanvraagKaartData }) {
+  return (
+    <>
+      <div className="flex items-center justify-between gap-4">
+        <div>
+          <p className="font-medium text-brand-zwart">
+            {aanvraag.afmeting} · {aanvraag.aantal}×
+          </p>
+          <p className="text-sm text-neutral-500">
+            Aangevraagd op {new Date(aanvraag.created_at).toLocaleDateString("nl-NL")}
+          </p>
+          {aanvraag.levering === "Bezorgen" && (aanvraag.straat || aanvraag.plaats) && (
+            <p className="mt-1 text-sm text-neutral-500">
+              Bezorgadres: {[aanvraag.straat, [aanvraag.postcode, aanvraag.plaats].filter(Boolean).join(" ")]
+                .filter(Boolean)
+                .join(", ")}
+            </p>
+          )}
+          {aanvraag.levering === "Zelf ophalen in Oudewater" && (
+            <p className="mt-1 text-sm text-neutral-500">Zelf ophalen in Oudewater</p>
+          )}
+        </div>
+        <span
+          className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium ${AANVRAAG_STATUS_KLEUREN[aanvraag.status]}`}
+        >
+          {AANVRAAG_STATUS_LABELS[aanvraag.status]}
+        </span>
+      </div>
+
+      {aanvraag.voorbeeldUrl && (
+        // eslint-disable-next-line @next/next/no-img-element -- tijdelijke ondertekende Storage-link, geen vaste breedte/hoogte nodig
+        <img
+          src={aanvraag.voorbeeldUrl}
+          alt={`Voorbeeld van je bord (${aanvraag.afmeting})`}
+          className="mt-3 w-full rounded border border-neutral-200 object-contain"
+        />
+      )}
+
+      {aanvraag.drukbestandUrl && (
+        <a
+          href={aanvraag.drukbestandUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-2 inline-block text-sm font-medium text-brand-groen hover:underline"
+        >
+          Download drukbestand
+        </a>
+      )}
+    </>
   );
 }
