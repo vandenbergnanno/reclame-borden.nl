@@ -1,6 +1,7 @@
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { createServerAuthClient } from "@/lib/supabase/serverAuth";
 import { checkRateLimit, clientIp, teVeelPogingenResponse } from "@/lib/security/rateLimit";
+import { logServerFout, GENERIEKE_SERVERFOUT } from "@/lib/security/serverFout";
 
 const MAX_POGINGEN = 10;
 const VENSTER_MS = 15 * 60 * 1000;
@@ -45,7 +46,8 @@ export async function GET(request: Request) {
     .maybeSingle();
 
   if (klantFout) {
-    return Response.json({ ok: false, error: klantFout.message }, { status: 500 });
+    logServerFout("account/exporteren: klant ophalen", klantFout);
+    return Response.json({ ok: false, error: GENERIEKE_SERVERFOUT }, { status: 500 });
   }
   if (!klant) {
     return Response.json({ ok: false, error: "Geen klantgegevens gevonden bij dit account." }, { status: 404 });
@@ -60,7 +62,8 @@ export async function GET(request: Request) {
     .order("created_at", { ascending: false });
 
   if (aanvragenFout) {
-    return Response.json({ ok: false, error: aanvragenFout.message }, { status: 500 });
+    logServerFout("account/exporteren: aanvragen ophalen", aanvragenFout);
+    return Response.json({ ok: false, error: GENERIEKE_SERVERFOUT }, { status: 500 });
   }
 
   const aanvraagIds = (aanvragen ?? []).map((aanvraag) => aanvraag.id);
@@ -73,7 +76,8 @@ export async function GET(request: Request) {
       : { data: [], error: null };
 
   if (feedbackFout) {
-    return Response.json({ ok: false, error: feedbackFout.message }, { status: 500 });
+    logServerFout("account/exporteren: feedback ophalen", feedbackFout);
+    return Response.json({ ok: false, error: GENERIEKE_SERVERFOUT }, { status: 500 });
   }
 
   const export_ = {

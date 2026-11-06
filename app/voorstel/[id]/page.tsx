@@ -3,6 +3,8 @@ import type { ReactNode } from "react";
 import { notFound } from "next/navigation";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { VELDTYPE_LABELS } from "@/lib/types/domain";
+import { isGeldigeUuid } from "@/lib/validatie/uuid";
+import { logServerFout, GENERIEKE_SERVERFOUT } from "@/lib/security/serverFout";
 import { VoorstelActies } from "./VoorstelActies";
 
 export const metadata: Metadata = {
@@ -13,6 +15,14 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 export default async function VoorstelPage({ params }: { params: { id: string } }) {
+  // Een ongeldige UUID in de URL (bijv. /voorstel/test, of een kapotte/verouderde link) geeft
+  // Postgres zelf een harde fout zodra die rechtstreeks in de query hieronder terechtkomt -- die
+  // rauwe foutmelding hoort nooit op het scherm. Zo'n niet-UUID-id kan sowieso nooit een bestaand
+  // voorstel zijn, dus dit volgt hetzelfde pad als "bestaat niet": de 404-pagina.
+  if (!isGeldigeUuid(params.id)) {
+    notFound();
+  }
+
   let supabase: ReturnType<typeof createServerSupabaseClient>;
   try {
     supabase = createServerSupabaseClient();
@@ -31,9 +41,10 @@ export default async function VoorstelPage({ params }: { params: { id: string } 
     .maybeSingle();
 
   if (aanvraagFout) {
+    logServerFout("voorstel/[id]: ophalen aanvraag", aanvraagFout);
     return (
       <p className="rounded border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700">
-        {aanvraagFout.message}
+        {GENERIEKE_SERVERFOUT}
       </p>
     );
   }

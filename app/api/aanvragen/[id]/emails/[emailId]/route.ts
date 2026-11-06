@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { isGeldigeUuid } from "@/lib/validatie/uuid";
+import { logServerFout, GENERIEKE_SERVERFOUT } from "@/lib/security/serverFout";
 
 const MAX_LENGTE = { onderwerp: 300, platte_tekst: 20_000, html_inhoud: 100_000 } as const;
 
@@ -10,6 +12,10 @@ const MAX_LENGTE = { onderwerp: 300, platte_tekst: 20_000, html_inhoud: 100_000 
 // `emails.verzonden`) — anders zou je hier iets anders laten zien dan wat de klant daadwerkelijk
 // ontvangen heeft.
 export async function PATCH(request: Request, { params }: { params: { id: string; emailId: string } }) {
+  if (!isGeldigeUuid(params.id) || !isGeldigeUuid(params.emailId)) {
+    return NextResponse.json({ ok: false, error: "E-mail niet gevonden." }, { status: 404 });
+  }
+
   let body: { onderwerp?: unknown; platte_tekst?: unknown; html_inhoud?: unknown };
   try {
     body = await request.json();
@@ -53,7 +59,8 @@ export async function PATCH(request: Request, { params }: { params: { id: string
     .maybeSingle();
 
   if (emailFout) {
-    return NextResponse.json({ ok: false, error: emailFout.message }, { status: 500 });
+    logServerFout("emails/[emailId]: email opzoeken", emailFout);
+    return NextResponse.json({ ok: false, error: GENERIEKE_SERVERFOUT }, { status: 500 });
   }
   if (!email) {
     return NextResponse.json({ ok: false, error: "E-mail niet gevonden." }, { status: 404 });
@@ -71,7 +78,8 @@ export async function PATCH(request: Request, { params }: { params: { id: string
     .eq("id", email.id);
 
   if (updateFout) {
-    return NextResponse.json({ ok: false, error: updateFout.message }, { status: 500 });
+    logServerFout("emails/[emailId]: email bijwerken", updateFout);
+    return NextResponse.json({ ok: false, error: GENERIEKE_SERVERFOUT }, { status: 500 });
   }
 
   return NextResponse.json({ ok: true });

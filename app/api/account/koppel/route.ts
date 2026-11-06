@@ -1,6 +1,7 @@
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { createServerAuthClient } from "@/lib/supabase/serverAuth";
 import { checkRateLimit, clientIp, teVeelPogingenResponse } from "@/lib/security/rateLimit";
+import { logServerFout, GENERIEKE_SERVERFOUT } from "@/lib/security/serverFout";
 
 // Deze route vereist weliswaar al een geldige Supabase-sessie (zie de getUser()-check hieronder),
 // maar een ingelogd account kan 'm nog steeds herhaaldelijk aanroepen om de klanten-tabel te
@@ -65,7 +66,8 @@ export async function POST(request: Request) {
     .maybeSingle();
 
   if (zoekFout) {
-    return Response.json({ ok: false, error: zoekFout.message }, { status: 500 });
+    logServerFout("account/koppel: klant opzoeken", zoekFout);
+    return Response.json({ ok: false, error: GENERIEKE_SERVERFOUT }, { status: 500 });
   }
 
   if (bestaandeKlant) {
@@ -105,7 +107,8 @@ export async function POST(request: Request) {
     const { error: updateFout } = await supabase.from("klanten").update(updateVelden).eq("id", bestaandeKlant.id);
 
     if (updateFout) {
-      return Response.json({ ok: false, error: updateFout.message }, { status: 500 });
+      logServerFout("account/koppel: klant bijwerken", updateFout);
+      return Response.json({ ok: false, error: GENERIEKE_SERVERFOUT }, { status: 500 });
     }
 
     return Response.json({ ok: true });
@@ -125,7 +128,8 @@ export async function POST(request: Request) {
   });
 
   if (insertFout) {
-    return Response.json({ ok: false, error: insertFout.message }, { status: 500 });
+    logServerFout("account/koppel: klant aanmaken", insertFout);
+    return Response.json({ ok: false, error: GENERIEKE_SERVERFOUT }, { status: 500 });
   }
 
   return Response.json({ ok: true });

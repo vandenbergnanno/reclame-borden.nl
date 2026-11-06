@@ -217,8 +217,6 @@ export function KlantLoginForm({ vasteModus }: { vasteModus?: Modus } = {}) {
     turnstileToken.current = "";
 
     try {
-      const supabase = createBrowserSupabaseClient();
-
       if (modus === "inloggen") {
         // Gaat via onze eigen route (niet rechtstreeks supabase.auth.signInWithPassword), die er
         // eerst een eigen IP-gebaseerde rate limit tussen zet (zie app/api/klant/login/route.ts)
@@ -255,17 +253,28 @@ export function KlantLoginForm({ vasteModus }: { vasteModus?: Modus } = {}) {
       }
 
       // Account aanmaken
-      // emailRedirectTo: zonder dit stuurt Supabase na het klikken op de bevestigingslink naar de
-      // "Site URL" uit de projectinstellingen, die niet per se (nog) goed staat ingesteld --
-      // hiermee komt de klant altijd terug op onze eigen inlogpagina, waar hij meteen kan inloggen.
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password: wachtwoord,
-        options: { emailRedirectTo: `${window.location.origin}/inloggen`, captchaToken },
+      // Gaat, net als inloggen hierboven, via onze eigen route (zie
+      // app/api/klant/registreren/route.ts) in plaats van rechtstreeks supabase.auth.signUp: die
+      // route verifieert het Turnstile-token zelf op de server. emailRedirectTo: zonder dit stuurt
+      // Supabase na het klikken op de bevestigingslink naar de "Site URL" uit de
+      // projectinstellingen, die niet per se (nog) goed staat ingesteld -- hiermee komt de klant
+      // altijd terug op onze eigen inlogpagina, waar hij meteen kan inloggen.
+      const registrerenResponse = await fetch("/api/klant/registreren", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email,
+          wachtwoord,
+          cf_turnstile_token: captchaToken,
+          emailRedirectTo: `${window.location.origin}/inloggen`,
+        }),
       });
-      if (error) throw new Error(error.message);
+      const registrerenData = await registrerenResponse.json();
+      if (!registrerenResponse.ok || !registrerenData.ok) {
+        throw new Error(registrerenData.error ?? "Account aanmaken is mislukt.");
+      }
 
-      if (!data.session) {
+      if (!registrerenData.heeftSessie) {
         // Het Supabase-project vraagt om e-mailbevestiging voordat er een sessie is -- de
         // koppeling met de klantenrij (hieronder) kan dan nog niet, dat gebeurt automatisch
         // zodra de klant voor het eerst inlogt ná het bevestigen van zijn e-mailadres (zie de

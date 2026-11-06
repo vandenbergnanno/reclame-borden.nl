@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { createServerSupabaseClient, isSupabaseGeconfigureerd } from "@/lib/supabase/server";
 import { naarOndertekendeLinks } from "@/lib/supabase/bestandsLinks";
+import { isGeldigeUuid } from "@/lib/validatie/uuid";
+import { logServerFout, GENERIEKE_SERVERFOUT } from "@/lib/security/serverFout";
 import {
   VOORBEELD_AANVRAGEN,
   VOORBEELD_CONTENT_CHECKS,
@@ -66,6 +68,13 @@ export default async function AanvraagDetailPage({ params }: { params: { id: str
     ontwerpUrl = aanvraag?.ontwerp_pad ?? null;
     overigeBestandenUrls = aanvraag?.overige_bestanden?.map((b) => b.pad) ?? [];
   } else {
+    // Zie lib/validatie/uuid.ts: een niet-UUID id (bijv. een getypte URL) kan nooit een bestaande
+    // aanvraag zijn, en geeft Postgres anders een harde fout zodra die rechtstreeks in de query
+    // hieronder terechtkomt.
+    if (!isGeldigeUuid(params.id)) {
+      notFound();
+    }
+
     const supabase = createServerSupabaseClient();
 
     const { data: aanvraagData, error: aanvraagFout } = await supabase
@@ -75,9 +84,10 @@ export default async function AanvraagDetailPage({ params }: { params: { id: str
       .maybeSingle();
 
     if (aanvraagFout) {
+      logServerFout("intern/[id]: aanvraag ophalen", aanvraagFout);
       return (
         <p className="rounded border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700">
-          {aanvraagFout.message}
+          {GENERIEKE_SERVERFOUT}
         </p>
       );
     }

@@ -4,6 +4,7 @@ import { analyzeRequest } from "@/lib/ai/analyzeRequest";
 import { controleerAfmetingBeschikbaarheid } from "@/lib/ai/controleerAfmetingBeschikbaarheid";
 import { berekenVoorstelGeplandOp } from "@/lib/planning/voorstelPlanning";
 import { checkRateLimit, clientIp, teVeelPogingenResponse } from "@/lib/security/rateLimit";
+import { logServerFout, GENERIEKE_SERVERFOUT } from "@/lib/security/serverFout";
 import {
   BORD_AANSCHAF_OPTIES,
   PROVINCIES,
@@ -142,7 +143,8 @@ export async function POST(request: Request) {
     .maybeSingle();
 
   if (klantZoekFout) {
-    return NextResponse.json({ ok: false, error: klantZoekFout.message }, { status: 500 });
+    logServerFout("aanvragen: klant opzoeken", klantZoekFout);
+    return NextResponse.json({ ok: false, error: GENERIEKE_SERVERFOUT }, { status: 500 });
   }
 
   let klantId = bestaandeKlant?.id;
@@ -161,10 +163,8 @@ export async function POST(request: Request) {
       .single();
 
     if (klantInsertFout || !nieuweKlant) {
-      return NextResponse.json(
-        { ok: false, error: klantInsertFout?.message ?? "Klant kon niet worden aangemaakt." },
-        { status: 500 }
-      );
+      logServerFout("aanvragen: klant aanmaken", klantInsertFout ?? new Error("Geen klant teruggekregen na insert"));
+      return NextResponse.json({ ok: false, error: GENERIEKE_SERVERFOUT }, { status: 500 });
     }
 
     klantId = nieuweKlant.id;
@@ -195,10 +195,8 @@ export async function POST(request: Request) {
     .single();
 
   if (aanvraagInsertFout || !aanvraag) {
-    return NextResponse.json(
-      { ok: false, error: aanvraagInsertFout?.message ?? "Aanvraag kon niet worden opgeslagen." },
-      { status: 500 }
-    );
+    logServerFout("aanvragen: aanvraag opslaan", aanvraagInsertFout ?? new Error("Geen aanvraag teruggekregen na insert"));
+    return NextResponse.json({ ok: false, error: GENERIEKE_SERVERFOUT }, { status: 500 });
   }
 
   // Optionele bijlage opslaan in Supabase Storage — puur opslag, nog geen verwerking.
@@ -212,8 +210,9 @@ export async function POST(request: Request) {
     });
 
     if (uploadFout) {
+      logServerFout("aanvragen: bijlage uploaden", uploadFout);
       return NextResponse.json(
-        { ok: false, error: `Aanvraag opgeslagen, maar bijlage uploaden is mislukt: ${uploadFout.message}` },
+        { ok: false, error: "Aanvraag opgeslagen, maar het bijvoegde bestand uploaden is mislukt." },
         { status: 500 }
       );
     }

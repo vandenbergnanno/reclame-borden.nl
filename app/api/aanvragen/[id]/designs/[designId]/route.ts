@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { isGeldigeUuid } from "@/lib/validatie/uuid";
+import { logServerFout, GENERIEKE_SERVERFOUT } from "@/lib/security/serverFout";
 
 // Beveiligd via middleware.ts (de gedeelde-wachtwoord-poort van /intern) — alleen ingelogde
 // medewerkers kunnen hier bij.
@@ -9,6 +11,10 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 // 'm al wel verstuurd, dan is dit niet meer wat de klant onder ogen heeft gehad en zou aanpassen
 // een vals beeld geven van wat er daadwerkelijk gemaild is.
 export async function PATCH(request: Request, { params }: { params: { id: string; designId: string } }) {
+  if (!isGeldigeUuid(params.id) || !isGeldigeUuid(params.designId)) {
+    return NextResponse.json({ ok: false, error: "Concept niet gevonden." }, { status: 404 });
+  }
+
   let body: { opslaglocatie?: unknown };
   try {
     body = await request.json();
@@ -41,7 +47,8 @@ export async function PATCH(request: Request, { params }: { params: { id: string
     .maybeSingle();
 
   if (designFout) {
-    return NextResponse.json({ ok: false, error: designFout.message }, { status: 500 });
+    logServerFout("designs/[designId]: design opzoeken", designFout);
+    return NextResponse.json({ ok: false, error: GENERIEKE_SERVERFOUT }, { status: 500 });
   }
   if (!design) {
     return NextResponse.json({ ok: false, error: "Concept niet gevonden." }, { status: 404 });
@@ -54,7 +61,8 @@ export async function PATCH(request: Request, { params }: { params: { id: string
     .maybeSingle();
 
   if (emailFout) {
-    return NextResponse.json({ ok: false, error: emailFout.message }, { status: 500 });
+    logServerFout("designs/[designId]: email opzoeken", emailFout);
+    return NextResponse.json({ ok: false, error: GENERIEKE_SERVERFOUT }, { status: 500 });
   }
   if (email?.verzonden) {
     return NextResponse.json(
@@ -69,7 +77,8 @@ export async function PATCH(request: Request, { params }: { params: { id: string
     .eq("id", design.id);
 
   if (updateFout) {
-    return NextResponse.json({ ok: false, error: updateFout.message }, { status: 500 });
+    logServerFout("designs/[designId]: design bijwerken", updateFout);
+    return NextResponse.json({ ok: false, error: GENERIEKE_SERVERFOUT }, { status: 500 });
   }
 
   return NextResponse.json({ ok: true });

@@ -3,6 +3,7 @@ import { analyzeRequest } from "@/lib/ai/analyzeRequest";
 import { controleerAfmetingBeschikbaarheid } from "@/lib/ai/controleerAfmetingBeschikbaarheid";
 import { checkRateLimit, clientIp } from "@/lib/security/rateLimit";
 import { verifieerTurnstile } from "@/lib/security/turnstile";
+import { logServerFout, GENERIEKE_SERVERFOUT } from "@/lib/security/serverFout";
 import type { BordAanschaf, OverigBestand } from "@/lib/types/domain";
 
 // Bestandsuploads vragen om de Node.js-runtime (niet de edge-runtime).
@@ -178,7 +179,10 @@ export async function POST(request: Request) {
     .eq("email", email)
     .maybeSingle();
 
-  if (klantZoekFout) return fout(klantZoekFout.message, 500);
+  if (klantZoekFout) {
+    logServerFout("ontwerp: klant opzoeken", klantZoekFout);
+    return fout(GENERIEKE_SERVERFOUT, 500);
+  }
 
   let klantId = bestaandeKlant?.id;
 
@@ -196,7 +200,8 @@ export async function POST(request: Request) {
       .single();
 
     if (klantInsertFout || !nieuweKlant) {
-      return fout(klantInsertFout?.message ?? "Klant kon niet worden aangemaakt.", 500);
+      logServerFout("ontwerp: klant aanmaken", klantInsertFout ?? new Error("Geen klant teruggekregen na insert"));
+      return fout(GENERIEKE_SERVERFOUT, 500);
     }
 
     klantId = nieuweKlant.id;
@@ -233,7 +238,8 @@ export async function POST(request: Request) {
     .single();
 
   if (aanvraagInsertFout || !aanvraag) {
-    return fout(aanvraagInsertFout?.message ?? "Aanvraag kon niet worden opgeslagen.", 500);
+    logServerFout("ontwerp: aanvraag opslaan", aanvraagInsertFout ?? new Error("Geen aanvraag teruggekregen na insert"));
+    return fout(GENERIEKE_SERVERFOUT, 500);
   }
 
   // Bestanden uploaden. Eén los mislukt bestand mag de rest van de (al opgeslagen) aanvraag niet

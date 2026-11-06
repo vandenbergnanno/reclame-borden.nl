@@ -51,12 +51,6 @@ export function SiteHeader() {
   // eigen sub-navigatie + uitlogknop) niet.
   if (pathname?.startsWith("/intern") && pathname !== "/intern/login") return null;
 
-  // Overal elders (ook op de homepage, ook als je toevallig al ingelogd bent) staat hier gewoon
-  // "Inloggen" -- "Mijn account"/e-mail/uitloggen hoort alleen thuis op /mijn-borden zelf (dat is
-  // na het inloggen de ene plek waar je je account kunt beheren en je borden ziet), expliciet zo
-  // gevraagd na eerdere verwarring over wanneer de header wel/niet accountinfo toonde.
-  const toonAccount = ingelogd && pathname === "/mijn-borden";
-
   return (
     <header className="border-b-4 border-brand-groen bg-white px-4 py-3 sm:px-6">
       <nav className="mx-auto flex max-w-4xl flex-wrap items-center justify-between gap-x-3 gap-y-2">
@@ -69,8 +63,11 @@ export function SiteHeader() {
           <a href="/aanvraag" className="whitespace-nowrap hover:text-brand-groen">
             Nieuwe aanvraag
           </a>
-          {toonAccount ? (
+          {ingelogd ? (
             <>
+              <a href="/mijn-borden" className="whitespace-nowrap hover:text-brand-groen">
+                Mijn borden
+              </a>
               <span className="hidden whitespace-nowrap text-neutral-400 sm:inline">{email}</span>
               <a href="/mijn-account" className="whitespace-nowrap hover:text-brand-groen">
                 Mijn account

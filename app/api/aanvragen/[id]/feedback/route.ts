@@ -3,6 +3,8 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { generateDesign } from "@/lib/ai/generateDesign";
 import { sendProposalEmail } from "@/lib/email/sendProposalEmail";
 import { checkRateLimit, clientIp, teVeelPogingenResponse } from "@/lib/security/rateLimit";
+import { isGeldigeUuid } from "@/lib/validatie/uuid";
+import { logServerFout, GENERIEKE_SERVERFOUT } from "@/lib/security/serverFout";
 
 export const runtime = "nodejs";
 
@@ -16,6 +18,13 @@ const MAX_FEEDBACKTEKST_LENGTE = 2000;
 // genereert en verstuurt de AI automatisch een herzien concept terwijl de aanvraag gewoon
 // "voorstel_verstuurd" blijft. De klantreactie zelf blijft bewaard als rij in `feedback`.
 export async function POST(request: Request, { params }: { params: { id: string } }) {
+  // Een ongeldige UUID (bijv. een kapotte/verouderde link) geeft Postgres anders een harde fout
+  // zodra die rechtstreeks in de query hieronder terechtkomt -- zo'n id kan sowieso nooit een
+  // bestaande aanvraag zijn, dus hetzelfde pad als "niet gevonden".
+  if (!isGeldigeUuid(params.id)) {
+    return NextResponse.json({ ok: false, error: "Aanvraag niet gevonden." }, { status: 404 });
+  }
+
   const rateLimit = await checkRateLimit(`feedback:${clientIp(request)}`, 20, 60 * 60 * 1000);
   if (!rateLimit.toegestaan) {
     return teVeelPogingenResponse(rateLimit);
@@ -61,7 +70,8 @@ export async function POST(request: Request, { params }: { params: { id: string 
     .maybeSingle();
 
   if (aanvraagFout) {
-    return NextResponse.json({ ok: false, error: aanvraagFout.message }, { status: 500 });
+    logServerFout("feedback: ophalen aanvraag", aanvraagFout);
+    return NextResponse.json({ ok: false, error: GENERIEKE_SERVERFOUT }, { status: 500 });
   }
   if (!aanvraag) {
     return NextResponse.json({ ok: false, error: "Aanvraag niet gevonden." }, { status: 404 });
@@ -82,7 +92,8 @@ export async function POST(request: Request, { params }: { params: { id: string 
   });
 
   if (feedbackFout) {
-    return NextResponse.json({ ok: false, error: feedbackFout.message }, { status: 500 });
+    logServerFout("feedback: opslaan feedback", feedbackFout);
+    return NextResponse.json({ ok: false, error: GENERIEKE_SERVERFOUT }, { status: 500 });
   }
 
   const { data: laatsteDesign } = await supabase
@@ -100,7 +111,8 @@ export async function POST(request: Request, { params }: { params: { id: string 
 
     const { error: statusFout } = await supabase.from("aanvragen").update({ status: "nieuw" }).eq("id", aanvraag.id);
     if (statusFout) {
-      return NextResponse.json({ ok: false, error: statusFout.message }, { status: 500 });
+      logServerFout("feedback: status bijwerken na goedkeuring", statusFout);
+      return NextResponse.json({ ok: false, error: GENERIEKE_SERVERFOUT }, { status: 500 });
     }
 
     return NextResponse.json({ ok: true });

@@ -2,6 +2,8 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { createServerAuthClient } from "@/lib/supabase/serverAuth";
 import { checkRateLimit, clientIp } from "@/lib/security/rateLimit";
 import { sendKlantWijzigingNotificatie } from "@/lib/email/sendKlantWijzigingNotificatie";
+import { isGeldigeUuid } from "@/lib/validatie/uuid";
+import { logServerFout, GENERIEKE_SERVERFOUT } from "@/lib/security/serverFout";
 import type { OverigBestand } from "@/lib/types/domain";
 
 // Bestandsuploads vragen om de Node.js-runtime (niet de edge-runtime) -- zelfde reden als
@@ -41,6 +43,12 @@ function tekst(formData: FormData, veld: string): string {
 }
 
 export async function PATCH(request: Request, { params }: { params: { id: string } }) {
+  // Zie lib/validatie/uuid.ts: een niet-UUID id kan nooit een bestaande aanvraag zijn, en geeft
+  // Postgres anders een harde fout zodra die rechtstreeks in een query terechtkomt.
+  if (!isGeldigeUuid(params.id)) {
+    return fout("Aanvraag niet gevonden.", 404);
+  }
+
   const rateLimit = await checkRateLimit(`aanvraag-klant-bewerken:${clientIp(request)}`, MAX_AANVRAGEN_PER_UUR, 60 * 60 * 1000);
   if (!rateLimit.toegestaan) {
     return Response.json(
@@ -213,7 +221,8 @@ export async function PATCH(request: Request, { params }: { params: { id: string
     .eq("id", huidigeAanvraag.id);
 
   if (updateFout) {
-    return fout(updateFout.message, 500);
+    logServerFout("klant-bewerken: aanvraag bijwerken", updateFout);
+    return fout(GENERIEKE_SERVERFOUT, 500);
   }
 
   await sendKlantWijzigingNotificatie({ aanvraagId: huidigeAanvraag.id, klantNaam: klant.naam });

@@ -1,6 +1,7 @@
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { createServerAuthClient } from "@/lib/supabase/serverAuth";
 import { checkRateLimit, clientIp, teVeelPogingenResponse } from "@/lib/security/rateLimit";
+import { logServerFout, GENERIEKE_SERVERFOUT } from "@/lib/security/serverFout";
 
 const MAX_POGINGEN = 5;
 const VENSTER_MS = 15 * 60 * 1000;
@@ -48,13 +49,15 @@ export async function POST(request: Request) {
     .eq("auth_user_id", user.id);
 
   if (ontkoppelFout) {
-    return Response.json({ ok: false, error: ontkoppelFout.message }, { status: 500 });
+    logServerFout("account/verwijderen: ontkoppelen", ontkoppelFout);
+    return Response.json({ ok: false, error: GENERIEKE_SERVERFOUT }, { status: 500 });
   }
 
   const { error: verwijderFout } = await supabase.auth.admin.deleteUser(user.id);
 
   if (verwijderFout) {
-    return Response.json({ ok: false, error: verwijderFout.message }, { status: 500 });
+    logServerFout("account/verwijderen: account verwijderen", verwijderFout);
+    return Response.json({ ok: false, error: GENERIEKE_SERVERFOUT }, { status: 500 });
   }
 
   return Response.json({ ok: true });
