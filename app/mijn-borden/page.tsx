@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { createServerAuthClient } from "@/lib/supabase/serverAuth";
-import { isSupabaseAuthGeconfigureerd } from "@/lib/supabase/server";
+import { createServerSupabaseClient, isSupabaseAuthGeconfigureerd } from "@/lib/supabase/server";
+import { naarOndertekendeLink } from "@/lib/supabase/bestandsLinks";
 import { AANVRAAG_STATUS_KLEUREN, AANVRAAG_STATUS_LABELS } from "@/lib/types/domain";
 import { AccountActies } from "./AccountActies";
 
@@ -47,13 +48,28 @@ export default async function MijnBordenPage() {
     .eq("auth_user_id", user.id)
     .maybeSingle();
 
-  const { data: aanvragen } = klant
+  const { data: aanvragenData } = klant
     ? await supabase
         .from("aanvragen")
         .select("id, afmeting, aantal, status, created_at, voorbeeld_pad, drukbestand_pad")
         .eq("klant_id", klant.id)
         .order("created_at", { ascending: false })
     : { data: null };
+
+  // Ondertekenen met de service-role client: de klant-sessie zelf heeft geen Storage-rechten op
+  // deze privé-bucket (geen policy daarvoor, zie SUPABASE_STORAGE_BUCKET) -- de rij hierboven is
+  // al via Row Level Security tot de eigen aanvragen beperkt, dus dit maakt geen andermans
+  // bestanden bereikbaar.
+  const storageClient = createServerSupabaseClient();
+  const aanvragen = aanvragenData
+    ? await Promise.all(
+        aanvragenData.map(async (aanvraag) => ({
+          ...aanvraag,
+          voorbeeldUrl: await naarOndertekendeLink(storageClient, aanvraag.voorbeeld_pad),
+          drukbestandUrl: await naarOndertekendeLink(storageClient, aanvraag.drukbestand_pad),
+        }))
+      )
+    : null;
 
   return (
     <div className="space-y-6">
@@ -76,20 +92,42 @@ export default async function MijnBordenPage() {
       ) : (
         <ul className="space-y-3">
           {aanvragen.map((aanvraag) => (
-            <li key={aanvraag.id} className="flex items-center justify-between rounded border border-neutral-200 p-4">
-              <div>
-                <p className="font-medium text-brand-zwart">
-                  {aanvraag.afmeting} · {aanvraag.aantal}×
-                </p>
-                <p className="text-sm text-neutral-500">
-                  Aangevraagd op {new Date(aanvraag.created_at).toLocaleDateString("nl-NL")}
-                </p>
+            <li key={aanvraag.id} className="rounded border border-neutral-200 p-4">
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <p className="font-medium text-brand-zwart">
+                    {aanvraag.afmeting} · {aanvraag.aantal}×
+                  </p>
+                  <p className="text-sm text-neutral-500">
+                    Aangevraagd op {new Date(aanvraag.created_at).toLocaleDateString("nl-NL")}
+                  </p>
+                </div>
+                <span
+                  className={`rounded-full px-3 py-1 text-xs font-medium ${AANVRAAG_STATUS_KLEUREN[aanvraag.status]}`}
+                >
+                  {AANVRAAG_STATUS_LABELS[aanvraag.status]}
+                </span>
               </div>
-              <span
-                className={`rounded-full px-3 py-1 text-xs font-medium ${AANVRAAG_STATUS_KLEUREN[aanvraag.status]}`}
-              >
-                {AANVRAAG_STATUS_LABELS[aanvraag.status]}
-              </span>
+
+              {aanvraag.voorbeeldUrl && (
+                // eslint-disable-next-line @next/next/no-img-element -- tijdelijke ondertekende Storage-link, geen vaste breedte/hoogte nodig
+                <img
+                  src={aanvraag.voorbeeldUrl}
+                  alt={`Voorbeeld van je bord (${aanvraag.afmeting})`}
+                  className="mt-3 w-full rounded border border-neutral-200 object-contain"
+                />
+              )}
+
+              {aanvraag.drukbestandUrl && (
+                <a
+                  href={aanvraag.drukbestandUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-2 inline-block text-sm font-medium text-brand-groen hover:underline"
+                >
+                  Download drukbestand
+                </a>
+              )}
             </li>
           ))}
         </ul>

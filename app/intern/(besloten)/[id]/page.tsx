@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { createServerSupabaseClient, isSupabaseGeconfigureerd } from "@/lib/supabase/server";
+import { naarOndertekendeLinks } from "@/lib/supabase/bestandsLinks";
 import {
   VOORBEELD_AANVRAGEN,
   VOORBEELD_CONTENT_CHECKS,
@@ -36,6 +37,15 @@ export default async function AanvraagDetailPage({ params }: { params: { id: str
   let designs: typeof VOORBEELD_DESIGNS | null;
   let feedback: typeof VOORBEELD_FEEDBACK | null;
   let emails: typeof VOORBEELD_EMAILS | null;
+  // Bestandspaden in de database zijn kale Supabase Storage-paden (de bucket is bewust privé, zie
+  // SUPABASE_STORAGE_BUCKET) -- pas na het omzetten naar een tijdelijke ondertekende link kan de
+  // browser ze echt laden. Zonder dit stond hier eerder alleen de kale bestandsnaam.
+  let drukbestandUrl: string | null = null;
+  let drukbestandAchterUrl: string | null = null;
+  let voorbeeldUrl: string | null = null;
+  let voorbeeldAchterUrl: string | null = null;
+  let ontwerpUrl: string | null = null;
+  let overigeBestandenUrls: (string | null)[] = [];
 
   if (toontVoorbeelddata) {
     aanvraag = VOORBEELD_AANVRAGEN.find((item) => item.id === params.id);
@@ -46,6 +56,14 @@ export default async function AanvraagDetailPage({ params }: { params: { id: str
     );
     feedback = VOORBEELD_FEEDBACK.filter((item) => item.aanvraag_id === params.id);
     emails = VOORBEELD_EMAILS.filter((item) => item.aanvraag_id === params.id);
+    // Voorbeelddata gebruikt al bestaande, publieke paden (/placeholder-ontwerp.svg) -- die
+    // hoeven niet ondertekend te worden.
+    drukbestandUrl = aanvraag?.drukbestand_pad ?? null;
+    drukbestandAchterUrl = aanvraag?.drukbestand_achter_pad ?? null;
+    voorbeeldUrl = aanvraag?.voorbeeld_pad ?? null;
+    voorbeeldAchterUrl = aanvraag?.voorbeeld_achter_pad ?? null;
+    ontwerpUrl = aanvraag?.ontwerp_pad ?? null;
+    overigeBestandenUrls = aanvraag?.overige_bestanden?.map((b) => b.pad) ?? [];
   } else {
     const supabase = createServerSupabaseClient();
 
@@ -83,6 +101,29 @@ export default async function AanvraagDetailPage({ params }: { params: { id: str
     designs = designsData;
     feedback = feedbackData;
     emails = emailsData;
+
+    const overigePaden = aanvraag.overige_bestanden?.map((b) => b.pad) ?? [];
+    const [
+      drukbestandResult,
+      drukbestandAchterResult,
+      voorbeeldResult,
+      voorbeeldAchterResult,
+      ontwerpResult,
+      ...overigeResults
+    ] = await naarOndertekendeLinks(supabase, [
+      aanvraag.drukbestand_pad,
+      aanvraag.drukbestand_achter_pad,
+      aanvraag.voorbeeld_pad,
+      aanvraag.voorbeeld_achter_pad,
+      aanvraag.ontwerp_pad,
+      ...overigePaden,
+    ]);
+    drukbestandUrl = drukbestandResult;
+    drukbestandAchterUrl = drukbestandAchterResult;
+    voorbeeldUrl = voorbeeldResult;
+    voorbeeldAchterUrl = voorbeeldAchterResult;
+    ontwerpUrl = ontwerpResult;
+    overigeBestandenUrls = overigeResults;
   }
 
   if (!aanvraag) {
@@ -207,15 +248,15 @@ export default async function AanvraagDetailPage({ params }: { params: { id: str
             </>
           ) : (
             <div className="grid gap-4 sm:grid-cols-2">
-              <Bestandsvoorbeeld label="Drukbestand (voorkant)" pad={aanvraag.drukbestand_pad} />
+              <Bestandsvoorbeeld label="Drukbestand (voorkant)" pad={drukbestandUrl} />
               {aanvraag.drukbestand_achter_pad && (
-                <Bestandsvoorbeeld label="Drukbestand (achterkant)" pad={aanvraag.drukbestand_achter_pad} />
+                <Bestandsvoorbeeld label="Drukbestand (achterkant)" pad={drukbestandAchterUrl} />
               )}
-              <Bestandsvoorbeeld label="Voorbeeld (voorkant)" pad={aanvraag.voorbeeld_pad} afbeelding />
+              <Bestandsvoorbeeld label="Voorbeeld (voorkant)" pad={voorbeeldUrl} afbeelding />
               {aanvraag.voorbeeld_achter_pad && (
-                <Bestandsvoorbeeld label="Voorbeeld (achterkant)" pad={aanvraag.voorbeeld_achter_pad} afbeelding />
+                <Bestandsvoorbeeld label="Voorbeeld (achterkant)" pad={voorbeeldAchterUrl} afbeelding />
               )}
-              {aanvraag.ontwerp_pad && <Bestandsvoorbeeld label="Ontwerpbestand (bewerkbaar)" pad={aanvraag.ontwerp_pad} />}
+              {aanvraag.ontwerp_pad && <Bestandsvoorbeeld label="Ontwerpbestand (bewerkbaar)" pad={ontwerpUrl} />}
               {aanvraag.ontwerp_ontbreekt && (
                 <p className="text-sm text-brand-oranje sm:col-span-2">
                   Het bewerkbare ontwerpbestand kon niet worden meegestuurd (te groot) — vraag het apart op bij de klant.
@@ -257,11 +298,22 @@ export default async function AanvraagDetailPage({ params }: { params: { id: str
             <div className="mt-3 border-t border-neutral-100 pt-3">
               <p className="mb-1 font-medium text-brand-zwart">Meegestuurde bestanden</p>
               <ul className="space-y-1 text-sm text-neutral-600">
-                {aanvraag.overige_bestanden.map((bestand) => (
-                  <li key={bestand.pad}>
-                    {bestand.naam} <span className="text-xs text-neutral-400">(nog geen downloadlink — wacht op een echt Supabase-project)</span>
-                  </li>
-                ))}
+                {aanvraag.overige_bestanden.map((bestand, index) => {
+                  const url = overigeBestandenUrls[index];
+                  return (
+                    <li key={bestand.pad}>
+                      {url ? (
+                        <a href={url} target="_blank" rel="noopener noreferrer" className="text-brand-groen hover:underline">
+                          {bestand.naam}
+                        </a>
+                      ) : (
+                        <>
+                          {bestand.naam} <span className="text-xs text-neutral-400">(link kon niet worden gemaakt)</span>
+                        </>
+                      )}
+                    </li>
+                  );
+                })}
               </ul>
             </div>
           )}
