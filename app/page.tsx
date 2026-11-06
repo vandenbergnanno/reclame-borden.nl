@@ -52,19 +52,19 @@ export default function HomePage() {
           <div className="text-center sm:text-left">
             <p className="font-semibold uppercase tracking-wide text-brand-groen">Gratis ontwerptool</p>
             <h1 className="mt-3 text-4xl font-semibold leading-tight text-brand-zwart sm:text-5xl">
-              Jouw reclamebord, in een paar minuten ontworpen
+              Jouw reclamebord, in ongeveer 10 minuten ontworpen
             </h1>
             <p className="mt-5 text-lg text-neutral-600">
               Geen dagen wachten op heen-en-weer gemail met een ontwerper. Stel zelf je bord samen
-              met je eigen logo, tekst en kleuren, en zie meteen het resultaat. Klaar? Dan staat er
-              automatisch een drukklaar bestand voor je klaar.
+              met je eigen logo, tekst en kleuren, en zie meteen het resultaat. Tevreden? Dan maakt
+              de tool er automatisch een drukklaar bestand van.
             </p>
             <div className="mt-8 flex justify-center sm:justify-start">
               <a
                 href="/aanvraag"
                 className="rounded-full bg-brand-oranje px-6 py-3 font-medium text-white shadow-sm transition hover:opacity-90"
               >
-                Begin met ontwerpen →
+                Maak eerst een gratis account aan (1 minuut) →
               </a>
             </div>
           </div>
@@ -109,7 +109,7 @@ export default function HomePage() {
           </div>
           <dl className="grid grid-cols-2 gap-4">
             <div className="rounded-2xl bg-white p-5 text-center shadow-sm">
-              <dt className="text-3xl font-semibold text-brand-groen">±10 min</dt>
+              <dt className="text-3xl font-semibold text-brand-groen">10 min</dt>
               <dd className="mt-1 text-sm text-neutral-600">om zelf een compleet ontwerp samen te stellen</dd>
             </div>
             <div className="rounded-2xl bg-white p-5 text-center shadow-sm">
@@ -136,9 +136,9 @@ export default function HomePage() {
         <div className="mt-8 flex justify-center">
           <a
             href="/aanvraag"
-            className="rounded-full bg-brand-groen px-6 py-3 font-medium text-white shadow-sm transition hover:opacity-90"
+            className="rounded-full bg-brand-oranje px-6 py-3 font-medium text-white shadow-sm transition hover:opacity-90"
           >
-            Begin met ontwerpen →
+            Maak eerst een gratis account aan (1 minuut) →
           </a>
         </div>
       </section>
@@ -165,13 +165,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      <p className="text-center text-sm text-neutral-500">
-        Ben je van reclame-borden.nl?{" "}
-        <a href="/intern" className="font-medium text-brand-zwart underline hover:text-brand-groen">
-          Bekijk het interne overzicht
-        </a>
-        .
-      </p>
     </div>
   );
 }

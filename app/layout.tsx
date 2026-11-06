@@ -2,15 +2,26 @@ import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { CookieMelding } from "@/components/CookieMelding";
+import { TOON_PROTOTYPE_LABEL } from "@/lib/constants/brand";
 import "./globals.css";
+
+const BESCHRIJVING = "Ontwerp zelf je reclamebord met je eigen logo, tekst en kleuren. Gratis ontwerptool van De Mediagraaf.";
 
 export const metadata: Metadata = {
   title: "reclame-borden.nl — Conceptor",
-  description: "Interne prototype-tool voor het aanvragen en beoordelen van reclamebord-ontwerpen.",
+  description: BESCHRIJVING,
   // Nog niet gepubliceerd: de site is wel bereikbaar voor iedereen met de link (geen inlog nodig
   // voor de klantkant), maar mag nog niet door zoekmachines gevonden/geïndexeerd worden -- zie
   // ook app/robots.ts. Verwijder dit zodra de site echt publiek live gaat.
   robots: { index: false, follow: false },
+  // og:image komt automatisch van app/opengraph-image.tsx (Next.js regelt dat zelf zodra dat
+  // bestand bestaat) -- hier alleen titel/beschrijving/type voor de linkpreview in WhatsApp/LinkedIn.
+  openGraph: {
+    title: "reclame-borden.nl — gratis ontwerptool",
+    description: BESCHRIJVING,
+    type: "website",
+    locale: "nl_NL",
+  },
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
@@ -20,11 +31,28 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <div className="min-h-screen flex flex-col">
           <SiteHeader />
           <main className="mx-auto w-full max-w-4xl flex-1 px-6 py-10">{children}</main>
-          <footer className="px-6 py-4 text-center text-xs text-neutral-500">
-            Prototype — reclame-borden.nl ·{" "}
-            <a href="/privacybeleid" className="underline hover:text-brand-groen">
-              Privacybeleid
-            </a>
+          <footer className="space-y-1 px-6 py-6 text-center text-xs text-neutral-500">
+            {TOON_PROTOTYPE_LABEL && <p>Prototype</p>}
+            <p>De Mediagraaf (Schaik Grafimedia B.V.) · [ADRES] · Oudewater · [TELEFOONNUMMER]</p>
+            <p>
+              <a href="mailto:info@demediagraaf.nl" className="underline hover:text-brand-groen">
+                info@demediagraaf.nl
+              </a>{" "}
+              · KvK [KVK-NUMMER] ·{" "}
+              <a
+                href="https://www.demediagraaf.nl"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline hover:text-brand-groen"
+              >
+                www.demediagraaf.nl
+              </a>
+            </p>
+            <p>
+              <a href="/privacybeleid" className="underline hover:text-brand-groen">
+                Privacybeleid
+              </a>
+            </p>
           </footer>
         </div>
         <CookieMelding />

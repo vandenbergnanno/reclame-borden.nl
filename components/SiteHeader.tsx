@@ -14,7 +14,8 @@ export function SiteHeader() {
   // Onbekend bij de allereerste render (server weet dit niet) -- totdat de sessie-check klaar is,
   // laten we "Inloggen" gewoon staan; dat is hooguit een halve seconde fout, nooit andersom (nooit
   // "Mijn account" tonen aan iemand die niet is ingelogd).
-  const [ingelogd, setIngelogd] = useState(false);
+  const [email, setEmail] = useState<string | null>(null);
+  const ingelogd = email !== null;
 
   useEffect(() => {
     let actief = true;
@@ -25,10 +26,10 @@ export function SiteHeader() {
       return; // Supabase nog niet geconfigureerd (zie .env.example) -- dan blijft het gewoon "Inloggen"
     }
     supabase.auth.getSession().then(({ data }) => {
-      if (actief) setIngelogd(!!data.session);
+      if (actief) setEmail(data.session?.user.email ?? null);
     });
     const { data: subscriptie } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (actief) setIngelogd(!!session);
+      if (actief) setEmail(session?.user.email ?? null);
     });
     return () => {
       actief = false;
@@ -36,7 +37,19 @@ export function SiteHeader() {
     };
   }, []);
 
-  if (pathname?.startsWith("/intern")) return null;
+  async function uitloggen() {
+    try {
+      await createBrowserSupabaseClient().auth.signOut();
+    } catch {
+      // Supabase nog niet geconfigureerd -- er was dan toch geen sessie om uit te loggen.
+    }
+    window.location.href = "/";
+  }
+
+  // /intern/login is de publieke inlogpagina voor medewerkers -- die hoort wel de normale
+  // header/logo te hebben, alleen het afgeschermde deel erachter (InternLayout heeft daar al zijn
+  // eigen sub-navigatie + uitlogknop) niet.
+  if (pathname?.startsWith("/intern") && pathname !== "/intern/login") return null;
 
   return (
     <header className="border-b-4 border-brand-groen bg-white px-4 py-3 sm:px-6">
@@ -51,9 +64,15 @@ export function SiteHeader() {
             Nieuwe aanvraag
           </a>
           {ingelogd ? (
-            <a href="/mijn-account" className="whitespace-nowrap hover:text-brand-groen">
-              Mijn account
-            </a>
+            <>
+              <span className="hidden whitespace-nowrap text-neutral-400 sm:inline">{email}</span>
+              <a href="/mijn-account" className="whitespace-nowrap hover:text-brand-groen">
+                Mijn account
+              </a>
+              <button type="button" onClick={uitloggen} className="whitespace-nowrap hover:text-brand-groen">
+                Uitloggen
+              </button>
+            </>
           ) : (
             <a href="/inloggen" className="whitespace-nowrap hover:text-brand-groen">
               Inloggen

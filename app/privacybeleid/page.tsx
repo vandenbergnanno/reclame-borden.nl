@@ -9,8 +9,19 @@ export default function PrivacybeleidPagina() {
     <div className="mx-auto max-w-2xl space-y-8 text-sm text-neutral-700">
       <div>
         <h1 className="text-2xl font-semibold text-brand-zwart">Privacybeleid</h1>
-        <p className="mt-1 text-neutral-500">Laatst bijgewerkt: november 2026.</p>
+        <p className="mt-1 text-neutral-500">Laatst bijgewerkt: 6 november 2026.</p>
       </div>
+
+      <section className="space-y-2">
+        <h2 className="font-semibold text-brand-zwart">Wie is verantwoordelijk</h2>
+        <p>
+          Schaik Grafimedia B.V. (De Mediagraaf), [ADRES], KvK [KVK-NUMMER]. Vragen? Mail naar{" "}
+          <a href="mailto:info@demediagraaf.nl" className="text-brand-groen underline">
+            info@demediagraaf.nl
+          </a>
+          .
+        </p>
+      </section>
 
       <section className="space-y-2">
         <h2 className="font-semibold text-brand-zwart">Welke gegevens we verzamelen</h2>
@@ -50,8 +61,11 @@ export default function PrivacybeleidPagina() {
             een account hebt, je inlogsessie.
           </li>
           <li>
-            <strong>Cloudflare Turnstile</strong> — een onzichtbare controle die bots en misbruik
-            tegenhoudt bij het versturen van formulieren en bij in- en registreren. Zie Cloudflare&apos;s{" "}
+            <strong>Vercel</strong> — host deze website.
+          </li>
+          <li>
+            <strong>Cloudflare Turnstile</strong> — een korte controle die bots tegenhoudt bij het
+            versturen van formulieren en bij in- en registreren. Zie Cloudflare&apos;s{" "}
             <a
               href="https://www.cloudflare.com/turnstile-privacy-policy/"
               className="text-brand-groen underline"
@@ -86,9 +100,9 @@ export default function PrivacybeleidPagina() {
       <section className="space-y-2">
         <h2 className="font-semibold text-brand-zwart">Hoe lang we je gegevens bewaren</h2>
         <p>
-          Je aanvraag en de bijbehorende gegevens bewaren we zolang als nodig voor garantie en
-          boekhouding. Verwijder je je account, dan kun je zelf niet meer inloggen, maar blijft de
-          aanvraag zelf bewaard bij reclame-borden.nl (zie hieronder).
+          Je aanvraag en de bijbehorende gegevens bewaren we [BEWAARTERMIJN, bijv. 7 jaar i.v.m. de
+          fiscale bewaarplicht]. Verwijder je je account, dan kun je zelf niet meer inloggen, maar
+          blijft de aanvraag zelf bewaard bij reclame-borden.nl (zie hieronder).
         </p>
       </section>
 
@@ -101,6 +115,16 @@ export default function PrivacybeleidPagina() {
           laten corrigeren, of heb je een andere vraag over je gegevens, neem dan contact op via{" "}
           <a href="mailto:info@demediagraaf.nl" className="text-brand-groen underline">
             info@demediagraaf.nl
+          </a>
+          . Ben je het niet eens met hoe we met je gegevens omgaan, dan kun je ook een klacht
+          indienen bij de{" "}
+          <a
+            href="https://www.autoriteitpersoonsgegevens.nl"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-brand-groen underline"
+          >
+            Autoriteit Persoonsgegevens
           </a>
           .
         </p>

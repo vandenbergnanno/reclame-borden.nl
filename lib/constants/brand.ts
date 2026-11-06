@@ -6,3 +6,7 @@ export const BRAND_COLORS = {
   oranje: "#E8792A",
   zwart: "#111111",
 } as const;
+
+// Eén plek om het "Prototype"-label in de footer (app/layout.tsx) weer te geven of weg te halen,
+// zodra de site echt live gaat voor klanten.
+export const TOON_PROTOTYPE_LABEL = true;

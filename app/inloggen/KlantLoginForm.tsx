@@ -220,11 +220,22 @@ export function KlantLoginForm({ vasteModus }: { vasteModus?: Modus } = {}) {
       const supabase = createBrowserSupabaseClient();
 
       if (modus === "inloggen") {
-        const { error } = await supabase.auth.signInWithPassword({ email, password: wachtwoord, options: { captchaToken } });
-        if (error) {
+        // Gaat via onze eigen route (niet rechtstreeks supabase.auth.signInWithPassword), die er
+        // eerst een eigen IP-gebaseerde rate limit tussen zet (zie app/api/klant/login/route.ts)
+        // -- de sessionStorage-afremming hieronder blijft daarnaast bestaan als extra, cosmetische
+        // laag (werkt ook nog als iemand JS-staat reset, dan vangt de server-kant het alsnog op).
+        const inlogResponse = await fetch("/api/klant/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, wachtwoord, cf_turnstile_token: captchaToken }),
+        });
+        const inlogData = await inlogResponse.json();
+
+        if (!inlogResponse.ok || !inlogData.ok) {
           // Alleen een fout wachtwoord/e-mailadres telt mee voor de afremming -- een
-          // configuratiefout (zie hierboven) of iets anders mag niet onterecht meetellen.
-          if (error.message === "Invalid login credentials") {
+          // configuratiefout, de server-rate-limit zelf (429) of iets anders mag niet onterecht
+          // meetellen.
+          if (inlogResponse.status === 401) {
             const { aantal } = leesPogingen();
             const nieuwAantal = aantal + 1;
             if (nieuwAantal >= MAX_POGINGEN) {
@@ -235,7 +246,7 @@ export function KlantLoginForm({ vasteModus }: { vasteModus?: Modus } = {}) {
               schrijfPogingen(nieuwAantal, 0);
             }
           }
-          throw new Error(error.message === "Invalid login credentials" ? "Onjuist e-mailadres of wachtwoord." : error.message);
+          throw new Error(inlogData.error ?? "Inloggen is mislukt.");
         }
         schrijfPogingen(0, 0);
         setGeblokkeerdTot(0);
@@ -383,7 +394,7 @@ export function KlantLoginForm({ vasteModus }: { vasteModus?: Modus } = {}) {
             id="wachtwoord"
             type="password"
             required
-            minLength={6}
+            minLength={8}
             value={wachtwoord}
             onChange={(event) => setWachtwoord(event.target.value)}
             autoComplete={modus === "inloggen" ? "current-password" : "new-password"}

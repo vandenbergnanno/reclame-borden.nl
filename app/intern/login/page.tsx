@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { InternLoginForm } from "./InternLoginForm";
 
 export const metadata: Metadata = {
-  title: "Inloggen — reclame-borden.nl Conceptor",
+  title: "Inloggen — reclame-borden.nl",
 };
 
 export default function InternLoginPage({ searchParams }: { searchParams: { van?: string } }) {
