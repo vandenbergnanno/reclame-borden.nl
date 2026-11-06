@@ -289,7 +289,10 @@ export function KlantLoginForm({ vasteModus }: { vasteModus?: Modus } = {}) {
       {TURNSTILE_SITE_KEY && (
         <Script src="https://challenges.cloudflare.com/turnstile/v0/api.js" strategy="afterInteractive" onLoad={laadTurnstile} />
       )}
-      <div id="klantTurnstile" className="absolute h-0 w-0 overflow-hidden" />
+      {/* Geen vaste 0x0-afmeting meer: bij widget-mode "Managed" (zie Cloudflare-dashboard) kan
+          Cloudflare hier soms een zichtbare checkbox tonen aan een verdachte bezoeker -- een
+          vast dichtgeknepen vakje zou die dan onbruikbaar maken. */}
+      <div id="klantTurnstile" className="mb-2 flex justify-center empty:mb-0 empty:hidden" />
       {!vasteModus && (
         <div className="mb-4 flex gap-1 rounded-lg bg-neutral-100 p-1 text-sm font-medium">
           <button
