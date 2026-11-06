@@ -49,6 +49,7 @@ export interface Database {
         Row: {
           id: string;
           klant_id: string;
+          bestelling_id: string;
           veldtype: Veldtype | null;
           afmeting: string;
           bord_aanschaf: BordAanschaf;
@@ -83,6 +84,7 @@ export interface Database {
         Insert: {
           id?: string;
           klant_id: string;
+          bestelling_id?: string;
           veldtype?: Veldtype | null;
           afmeting: string;
           bord_aanschaf: BordAanschaf;

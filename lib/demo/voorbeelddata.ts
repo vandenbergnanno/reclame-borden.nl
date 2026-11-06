@@ -121,6 +121,7 @@ export const VOORBEELD_AANVRAGEN: AanvraagRow[] = [
   {
     ...ONTWERPTOOL_DEFAULTS,
     id: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+    bestelling_id: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
     klant_id: "11111111-1111-1111-1111-111111111111",
     veldtype: "voetbal-zijlijn",
     afmeting: "300 x 100 cm",
@@ -135,6 +136,7 @@ export const VOORBEELD_AANVRAGEN: AanvraagRow[] = [
   {
     ...ONTWERPTOOL_DEFAULTS,
     id: "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+    bestelling_id: "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
     klant_id: "22222222-2222-2222-2222-222222222222",
     veldtype: "scorebord",
     afmeting: "200 x 100 cm",
@@ -149,6 +151,7 @@ export const VOORBEELD_AANVRAGEN: AanvraagRow[] = [
   {
     ...ONTWERPTOOL_DEFAULTS,
     id: "cccccccc-cccc-cccc-cccc-cccccccccccc",
+    bestelling_id: "cccccccc-cccc-cccc-cccc-cccccccccccc",
     klant_id: "33333333-3333-3333-3333-333333333333",
     veldtype: "voetbal-zijlijn",
     afmeting: "450 x 90 cm",
@@ -163,6 +166,7 @@ export const VOORBEELD_AANVRAGEN: AanvraagRow[] = [
   {
     ...ONTWERPTOOL_DEFAULTS,
     id: "dddddddd-dddd-dddd-dddd-dddddddddddd",
+    bestelling_id: "dddddddd-dddd-dddd-dddd-dddddddddddd",
     klant_id: "44444444-4444-4444-4444-444444444444",
     veldtype: "hockeyveld",
     afmeting: "300 x 100 cm",
@@ -177,6 +181,7 @@ export const VOORBEELD_AANVRAGEN: AanvraagRow[] = [
   {
     ...ONTWERPTOOL_DEFAULTS,
     id: "eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee",
+    bestelling_id: "eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee",
     klant_id: "55555555-5555-5555-5555-555555555555",
     veldtype: "scorebord",
     afmeting: "200 x 100 cm",
@@ -192,6 +197,7 @@ export const VOORBEELD_AANVRAGEN: AanvraagRow[] = [
   {
     ...ONTWERPTOOL_DEFAULTS,
     id: "ffffffff-ffff-ffff-ffff-ffffffffffff",
+    bestelling_id: "ffffffff-ffff-ffff-ffff-ffffffffffff",
     klant_id: "66666666-6666-6666-6666-666666666666",
     veldtype: "voetbal-zijlijn",
     afmeting: "300 x 100 cm",
@@ -208,6 +214,7 @@ export const VOORBEELD_AANVRAGEN: AanvraagRow[] = [
   {
     ...ONTWERPTOOL_DEFAULTS,
     id: "99999999-9999-9999-9999-999999999999",
+    bestelling_id: "99999999-9999-9999-9999-999999999999",
     klant_id: "77777777-7777-7777-7777-777777777777",
     veldtype: "voetbal-zijlijn",
     afmeting: "300 x 100 cm",
@@ -227,6 +234,7 @@ export const VOORBEELD_AANVRAGEN: AanvraagRow[] = [
   {
     ...ONTWERPTOOL_DEFAULTS,
     id: "a0000000-0000-0000-0000-000000000001",
+    bestelling_id: "a0000000-0000-0000-0000-000000000001",
     klant_id: "11111111-1111-1111-1111-111111111111",
     veldtype: null,
     afmeting: "300 x 100 cm",
@@ -245,6 +253,7 @@ export const VOORBEELD_AANVRAGEN: AanvraagRow[] = [
   {
     ...ONTWERPTOOL_DEFAULTS,
     id: "a0000000-0000-0000-0000-000000000002",
+    bestelling_id: "a0000000-0000-0000-0000-000000000002",
     klant_id: "22222222-2222-2222-2222-222222222222",
     veldtype: null,
     afmeting: "200 x 100 cm",

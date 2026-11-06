@@ -94,9 +94,13 @@ function wisWachtendeSignup() {
 // migratie 0003_klant_accounts.sql) voor zowel inloggen als een nieuw account aanmaken. Na een
 // geslaagde signup koppelen we het account aan een klanten-rij via /api/account/koppel (met de
 // service-role key, want RLS staat geen schrijfacties vanuit de klant zelf toe).
-export function KlantLoginForm() {
+// `vasteModus`: /inloggen en /account-aanmaken zijn bewust twee aparte pagina's (geen tabblad
+// binnen één pagina) -- zonder account kon je eerder per ongeluk op de inlogpagina belanden en
+// daar pas de knop "Account aanmaken" ontdekken. Met een vaste modus verdwijnt die tab-wissel
+// hieronder, en toont het formulier alleen het veld dat bij die pagina hoort.
+export function KlantLoginForm({ vasteModus }: { vasteModus?: Modus } = {}) {
   const router = useRouter();
-  const [modus, setModus] = useState<Modus>("inloggen");
+  const [modus, setModus] = useState<Modus>(vasteModus ?? "inloggen");
   const [naam, setNaam] = useState("");
   const [bedrijf, setBedrijf] = useState("");
   const [telefoon, setTelefoon] = useState("");
@@ -108,14 +112,16 @@ export function KlantLoginForm() {
   const [geblokkeerdTot, setGeblokkeerdTot] = useState(0);
   const [resterendeSeconden, setResterendeSeconden] = useState(0);
 
-  // Een link kan rechtstreeks naar "Account aanmaken" wijzen (?modus=account_aanmaken, zie de
-  // knop op de homepage) -- window.location.search lezen in plaats van useSearchParams() omdat
-  // dat laatste een Suspense-boundary rond deze client component zou vereisen, puur voor iets wat
-  // toch alleen in de browser relevant is.
+  // Waar na een geslaagde login/signup naartoe? Standaard /mijn-borden, maar bijv. de ontwerptool
+  // stuurt niet-ingelogde bezoekers hierheen met ?daarna=/aanvraag (zie app/aanvraag/route.ts),
+  // zodat je na het inloggen gewoon verdergaat waar je was in plaats van naar /mijn-borden te
+  // moeten navigeren. window.location.search lezen i.p.v. useSearchParams() omdat dat laatste een
+  // Suspense-boundary rond deze client component zou vereisen, puur voor iets wat toch alleen in
+  // de browser relevant is.
+  const daarnaRef = useRef("/mijn-borden");
   useEffect(() => {
-    if (new URLSearchParams(window.location.search).get("modus") === "account_aanmaken") {
-      setModus("account_aanmaken");
-    }
+    const daarna = new URLSearchParams(window.location.search).get("daarna");
+    if (daarna && daarna.startsWith("/")) daarnaRef.current = daarna;
   }, []);
 
   // Onzichtbare Turnstile-widget: één keer renderen zodra het script geladen is, en na elke
@@ -213,7 +219,7 @@ export function KlantLoginForm() {
         } catch {
           // zie hierboven
         }
-        router.push("/mijn-borden");
+        router.push(daarnaRef.current);
         router.refresh();
         return;
       }
@@ -251,7 +257,7 @@ export function KlantLoginForm() {
         throw new Error(koppelData.error ?? "Account aangemaakt, maar koppelen aan je gegevens is mislukt.");
       }
 
-      router.push("/mijn-borden");
+      router.push(daarnaRef.current);
       router.refresh();
     } catch (error) {
       setFoutmelding(error instanceof Error ? error.message : "Onbekende fout.");
@@ -265,22 +271,24 @@ export function KlantLoginForm() {
         <Script src="https://challenges.cloudflare.com/turnstile/v0/api.js" strategy="afterInteractive" onLoad={laadTurnstile} />
       )}
       <div id="klantTurnstile" className="absolute h-0 w-0 overflow-hidden" />
-      <div className="mb-4 flex gap-1 rounded-lg bg-neutral-100 p-1 text-sm font-medium">
-        <button
-          type="button"
-          onClick={() => { setModus("inloggen"); setFoutmelding(null); setMelding(null); }}
-          className={`flex-1 rounded-md px-3 py-1.5 transition ${modus === "inloggen" ? "bg-white text-brand-zwart shadow-sm" : "text-neutral-500"}`}
-        >
-          Inloggen
-        </button>
-        <button
-          type="button"
-          onClick={() => { setModus("account_aanmaken"); setFoutmelding(null); setMelding(null); }}
-          className={`flex-1 rounded-md px-3 py-1.5 transition ${modus === "account_aanmaken" ? "bg-white text-brand-zwart shadow-sm" : "text-neutral-500"}`}
-        >
-          Account aanmaken
-        </button>
-      </div>
+      {!vasteModus && (
+        <div className="mb-4 flex gap-1 rounded-lg bg-neutral-100 p-1 text-sm font-medium">
+          <button
+            type="button"
+            onClick={() => { setModus("inloggen"); setFoutmelding(null); setMelding(null); }}
+            className={`flex-1 rounded-md px-3 py-1.5 transition ${modus === "inloggen" ? "bg-white text-brand-zwart shadow-sm" : "text-neutral-500"}`}
+          >
+            Inloggen
+          </button>
+          <button
+            type="button"
+            onClick={() => { setModus("account_aanmaken"); setFoutmelding(null); setMelding(null); }}
+            className={`flex-1 rounded-md px-3 py-1.5 transition ${modus === "account_aanmaken" ? "bg-white text-brand-zwart shadow-sm" : "text-neutral-500"}`}
+          >
+            Account aanmaken
+          </button>
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
         {modus === "account_aanmaken" && (
@@ -396,6 +404,23 @@ export function KlantLoginForm() {
           </p>
         )}
       </form>
+
+      {vasteModus === "inloggen" && (
+        <p className="mt-4 text-center text-sm text-neutral-600">
+          Nog geen account?{" "}
+          <a href="/account-aanmaken" className="font-medium text-brand-groen underline">
+            Account aanmaken
+          </a>
+        </p>
+      )}
+      {vasteModus === "account_aanmaken" && (
+        <p className="mt-4 text-center text-sm text-neutral-600">
+          Al een account?{" "}
+          <a href="/inloggen" className="font-medium text-brand-groen underline">
+            Inloggen
+          </a>
+        </p>
+      )}
     </div>
   );
 }

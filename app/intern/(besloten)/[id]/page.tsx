@@ -18,6 +18,7 @@ import {
 import { StatusWijzigen } from "./StatusWijzigen";
 import { ConceptBewerken } from "./ConceptBewerken";
 import { EmailBewerken } from "./EmailBewerken";
+import { BevestigingsmailKopieren } from "./BevestigingsmailKopieren";
 
 export const metadata: Metadata = {
   title: "Aanvraag — reclame-borden.nl Conceptor",
@@ -122,6 +123,12 @@ export default async function AanvraagDetailPage({ params }: { params: { id: str
       <section className="rounded-xl border border-neutral-200 bg-white p-5 shadow-sm">
         <h2 className="mb-3 font-semibold text-brand-zwart">Status wijzigen</h2>
         <StatusWijzigen aanvraagId={aanvraag.id} huidigeStatus={aanvraag.status} />
+      </section>
+
+      <section className="rounded-xl border border-neutral-200 bg-white p-5 shadow-sm">
+        <BevestigingsmailKopieren
+          tekst={bouwBevestigingsmailTekst(klant?.naam ?? "", aanvraag.afmeting, aanvraag.aantal)}
+        />
       </section>
 
       <section className="grid gap-4 sm:grid-cols-2">
@@ -411,6 +418,23 @@ export default async function AanvraagDetailPage({ params }: { params: { id: str
       )}
     </div>
   );
+}
+
+// Kant-en-klare, kopieerbare tekst voor een medewerker om zelf (met de factuur als bijlage) te
+// versturen -- bewust geen automatische verzending, zie BevestigingsmailKopieren.tsx.
+function bouwBevestigingsmailTekst(klantNaam: string, afmeting: string, aantal: number): string {
+  return [
+    `Beste ${klantNaam || "klant"},`,
+    "",
+    "Uw order is ontvangen.",
+    "",
+    `Dit is uw bord: ${afmeting}${aantal > 1 ? ` (${aantal}x)` : ""}.`,
+    "",
+    "Hieronder vindt u de factuur.",
+    "",
+    "Met vriendelijke groet,",
+    "reclame-borden.nl",
+  ].join("\n");
 }
 
 function Rij({ label, waarde }: { label: string; waarde?: string | null }) {

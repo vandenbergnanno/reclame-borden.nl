@@ -43,6 +43,19 @@ function isGeldigEmailFormaat(waarde: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(waarde);
 }
 
+const UUID_PATROON = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+// Meerdere borden in één order (zie "Dit bord opslaan en volgend bord beginnen" in de
+// ontwerptool) sturen elk een eigen verzoek naar dit endpoint, maar met dezelfde bestelling_id
+// erbij -- zo blijven het losse, onafhankelijke aanvraag-rijen (eigen ontwerp, eigen status) die
+// /intern wel als één geheel kan tonen. Ontbreekt dit veld, of is het geen geldige uuid (bijv. een
+// oudere versie van de tool die het nog niet meestuurt), dan valt de database terug op haar eigen
+// `default gen_random_uuid()` -- een losse bestelling van één bord.
+function geldigeBestellingId(formData: FormData): string | undefined {
+  const waarde = formData.get("bestelling_id");
+  return typeof waarde === "string" && UUID_PATROON.test(waarde) ? waarde : undefined;
+}
+
 // Controleert het onzichtbare/"managed" Turnstile-token dat de ontwerptool meestuurt (zie
 // laadTurnstile() in lib/ontwerptool/reclamebord-maker.html) bij Cloudflare's eigen
 // verificatie-endpoint.
@@ -194,6 +207,7 @@ export async function POST(request: Request) {
   }
 
   const bordAanschaf: BordAanschaf = hergebruik ? "hergebruiken" : "nieuw";
+  const bestellingId = geldigeBestellingId(formData);
 
   let supabase: ReturnType<typeof createServerSupabaseClient>;
   try {
@@ -238,6 +252,7 @@ export async function POST(request: Request) {
     .from("aanvragen")
     .insert({
       klant_id: klantId,
+      ...(bestellingId ? { bestelling_id: bestellingId } : {}),
       veldtype: null,
       afmeting: formaat,
       bord_aanschaf: bordAanschaf,

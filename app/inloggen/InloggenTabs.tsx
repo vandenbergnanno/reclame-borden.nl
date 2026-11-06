@@ -32,7 +32,7 @@ export function InloggenTabs() {
         </button>
       </div>
 
-      {rol === "klant" ? <KlantLoginForm /> : <InternLoginForm />}
+      {rol === "klant" ? <KlantLoginForm vasteModus="inloggen" /> : <InternLoginForm />}
     </div>
   );
 }
