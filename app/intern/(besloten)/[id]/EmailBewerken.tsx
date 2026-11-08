@@ -105,7 +105,7 @@ export function EmailBewerken({
           type="button"
           onClick={opslaan}
           disabled={bezig || !onderwerp.trim() || !platteTekst.trim() || !htmlInhoud.trim()}
-          className="rounded bg-brand-groen px-2 py-1 text-xs font-medium text-white hover:opacity-90 disabled:opacity-50"
+          className="rounded bg-brand-groen-donker px-2 py-1 text-xs font-medium text-white hover:opacity-90 disabled:opacity-50"
         >
           {bezig ? "Opslaan..." : "Opslaan"}
         </button>

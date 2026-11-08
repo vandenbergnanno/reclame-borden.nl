@@ -57,7 +57,7 @@ export function StatusWijzigen({
         type="button"
         onClick={opslaan}
         disabled={bezig || status === huidigeStatus}
-        className="rounded bg-brand-groen px-3 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50"
+        className="rounded bg-brand-groen-donker px-3 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50"
       >
         {bezig ? "Opslaan..." : "Status opslaan"}
       </button>

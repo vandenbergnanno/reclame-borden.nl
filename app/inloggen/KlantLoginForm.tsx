@@ -175,6 +175,11 @@ export function KlantLoginForm({ vasteModus }: { vasteModus?: Modus } = {}) {
       // Geen `size` meegeven: "invisible" is geen geldige waarde voor dat veld (de widget-api
       // gooit er anders een fout op) -- of de widget onzichtbaar is, hangt af van het widget-type
       // (Managed/Non-Interactive/Invisible) dat bij deze sitekey hoort in het Cloudflare-dashboard.
+      theme: "light",
+      // "interaction-only": de widget blijft onzichtbaar tenzij Cloudflare een interactieve check
+      // nodig vindt -- de managed-modus die het dashboard zelf ook aanbiedt, maar hier expliciet
+      // code-side afgedwongen in plaats van afhankelijk van een dashboard-instelling.
+      appearance: "interaction-only",
       callback: (token: string) => { turnstileToken.current = token; },
       "error-callback": () => { turnstileToken.current = ""; },
       "expired-callback": () => {
@@ -309,10 +314,6 @@ export function KlantLoginForm({ vasteModus }: { vasteModus?: Modus } = {}) {
       {TURNSTILE_SITE_KEY && (
         <Script src="https://challenges.cloudflare.com/turnstile/v0/api.js" strategy="afterInteractive" onLoad={laadTurnstile} />
       )}
-      {/* Geen vaste 0x0-afmeting meer: bij widget-mode "Managed" (zie Cloudflare-dashboard) kan
-          Cloudflare hier soms een zichtbare checkbox tonen aan een verdachte bezoeker -- een
-          vast dichtgeknepen vakje zou die dan onbruikbaar maken. */}
-      <div id="klantTurnstile" className="mb-2 flex justify-center empty:mb-0 empty:hidden" />
       {!vasteModus && (
         <div className="mb-4 flex gap-1 rounded-lg bg-neutral-100 p-1 text-sm font-medium">
           <button
@@ -423,10 +424,16 @@ export function KlantLoginForm({ vasteModus }: { vasteModus?: Modus } = {}) {
           </p>
         )}
 
+        {/* Geen vaste 0x0-afmeting meer: bij widget-mode "Managed" (zie Cloudflare-dashboard) kan
+            Cloudflare hier soms een zichtbare checkbox tonen aan een verdachte bezoeker -- een
+            vast dichtgeknepen vakje zou die dan onbruikbaar maken. Vlak boven de verstuurknop,
+            zodat 'm niemand mist als Cloudflare toch een interactieve check nodig vindt. */}
+        <div id="klantTurnstile" className="flex justify-center empty:hidden" />
+
         <button
           type="submit"
           disabled={bezig || (modus === "inloggen" && geblokkeerd)}
-          className="w-full rounded bg-brand-groen px-4 py-2 font-medium text-white hover:opacity-90 disabled:opacity-50"
+          className="w-full rounded bg-brand-groen-donker px-4 py-2 font-medium text-white hover:opacity-90 disabled:opacity-50"
         >
           {bezig ? "Bezig..." : modus === "inloggen" ? "Inloggen" : "Account aanmaken"}
         </button>

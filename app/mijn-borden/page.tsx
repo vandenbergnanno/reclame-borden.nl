@@ -109,7 +109,7 @@ export default async function MijnBordenPagina() {
                     <AanvraagKaart aanvraag={aanvraag} />
                     <a
                       href={`/aanvraag?bewerk=${aanvraag.id}`}
-                      className="mt-3 inline-block rounded bg-brand-groen px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-groen/90"
+                      className="mt-3 inline-block rounded bg-brand-groen-donker px-3 py-1.5 text-sm font-medium text-white hover:opacity-90"
                     >
                       Verder werken
                     </a>

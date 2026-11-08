@@ -97,7 +97,7 @@ export function InternLoginForm({ terugNaar }: { terugNaar?: string }) {
       <button
         type="submit"
         disabled={bezig}
-        className="w-full rounded bg-brand-groen px-4 py-2 font-medium text-white hover:opacity-90 disabled:opacity-50"
+        className="w-full rounded bg-brand-groen-donker px-4 py-2 font-medium text-white hover:opacity-90 disabled:opacity-50"
       >
         {bezig ? "Bezig..." : "Inloggen"}
       </button>

@@ -58,7 +58,7 @@ export function SiteHeader() {
           <MediagraafLogo size="md" />
           <span className="hidden sm:inline">
             <span className="block text-sm font-semibold leading-tight text-brand-zwart">reclame-borden.nl</span>
-            <span className="block text-xs leading-tight text-neutral-400">door De Mediagraaf, Oudewater</span>
+            <span className="block text-xs leading-tight text-neutral-500">door De Mediagraaf, Oudewater</span>
           </span>
         </a>
         <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-brand-zwart sm:gap-4 sm:text-sm">
@@ -70,7 +70,7 @@ export function SiteHeader() {
               <a href="/mijn-borden" className="whitespace-nowrap hover:text-brand-groen">
                 Mijn borden
               </a>
-              <span className="hidden whitespace-nowrap text-neutral-400 sm:inline">{email}</span>
+              <span className="hidden whitespace-nowrap text-neutral-500 sm:inline">{email}</span>
               <a href="/mijn-account" className="whitespace-nowrap hover:text-brand-groen">
                 Mijn account
               </a>

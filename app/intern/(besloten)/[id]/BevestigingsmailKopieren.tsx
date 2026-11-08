@@ -25,7 +25,7 @@ export function BevestigingsmailKopieren({ tekst }: { tekst: string }) {
         <button
           type="button"
           onClick={kopieer}
-          className="rounded bg-brand-groen px-3 py-1.5 text-xs font-medium text-white hover:opacity-90"
+          className="rounded bg-brand-groen-donker px-3 py-1.5 text-xs font-medium text-white hover:opacity-90"
         >
           {gekopieerd ? "Gekopieerd!" : "Kopieer tekst"}
         </button>

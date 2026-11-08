@@ -45,7 +45,7 @@ export function CookieMelding() {
         <button
           type="button"
           onClick={accepteren}
-          className="shrink-0 rounded bg-brand-groen px-4 py-2 text-sm font-medium text-white hover:opacity-90"
+          className="shrink-0 rounded bg-brand-groen-donker px-4 py-2 text-sm font-medium text-white hover:opacity-90"
         >
           Oké
         </button>

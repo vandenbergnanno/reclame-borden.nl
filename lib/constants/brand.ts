@@ -28,3 +28,31 @@ export const VERTROUWEN = {
   klantLogos: [] as { naam: string; afbeelding: string }[],
   reviews: [] as { tekst: string; naam: string }[],
 };
+
+// Homepage-content die nog ontbreekt (app/page.tsx) -- allemaal leeg totdat de gebruiker 'm invult.
+// In productie laat een lege waarde hier het bijbehorende onderdeel (of de hele sectie) gewoon weg
+// in plaats van een kale placeholdertekst te tonen; alleen in development, of met ?preview=1 in de
+// URL, laat de pagina zien WAAR die content straks komt (zie `toonPlaceholders` in app/page.tsx).
+export const HOMEPAGE_MEDIA = {
+  heroAfbeelding: "",
+  voorbeeldFotos: [
+    { label: "FOTO: reclamebord bij sportveld", afbeelding: "" },
+    { label: "FOTO: reclamebord bij bedrijfspand", afbeelding: "" },
+    { label: "FOTO: reclamebord bij bouwproject", afbeelding: "" },
+  ],
+};
+
+// Prijs-vanaf-tekst per standaardmaat (de maten zelf zijn echt, zie FORMATEN in app/page.tsx en
+// lib/ontwerptool/reclamebord-maker.html -- de prijzen hiernaast zijn bewust placeholders, geen
+// berekening uit de richtprijsformule van de ontwerptool, zie het overleg hierover).
+export const PRIJZEN: Record<string, string> = {
+  "300 × 80 cm": "",
+  "320 × 80 cm": "",
+  "300 × 70 cm": "",
+  "244 × 61 cm": "",
+};
+
+// Eén waarde voor de levertijd, gebruikt op zowel de "Formaten en prijzen"-sectie als het
+// tijdsbesparing-kaartje (app/page.tsx) -- bewust leeg totdat de gebruiker 'm zelf bevestigt, ook
+// al staat een soortgelijke tekst al in de ontwerptool zelf (zie het overleg hierover).
+export const LEVERTIJD = "";

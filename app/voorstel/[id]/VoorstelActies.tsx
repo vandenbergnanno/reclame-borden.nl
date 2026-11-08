@@ -58,7 +58,7 @@ export function VoorstelActies({ aanvraagId }: { aanvraagId: string }) {
           <button
             type="submit"
             disabled={bezig}
-            className="rounded-lg bg-brand-groen px-4 py-2.5 font-medium text-white hover:opacity-90 disabled:opacity-50"
+            className="rounded-lg bg-brand-groen-donker px-4 py-2.5 font-medium text-white hover:opacity-90 disabled:opacity-50"
           >
             {bezig ? "Versturen..." : "Feedback versturen"}
           </button>
@@ -86,7 +86,7 @@ export function VoorstelActies({ aanvraagId }: { aanvraagId: string }) {
           type="button"
           onClick={() => void verstuur("goedkeuren")}
           disabled={bezig}
-          className="rounded-lg bg-brand-groen px-5 py-2.5 font-medium text-white shadow-sm hover:opacity-90 disabled:opacity-50"
+          className="rounded-lg bg-brand-groen-donker px-5 py-2.5 font-medium text-white shadow-sm hover:opacity-90 disabled:opacity-50"
         >
           {bezig ? "Bezig..." : "Ontwerp goedkeuren"}
         </button>
