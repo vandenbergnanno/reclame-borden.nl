@@ -442,7 +442,7 @@ export function KlantLoginForm({ vasteModus }: { vasteModus?: Modus } = {}) {
           <p className="text-center text-xs text-neutral-500">
             Met een account aanmaken ga je akkoord met ons{" "}
             <a
-              href="https://reclame-borden.nl/privacybeleid/"
+              href="/privacybeleid"
               target="_blank"
               rel="noopener noreferrer"
               className="underline hover:text-brand-groen"
