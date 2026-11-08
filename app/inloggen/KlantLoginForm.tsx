@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import Script from "next/script";
 import { createBrowserSupabaseClient } from "@/lib/supabase/browserClient";
+import { veiligPad } from "@/lib/security/veiligPad";
 
 declare global {
   interface Window {
@@ -121,7 +122,7 @@ export function KlantLoginForm({ vasteModus }: { vasteModus?: Modus } = {}) {
   const daarnaRef = useRef("/mijn-borden");
   useEffect(() => {
     const daarna = new URLSearchParams(window.location.search).get("daarna");
-    if (daarna && daarna.startsWith("/")) daarnaRef.current = daarna;
+    if (daarna) daarnaRef.current = veiligPad(daarna, "/mijn-borden");
   }, []);
 
   // Koppelen aan een klantenrij (zie de uitleg bij schrijfWachtendeSignup) en doorsturen -- gebruikt

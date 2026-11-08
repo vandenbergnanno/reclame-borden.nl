@@ -3,6 +3,7 @@
 import { useRef, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import Script from "next/script";
+import { veiligPad } from "@/lib/security/veiligPad";
 
 declare global {
   interface Window {
@@ -57,14 +58,19 @@ export function ToegangForm({ terugNaar }: { terugNaar?: string }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ wachtwoord, cf_turnstile_token: captchaToken }),
       });
-      const data = await response.json();
+      let data: { ok?: boolean; error?: string };
+      try {
+        data = await response.json();
+      } catch {
+        throw new Error("Er ging iets mis, probeer het opnieuw.");
+      }
 
       if (!response.ok || !data.ok) {
         throw new Error(data.error ?? "Onjuist wachtwoord.");
       }
 
       // Nooit blind naar een extern adres doorsturen dat via de querystring is meegegeven.
-      const bestemming = terugNaar && terugNaar.startsWith("/") ? terugNaar : "/";
+      const bestemming = veiligPad(terugNaar);
       router.push(bestemming);
       router.refresh();
     } catch (error) {
@@ -88,6 +94,7 @@ export function ToegangForm({ terugNaar }: { terugNaar?: string }) {
           type="password"
           required
           autoFocus
+          autoComplete="current-password"
           value={wachtwoord}
           onChange={(event) => setWachtwoord(event.target.value)}
           className="w-full rounded border border-neutral-300 px-3 py-2 focus:border-brand-groen focus:outline-none"

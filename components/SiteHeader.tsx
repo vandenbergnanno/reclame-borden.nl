@@ -51,6 +51,11 @@ export function SiteHeader() {
   // eigen sub-navigatie + uitlogknop) niet.
   if (pathname?.startsWith("/intern") && pathname !== "/intern/login") return null;
 
+  // Op /toegang (de tijdelijke site-brede wachtwoordpoort, zie middleware.ts) sturen
+  // "Nieuwe aanvraag" en "Inloggen" alleen naar dezelfde pagina terug -- die horen hier niet,
+  // alleen het logo blijft staan.
+  const opToegangspagina = pathname === "/toegang";
+
   return (
     <header className="border-b-4 border-brand-groen bg-white px-4 py-3 sm:px-6">
       <nav className="mx-auto flex max-w-4xl flex-wrap items-center justify-between gap-x-3 gap-y-2">
@@ -61,29 +66,31 @@ export function SiteHeader() {
             <span className="block text-xs leading-tight text-neutral-500">door De Mediagraaf, Oudewater</span>
           </span>
         </a>
-        <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-brand-zwart sm:gap-4 sm:text-sm">
-          <a href="/aanvraag" className="whitespace-nowrap hover:text-brand-groen">
-            Nieuwe aanvraag
-          </a>
-          {ingelogd ? (
-            <>
-              <a href="/mijn-borden" className="whitespace-nowrap hover:text-brand-groen">
-                Mijn borden
-              </a>
-              <span className="hidden whitespace-nowrap text-neutral-500 sm:inline">{email}</span>
-              <a href="/mijn-account" className="whitespace-nowrap hover:text-brand-groen">
-                Mijn account
-              </a>
-              <button type="button" onClick={uitloggen} className="whitespace-nowrap hover:text-brand-groen">
-                Uitloggen
-              </button>
-            </>
-          ) : (
-            <a href="/inloggen" className="whitespace-nowrap hover:text-brand-groen">
-              Inloggen
+        {!opToegangspagina && (
+          <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-brand-zwart sm:gap-4 sm:text-sm">
+            <a href="/aanvraag" className="whitespace-nowrap hover:text-brand-groen">
+              Nieuwe aanvraag
             </a>
-          )}
-        </div>
+            {ingelogd ? (
+              <>
+                <a href="/mijn-borden" className="whitespace-nowrap hover:text-brand-groen">
+                  Mijn borden
+                </a>
+                <span className="hidden whitespace-nowrap text-neutral-500 sm:inline">{email}</span>
+                <a href="/mijn-account" className="whitespace-nowrap hover:text-brand-groen">
+                  Mijn account
+                </a>
+                <button type="button" onClick={uitloggen} className="whitespace-nowrap hover:text-brand-groen">
+                  Uitloggen
+                </button>
+              </>
+            ) : (
+              <a href="/inloggen" className="whitespace-nowrap hover:text-brand-groen">
+                Inloggen
+              </a>
+            )}
+          </div>
+        )}
       </nav>
     </header>
   );

@@ -113,10 +113,25 @@ export async function middleware(request: NextRequest) {
   return NextResponse.next();
 }
 
-// Deze matcher dekt bewust de hele site (behalve de routes hieronder, die altijd moeten blijven
-// werken: linkpreviews, favicon, robots.txt) -- nodig voor de site-brede poort hierboven. De
-// afbakening van WIE binnen de functie welke extra poort moet passeren (/intern, /api/aanvragen)
-// gebeurt nu expliciet in de functie zelf, zie de toelichting daar.
+// Deze matcher dekt bewust de hele site (behalve de routes hieronder) -- nodig voor de site-brede
+// poort hierboven. De afbakening van WIE binnen de functie welke extra poort moet passeren
+// (/intern, /api/aanvragen) gebeurt expliciet in de functie zelf, zie de toelichting daar.
+// Uitgesloten, altijd zonder toegangscookie bereikbaar:
+// - _next/static, _next/image: Next.js' eigen interne asset-pipeline.
+// - icon, opengraph-image: de automatisch gegenereerde favicon- en linkpreview-routes (geen vaste
+//   bestandsnaam/-extensie, dus hier met de naam zelf i.p.v. via de extensie-regel hieronder).
+// - robots.txt: moet voor iedere crawler leesbaar blijven (zegt zelf al "Disallow: /", zie
+//   app/robots.ts), ook zonder toegangscookie.
+// - monitoring: de Sentry-tunnel (next.config.mjs, tunnelRoute) -- stuurt foutrapportages door,
+//   geen pagina, hoort niet achter een wachtwoordscherm te komen.
+// - privacybeleid: moet ook zonder toegangscookie leesbaar zijn (bijv. voor wie 'm via een
+//   e-maillink opent).
+// - bestanden met een bekende statische extensie (alles in /public, zoals het logo, plus elk
+//   toekomstig bestand daar) -- die worden op hun kale bestandsnaam geserveerd, niet onder een
+//   "/public"-prefix, dus een losse naam-voor-naam-uitsluiting zou bij elk nieuw bestand opnieuw
+//   vergeten kunnen worden.
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|icon|opengraph-image|robots\\.txt).*)"],
+  matcher: [
+    "/((?!_next/static|_next/image|icon|opengraph-image|robots\\.txt|monitoring|privacybeleid|.*\\.(?:png|jpe?g|gif|svg|webp|ico|woff2?|ttf|otf|css|js|map|txt|xml|json|pdf)$).*)",
+  ],
 };

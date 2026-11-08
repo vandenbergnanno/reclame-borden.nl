@@ -3,6 +3,7 @@
 import { useRef, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import Script from "next/script";
+import { veiligPad } from "@/lib/security/veiligPad";
 
 declare global {
   interface Window {
@@ -60,7 +61,8 @@ export function InternLoginForm({ terugNaar }: { terugNaar?: string }) {
       }
 
       // Nooit blind naar een extern adres doorsturen dat via de querystring is meegegeven.
-      const bestemming = terugNaar && terugNaar.startsWith("/intern") ? terugNaar : "/intern";
+      const kandidaat = veiligPad(terugNaar, "/intern");
+      const bestemming = kandidaat.startsWith("/intern") ? kandidaat : "/intern";
       router.push(bestemming);
       router.refresh();
     } catch (error) {
@@ -84,6 +86,7 @@ export function InternLoginForm({ terugNaar }: { terugNaar?: string }) {
           type="password"
           required
           autoFocus
+          autoComplete="current-password"
           value={wachtwoord}
           onChange={(event) => setWachtwoord(event.target.value)}
           className="w-full rounded border border-neutral-300 px-3 py-2 focus:border-brand-groen focus:outline-none"
