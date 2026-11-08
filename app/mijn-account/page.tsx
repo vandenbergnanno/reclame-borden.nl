@@ -54,7 +54,7 @@ export default async function MijnAccountPagina() {
         <Rij label="Telefoon" waarde={klant?.telefoon} />
       </dl>
 
-      <a href="/mijn-borden" className="inline-block text-sm font-medium text-brand-groen hover:underline">
+      <a href="/mijn-borden" className="inline-block text-sm font-medium text-brand-groen-donker hover:underline">
         Bekijk mijn bestelde borden →
       </a>
 

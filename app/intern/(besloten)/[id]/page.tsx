@@ -173,7 +173,7 @@ export default async function AanvraagDetailPage({ params }: { params: { id: str
           Ingediend op {new Date(aanvraag.created_at).toLocaleString("nl-NL")}
         </p>
         {aanvraag.gewijzigd_door_klant_op && (
-          <p className="mt-2 inline-block rounded bg-brand-oranje/10 px-2.5 py-1 text-xs font-medium text-brand-oranje">
+          <p className="mt-2 inline-block rounded bg-brand-oranje/10 px-2.5 py-1 text-xs font-medium text-brand-oranje-donker">
             Gewijzigd door klant op {new Date(aanvraag.gewijzigd_door_klant_op).toLocaleString("nl-NL")}
           </p>
         )}
@@ -256,7 +256,7 @@ export default async function AanvraagDetailPage({ params }: { params: { id: str
 
           {aanvraag.ontwerp_door_ons ? (
             <>
-              <p className="rounded-lg border border-brand-oranje/30 bg-brand-oranje/5 px-3 py-2 text-sm text-brand-oranje">
+              <p className="rounded-lg border border-brand-oranje/30 bg-brand-oranje/5 px-3 py-2 text-sm text-brand-oranje-donker">
                 Dit ontwerp moet nog gemaakt worden — de klant heeft gekozen voor &ldquo;Laat ons het
                 ontwerp maken&rdquo;.
               </p>
@@ -276,7 +276,7 @@ export default async function AanvraagDetailPage({ params }: { params: { id: str
               )}
               {aanvraag.ontwerp_pad && <Bestandsvoorbeeld label="Ontwerpbestand (bewerkbaar)" pad={ontwerpUrl} />}
               {aanvraag.ontwerp_ontbreekt && (
-                <p className="text-sm text-brand-oranje sm:col-span-2">
+                <p className="text-sm text-brand-oranje-donker sm:col-span-2">
                   Het bewerkbare ontwerpbestand kon niet worden meegestuurd (te groot) — vraag het apart op bij de klant.
                 </p>
               )}
@@ -300,12 +300,12 @@ export default async function AanvraagDetailPage({ params }: { params: { id: str
               )}
               {aanvraag.waarschuwingen && (
                 <div className="sm:col-span-2">
-                  <p className="font-medium text-brand-oranje">Genegeerde waarschuwingen</p>
+                  <p className="font-medium text-brand-oranje-donker">Genegeerde waarschuwingen</p>
                   <p className="whitespace-pre-wrap text-sm text-neutral-700">{aanvraag.waarschuwingen}</p>
                 </div>
               )}
               {aanvraag.lege_logoplek && (
-                <p className="text-sm text-brand-oranje sm:col-span-2">
+                <p className="text-sm text-brand-oranje-donker sm:col-span-2">
                   Er staat nog een lege logoplek op het bord — de klant heeft geen logo meegestuurd voor die plek.
                 </p>
               )}
@@ -321,7 +321,7 @@ export default async function AanvraagDetailPage({ params }: { params: { id: str
                   return (
                     <li key={bestand.pad}>
                       {url ? (
-                        <a href={url} target="_blank" rel="noopener noreferrer" className="text-brand-groen hover:underline">
+                        <a href={url} target="_blank" rel="noopener noreferrer" className="text-brand-groen-donker hover:underline">
                           {bestand.naam}
                         </a>
                       ) : (
@@ -347,7 +347,7 @@ export default async function AanvraagDetailPage({ params }: { params: { id: str
             {contentChecks.map((check) => (
               <li key={check.id} className="flex items-start gap-2">
                 {check.geblokkeerd ? (
-                  <span className="mt-0.5 shrink-0 rounded-full bg-brand-oranje/10 px-2 py-0.5 text-xs font-medium text-brand-oranje">
+                  <span className="mt-0.5 shrink-0 rounded-full bg-brand-oranje/10 px-2 py-0.5 text-xs font-medium text-brand-oranje-donker">
                     Te controleren
                   </span>
                 ) : (
@@ -401,7 +401,7 @@ export default async function AanvraagDetailPage({ params }: { params: { id: str
                         Concept versie {design.versienummer}
                         <span className="ml-2 text-xs font-normal text-neutral-500">{design.status}</span>
                         {isHuidigeVersie && (
-                          <span className="ml-2 rounded-full bg-brand-groen/10 px-2 py-0.5 text-[10px] font-medium text-brand-groen">
+                          <span className="ml-2 rounded-full bg-brand-groen/10 px-2 py-0.5 text-[10px] font-medium text-brand-groen-donker">
                             Huidig
                           </span>
                         )}
@@ -424,8 +424,8 @@ export default async function AanvraagDetailPage({ params }: { params: { id: str
                         <span
                           className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${
                             email.verzonden
-                              ? "bg-brand-groen/10 text-brand-groen"
-                              : "bg-brand-oranje/10 text-brand-oranje"
+                              ? "bg-brand-groen/10 text-brand-groen-donker"
+                              : "bg-brand-oranje/10 text-brand-oranje-donker"
                           }`}
                         >
                           {email.verzonden ? "Echt verstuurd" : "Alleen gelogd (RESEND_API_KEY ontbreekt)"}
@@ -474,7 +474,7 @@ export default async function AanvraagDetailPage({ params }: { params: { id: str
             {feedback.map((item) => (
               <li key={item.id}>
                 <span
-                  className={`font-medium ${item.goedgekeurd ? "text-brand-groen" : "text-brand-oranje"}`}
+                  className={`font-medium ${item.goedgekeurd ? "text-brand-groen-donker" : "text-brand-oranje-donker"}`}
                 >
                   {item.goedgekeurd ? "Goedgekeurd" : "Afgewezen"}
                 </span>
@@ -561,7 +561,7 @@ function Bestandsvoorbeeld({ label, pad, afbeelding = false }: { label: string; 
         // eslint-disable-next-line @next/next/no-img-element -- extern/placeholder pad
         <img src={pad} alt={label} className="h-32 w-full rounded border border-neutral-200 object-contain bg-neutral-50" />
       ) : isEchteUrl ? (
-        <a href={pad} target="_blank" rel="noopener noreferrer" className="text-sm text-brand-groen hover:underline">
+        <a href={pad} target="_blank" rel="noopener noreferrer" className="text-sm text-brand-groen-donker hover:underline">
           {pad}
         </a>
       ) : (

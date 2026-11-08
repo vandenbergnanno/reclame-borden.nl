@@ -88,7 +88,7 @@ export default async function MijnBordenPagina() {
       {!aanvragen || aanvragen.length === 0 ? (
         <div className="rounded border border-neutral-200 bg-neutral-50 p-6 text-center text-sm text-neutral-500">
           Je hebt nog geen borden aangevraagd.{" "}
-          <a href="/aanvraag" className="font-medium text-brand-groen hover:underline">
+          <a href="/aanvraag" className="font-medium text-brand-groen-donker hover:underline">
             Begin met ontwerpen
           </a>
           .
@@ -128,7 +128,7 @@ export default async function MijnBordenPagina() {
                     <AanvraagKaart aanvraag={aanvraag} />
                     <p className="mt-3 text-sm text-neutral-500">
                       Deze aanvraag is al in productie. Wil je nog iets wijzigen? Mail naar{" "}
-                      <a href="mailto:info@demediagraaf.nl" className="text-brand-groen underline">
+                      <a href="mailto:info@demediagraaf.nl" className="text-brand-groen-donker underline">
                         info@demediagraaf.nl
                       </a>
                       .
@@ -201,7 +201,7 @@ function AanvraagKaart({ aanvraag }: { aanvraag: AanvraagKaartData }) {
           href={aanvraag.drukbestandUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="mt-2 inline-block text-sm font-medium text-brand-groen hover:underline"
+          className="mt-2 inline-block text-sm font-medium text-brand-groen-donker hover:underline"
         >
           Download drukbestand
         </a>

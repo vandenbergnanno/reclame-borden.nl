@@ -56,24 +56,24 @@ export function AanvraagKaarten({ kaarten }: { kaarten: AanvraagKaart[] }) {
               {kaart.statusWaarde === "nieuw" && !kaart.isOntwerptool && (
                 <span
                   className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${
-                    kaart.alGoedgekeurd ? "bg-brand-groen/10 text-brand-groen" : "bg-neutral-100 text-neutral-500"
+                    kaart.alGoedgekeurd ? "bg-brand-groen/10 text-brand-groen-donker" : "bg-neutral-100 text-neutral-500"
                   }`}
                 >
                   {kaart.alGoedgekeurd ? "Goedgekeurd door klant" : "Wacht nog op voorstel"}
                 </span>
               )}
               {kaart.statusWaarde === "nieuw" && kaart.isOntwerptool && kaart.ontwerpDoorOns && (
-                <span className="rounded-full bg-brand-oranje/10 px-2 py-0.5 text-[10px] font-medium text-brand-oranje">
+                <span className="rounded-full bg-brand-oranje/10 px-2 py-0.5 text-[10px] font-medium text-brand-oranje-donker">
                   Ontwerp nog maken
                 </span>
               )}
               {kaart.nieuwBord && (
-                <span className="rounded-full bg-brand-oranje/10 px-2 py-0.5 text-[10px] font-medium text-brand-oranje">
+                <span className="rounded-full bg-brand-oranje/10 px-2 py-0.5 text-[10px] font-medium text-brand-oranje-donker">
                   {kaart.bordAanschaf}
                 </span>
               )}
               {kaart.heeftGeblokkeerdeCheck && (
-                <span className="rounded-full bg-brand-oranje/10 px-2 py-0.5 text-[10px] font-medium text-brand-oranje">
+                <span className="rounded-full bg-brand-oranje/10 px-2 py-0.5 text-[10px] font-medium text-brand-oranje-donker">
                   Te controleren
                 </span>
               )}
@@ -81,7 +81,7 @@ export function AanvraagKaarten({ kaarten }: { kaarten: AanvraagKaart[] }) {
 
             <div className="mt-2 flex items-center justify-between">
               <span className="text-[10px] text-neutral-400">{kaart.ingediendOp}</span>
-              <a href={`/intern/${kaart.aanvraagId}`} className="text-xs font-medium text-brand-groen hover:underline">
+              <a href={`/intern/${kaart.aanvraagId}`} className="text-xs font-medium text-brand-groen-donker hover:underline">
                 Bekijken →
               </a>
             </div>

@@ -206,7 +206,7 @@ export default async function InternPage({
         <p className="mt-1 text-sm text-neutral-600">
           De fysieke productie van goedgekeurde borden. Klik op een vakje om de aanvragen in die
           status te zien. De klant-goedkeuring zelf staat op{" "}
-          <a href="/intern/concepten" className="font-medium text-brand-groen hover:underline">
+          <a href="/intern/concepten" className="font-medium text-brand-groen-donker hover:underline">
             Concepten
           </a>
           .
@@ -216,7 +216,7 @@ export default async function InternPage({
       {klantNaamFilter && (
         <p className="rounded border border-neutral-200 bg-neutral-50 px-3 py-2 text-sm text-neutral-700">
           Aanvragen van <span className="font-medium">{klantNaamFilter}</span>.{" "}
-          <a href="/intern" className="font-medium text-brand-groen hover:underline">
+          <a href="/intern" className="font-medium text-brand-groen-donker hover:underline">
             Toon alle aanvragen
           </a>
           .
@@ -267,7 +267,7 @@ export default async function InternPage({
               }`}
             >
               <p className="text-xs font-medium uppercase tracking-wide text-neutral-500">Loopt vast</p>
-              <p className={`mt-1 text-2xl font-semibold ${looptVastAantal > 0 ? "text-brand-oranje" : "text-brand-zwart"}`}>
+              <p className={`mt-1 text-2xl font-semibold ${looptVastAantal > 0 ? "text-brand-oranje-donker" : "text-brand-zwart"}`}>
                 {looptVastAantal}
               </p>
               <p className="text-xs text-neutral-500">concepten die een medewerker nodig hebben</p>
@@ -281,7 +281,7 @@ export default async function InternPage({
                 href={`/intern?status=${status}${klantQuery}`}
                 className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-sm transition ${
                   status === actieveStatus
-                    ? "border-brand-groen bg-brand-groen/10 font-medium text-brand-groen"
+                    ? "border-brand-groen bg-brand-groen/10 font-medium text-brand-groen-donker"
                     : "border-neutral-200 bg-white text-neutral-600 hover:border-neutral-300"
                 }`}
               >

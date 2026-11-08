@@ -64,7 +64,7 @@ export function EmailBewerken({
       <button
         type="button"
         onClick={() => setBewerken(true)}
-        className="text-xs font-medium text-brand-groen hover:underline"
+        className="text-xs font-medium text-brand-groen-donker hover:underline"
       >
         E-mail bewerken
       </button>

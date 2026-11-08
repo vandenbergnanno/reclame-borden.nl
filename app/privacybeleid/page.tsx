@@ -1,11 +1,19 @@
 import type { Metadata } from "next";
-import { CONTACTGEGEVENS } from "@/lib/constants/brand";
+import { CONTACTGEGEVENS, BEWAARTERMIJN } from "@/lib/constants/brand";
 
 export const metadata: Metadata = {
   title: "Privacybeleid — reclame-borden.nl",
 };
 
-export default function PrivacybeleidPagina() {
+export default function PrivacybeleidPagina({
+  searchParams,
+}: {
+  searchParams: { [key: string]: string | string[] | undefined };
+}) {
+  // Zelfde aanpak als app/page.tsx: een kale "[BEWAARTERMIJN...]"-placeholder hoort niet op de
+  // live site te staan, alleen in development of met ?preview=1.
+  const toonPlaceholders = process.env.NODE_ENV !== "production" || searchParams?.preview === "1";
+
   return (
     <div className="mx-auto max-w-2xl space-y-8 text-sm text-neutral-700">
       <div>
@@ -19,7 +27,7 @@ export default function PrivacybeleidPagina() {
           Schaik Grafimedia B.V. (De Mediagraaf)
           {CONTACTGEGEVENS.adres && <>, {CONTACTGEGEVENS.adres}</>}
           {CONTACTGEGEVENS.kvkNummer && <>, KvK {CONTACTGEGEVENS.kvkNummer}</>}. Vragen? Mail naar{" "}
-          <a href="mailto:info@demediagraaf.nl" className="text-brand-groen underline">
+          <a href="mailto:info@demediagraaf.nl" className="text-brand-groen-donker underline">
             info@demediagraaf.nl
           </a>
           .
@@ -71,7 +79,7 @@ export default function PrivacybeleidPagina() {
             versturen van formulieren en bij in- en registreren. Zie Cloudflare&apos;s{" "}
             <a
               href="https://www.cloudflare.com/turnstile-privacy-policy/"
-              className="text-brand-groen underline"
+              className="text-brand-groen-donker underline"
               target="_blank"
               rel="noreferrer"
             >
@@ -80,7 +88,7 @@ export default function PrivacybeleidPagina() {
             en{" "}
             <a
               href="https://www.cloudflare.com/privacypolicy/"
-              className="text-brand-groen underline"
+              className="text-brand-groen-donker underline"
               target="_blank"
               rel="noreferrer"
             >
@@ -103,9 +111,14 @@ export default function PrivacybeleidPagina() {
       <section className="space-y-2">
         <h2 className="font-semibold text-brand-zwart">Hoe lang we je gegevens bewaren</h2>
         <p>
-          Je aanvraag en de bijbehorende gegevens bewaren we [BEWAARTERMIJN, bijv. 7 jaar i.v.m. de
-          fiscale bewaarplicht]. Verwijder je je account, dan kun je zelf niet meer inloggen, maar
-          blijft de aanvraag zelf bewaard bij reclame-borden.nl (zie hieronder).
+          {(BEWAARTERMIJN || toonPlaceholders) && (
+            <>
+              Je aanvraag en de bijbehorende gegevens bewaren we{" "}
+              {BEWAARTERMIJN || "[BEWAARTERMIJN, bijv. 7 jaar i.v.m. de fiscale bewaarplicht]"}.{" "}
+            </>
+          )}
+          Verwijder je je account, dan kun je zelf niet meer inloggen, maar blijft de aanvraag zelf
+          bewaard bij reclame-borden.nl (zie hieronder).
         </p>
       </section>
 
@@ -116,7 +129,7 @@ export default function PrivacybeleidPagina() {
           <code className="rounded bg-neutral-100 px-1">/mijn-borden</code> zelf je gegevens
           downloaden (inzagerecht) of je account verwijderen (recht op vergetelheid). Wil je iets
           laten corrigeren, of heb je een andere vraag over je gegevens, neem dan contact op via{" "}
-          <a href="mailto:info@demediagraaf.nl" className="text-brand-groen underline">
+          <a href="mailto:info@demediagraaf.nl" className="text-brand-groen-donker underline">
             info@demediagraaf.nl
           </a>
           . Ben je het niet eens met hoe we met je gegevens omgaan, dan kun je ook een klacht
@@ -125,7 +138,7 @@ export default function PrivacybeleidPagina() {
             href="https://www.autoriteitpersoonsgegevens.nl"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-brand-groen underline"
+            className="text-brand-groen-donker underline"
           >
             Autoriteit Persoonsgegevens
           </a>
@@ -137,7 +150,7 @@ export default function PrivacybeleidPagina() {
         <h2 className="font-semibold text-brand-zwart">Contact</h2>
         <p>
           Vragen over dit privacybeleid? Mail naar{" "}
-          <a href="mailto:info@demediagraaf.nl" className="text-brand-groen underline">
+          <a href="mailto:info@demediagraaf.nl" className="text-brand-groen-donker underline">
             info@demediagraaf.nl
           </a>
           .

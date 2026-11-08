@@ -121,7 +121,7 @@ export default function HomePage({
         <div className="mx-auto mt-10 grid max-w-4xl gap-6 sm:grid-cols-2">
           {VOORDELEN.map((voordeel) => (
             <div key={voordeel.titel} className="flex gap-4 rounded-2xl border border-neutral-200 bg-white p-5">
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-brand-groen/10 text-brand-groen">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-brand-groen/10 text-brand-groen-donker">
                 {voordeel.icoon}
               </div>
               <div>

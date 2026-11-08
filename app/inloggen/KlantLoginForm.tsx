@@ -457,7 +457,7 @@ export function KlantLoginForm({ vasteModus }: { vasteModus?: Modus } = {}) {
       {vasteModus === "inloggen" && (
         <p className="mt-4 text-center text-sm text-neutral-600">
           Nog geen account?{" "}
-          <a href="/account-aanmaken" className="font-medium text-brand-groen underline">
+          <a href="/account-aanmaken" className="font-medium text-brand-groen-donker underline">
             Account aanmaken
           </a>
         </p>
@@ -465,7 +465,7 @@ export function KlantLoginForm({ vasteModus }: { vasteModus?: Modus } = {}) {
       {vasteModus === "account_aanmaken" && (
         <p className="mt-4 text-center text-sm text-neutral-600">
           Al een account?{" "}
-          <a href="/inloggen" className="font-medium text-brand-groen underline">
+          <a href="/inloggen" className="font-medium text-brand-groen-donker underline">
             Inloggen
           </a>
         </p>

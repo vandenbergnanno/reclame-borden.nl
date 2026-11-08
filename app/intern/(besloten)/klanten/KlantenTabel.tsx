@@ -68,7 +68,7 @@ export function KlantenTabel({ rijen }: { rijen: KlantRij[] }) {
                   <td className="px-4 py-3">
                     <span className="text-neutral-600">{rij.aantalAanvragen}</span>
                     {rij.aantalOpen > 0 && (
-                      <span className="ml-2 rounded-full bg-brand-oranje/10 px-2 py-0.5 text-xs font-medium text-brand-oranje">
+                      <span className="ml-2 rounded-full bg-brand-oranje/10 px-2 py-0.5 text-xs font-medium text-brand-oranje-donker">
                         {rij.aantalOpen} lopend
                       </span>
                     )}
@@ -78,7 +78,7 @@ export function KlantenTabel({ rijen }: { rijen: KlantRij[] }) {
                       {rij.heeftProductieItems && (
                         <a
                           href={`/intern?klant=${rij.klantId}`}
-                          className="font-medium text-brand-groen hover:underline"
+                          className="font-medium text-brand-groen-donker hover:underline"
                         >
                           Aanvragen bekijken →
                         </a>
@@ -86,7 +86,7 @@ export function KlantenTabel({ rijen }: { rijen: KlantRij[] }) {
                       {rij.heeftConceptItems && (
                         <a
                           href={`/intern/concepten?klant=${rij.klantId}`}
-                          className="font-medium text-brand-groen hover:underline"
+                          className="font-medium text-brand-groen-donker hover:underline"
                         >
                           Concepten bekijken →
                         </a>

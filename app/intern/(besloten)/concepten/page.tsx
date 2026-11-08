@@ -188,7 +188,7 @@ export default async function ConceptenPage({
           Hier zie je welke voorstellen de AI automatisch gegenereerd en gemaild heeft, en hoe de
           klant erop gereageerd heeft. Bij goedkeuring gaat een aanvraag direct door naar &ldquo;Nieuw&rdquo;
           op{" "}
-          <a href="/intern" className="font-medium text-brand-groen hover:underline">
+          <a href="/intern" className="font-medium text-brand-groen-donker hover:underline">
             Aanvragen
           </a>
           ; bij afwijzing stuurt de AI automatisch een herzien concept terug.
@@ -198,7 +198,7 @@ export default async function ConceptenPage({
       {klantNaamFilter && (
         <p className="rounded border border-neutral-200 bg-neutral-50 px-3 py-2 text-sm text-neutral-700">
           Concepten van <span className="font-medium">{klantNaamFilter}</span>.{" "}
-          <a href="/intern/concepten" className="font-medium text-brand-groen hover:underline">
+          <a href="/intern/concepten" className="font-medium text-brand-groen-donker hover:underline">
             Toon alle concepten
           </a>
           .
@@ -289,7 +289,7 @@ function ConceptKaartWeergave({ kaart, nadruk = false }: { kaart: ConceptKaart; 
         </div>
         <a
           href={`/intern/${kaart.aanvraagId}`}
-          className="shrink-0 text-xs font-medium text-brand-groen hover:underline"
+          className="shrink-0 text-xs font-medium text-brand-groen-donker hover:underline"
         >
           Bekijken →
         </a>
@@ -302,13 +302,13 @@ function ConceptKaartWeergave({ kaart, nadruk = false }: { kaart: ConceptKaart; 
       )}
 
       {kaart.wachtDagen !== null && kaart.wachtDagen >= 1 && (
-        <p className={`mt-2 text-xs font-medium ${kaart.wachtDagen >= 3 ? "text-red-700" : "text-brand-oranje"}`}>
+        <p className={`mt-2 text-xs font-medium ${kaart.wachtDagen >= 3 ? "text-red-700" : "text-brand-oranje-donker"}`}>
           Wacht al {kaart.wachtDagen} {kaart.wachtDagen === 1 ? "dag" : "dagen"} op reactie
         </p>
       )}
 
       {kaart.geblokkeerdeCheck && (
-        <p className="mt-2 text-xs text-brand-oranje">
+        <p className="mt-2 text-xs text-brand-oranje-donker">
           Te controleren: {kaart.geblokkeerdeCheck.probleem}
           {kaart.geblokkeerdeCheck.toelichting && ` — ${kaart.geblokkeerdeCheck.toelichting}`}
         </p>

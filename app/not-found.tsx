@@ -7,7 +7,7 @@ export default function NotFoundPagina() {
       </p>
       <a
         href="/"
-        className="inline-block rounded-full bg-brand-oranje px-6 py-3 font-medium text-white shadow-sm transition hover:opacity-90"
+        className="inline-block rounded-full bg-brand-oranje-donker px-6 py-3 font-medium text-white shadow-sm transition hover:opacity-90"
       >
         Terug naar de homepage
       </a>

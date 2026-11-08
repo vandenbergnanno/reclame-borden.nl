@@ -22,7 +22,7 @@ export function InternNav({ looptVastAantal = 0 }: { looptVastAantal?: number })
           <Link
             key={tabblad.href}
             href={tabblad.href}
-            className={`inline-flex items-center gap-1.5 ${actief ? "text-brand-groen" : "text-neutral-600 hover:text-brand-groen"}`}
+            className={`inline-flex items-center gap-1.5 ${actief ? "text-brand-groen-donker" : "text-neutral-600 hover:text-brand-groen"}`}
           >
             {tabblad.label}
             {tabblad.href === "/intern/concepten" && looptVastAantal > 0 && (

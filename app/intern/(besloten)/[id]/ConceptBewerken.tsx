@@ -51,7 +51,7 @@ export function ConceptBewerken({
       <button
         type="button"
         onClick={() => setBewerken(true)}
-        className="text-xs font-medium text-brand-groen hover:underline"
+        className="text-xs font-medium text-brand-groen-donker hover:underline"
       >
         Concept bewerken
       </button>

@@ -20,6 +20,11 @@ export const CONTACTGEGEVENS = {
   kvkNummer: "",
 } as const;
 
+// Bewaartermijn voor het privacybeleid (app/privacybeleid/page.tsx) -- leeg totdat de gebruiker
+// 'm zelf vaststelt (bijv. i.v.m. de fiscale bewaarplicht); dezelfde leeg/preview-aanpak als de
+// homepage-placeholders in app/page.tsx (zie `toonPlaceholders` daar).
+export const BEWAARTERMIJN = "";
+
 // Vertrouwenssectie op de homepage ("Gedrukt door De Mediagraaf in Oudewater", zie app/page.tsx).
 // De hele sectie rendert alleen als overOnsTekst niet leeg is -- zo staat er nooit een leeg blok
 // live. klantLogos/reviews zijn optioneel en schuiven er vanzelf bij zodra ze gevuld zijn.

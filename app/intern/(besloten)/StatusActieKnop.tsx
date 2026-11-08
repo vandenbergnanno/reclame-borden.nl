@@ -63,7 +63,7 @@ export function StatusActieKnop({
         disabled={bezig}
         title={volgende.label}
         aria-label={volgende.label}
-        className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-brand-groen text-brand-groen hover:bg-green-50 disabled:opacity-50"
+        className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-brand-groen text-brand-groen-donker hover:bg-green-50 disabled:opacity-50"
       >
         {bezig ? "…" : "→"}
       </button>
