@@ -55,9 +55,11 @@ export function SiteHeader() {
     <header className="border-b-4 border-brand-groen bg-white px-4 py-3 sm:px-6">
       <nav className="mx-auto flex max-w-4xl flex-wrap items-center justify-between gap-x-3 gap-y-2">
         <a href="/" className="flex shrink-0 items-center gap-2">
-          <MediagraafLogo size="sm" />
-          <span className="hidden text-sm font-semibold text-brand-zwart sm:inline">reclame-borden.nl</span>
-          <span className="hidden text-sm text-neutral-400 sm:inline">· Conceptor</span>
+          <MediagraafLogo size="md" />
+          <span className="hidden sm:inline">
+            <span className="block text-sm font-semibold leading-tight text-brand-zwart">reclame-borden.nl</span>
+            <span className="block text-xs leading-tight text-neutral-400">door De Mediagraaf, Oudewater</span>
+          </span>
         </a>
         <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-brand-zwart sm:gap-4 sm:text-sm">
           <a href="/aanvraag" className="whitespace-nowrap hover:text-brand-groen">

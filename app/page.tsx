@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
-import { MediagraafLogo } from "@/components/MediagraafLogo";
+import { MediaPlaceholder } from "@/components/MediaPlaceholder";
+import { VERTROUWEN } from "@/lib/constants/brand";
 
 const STAPPEN = [
   {
@@ -41,33 +42,54 @@ const VOORDELEN = [
   },
 ];
 
+// Dezelfde 4 standaardmaten als in de ontwerptool zelf (lib/ontwerptool/reclamebord-maker.html,
+// FORMATEN-array) -- bewust hergebruikt in plaats van verzonnen, de prijs erbij is nog een
+// placeholder (zie [PRIJS VANAF] hieronder).
+const FORMATEN = ["300 × 80 cm", "320 × 80 cm", "300 × 70 cm", "244 × 61 cm"];
+
+// De drie voorbeeldcategorieën die voor "Zo kan jouw bord eruitzien" zijn aangeleverd -- nog geen
+// echte foto's, alleen de categorieën staan al vast.
+const VOORBEELDCATEGORIEEN = [
+  "FOTO: reclamebord bij sportveld",
+  "FOTO: reclamebord bij bedrijfspand",
+  "FOTO: reclamebord bij bouwproject",
+];
+
 export default function HomePage() {
   return (
     <div className="space-y-16">
       <section className="overflow-hidden rounded-3xl border border-neutral-200 bg-white px-6 py-14 sm:px-12 sm:py-20">
-        <div className="mx-auto grid max-w-4xl items-center gap-10 sm:grid-cols-[auto_1fr]">
-          <div className="flex justify-center">
-            <MediagraafLogo size="lg" />
-          </div>
+        <div className="mx-auto grid max-w-4xl items-center gap-10 sm:grid-cols-2">
           <div className="text-center sm:text-left">
-            <p className="font-semibold uppercase tracking-wide text-brand-groen">Gratis ontwerptool</p>
-            <h1 className="mt-3 text-4xl font-semibold leading-tight text-brand-zwart sm:text-5xl">
+            <p className="font-semibold uppercase tracking-wide text-brand-groen-donker">Gratis ontwerptool</p>
+            <h1 className="mt-3 text-3xl font-semibold leading-tight text-brand-zwart sm:text-5xl">
               Jouw reclamebord, in ongeveer 10 minuten ontworpen
             </h1>
             <p className="mt-5 text-lg text-neutral-600">
-              Geen dagen wachten op heen-en-weer gemail met een ontwerper. Stel zelf je bord samen
-              met je eigen logo, tekst en kleuren, en zie meteen het resultaat. Tevreden? Dan maakt
-              de tool er automatisch een drukklaar bestand van.
+              Stel zelf je bord samen met je eigen logo, tekst en kleuren — en zie meteen het resultaat.
             </p>
-            <div className="mt-8 flex justify-center sm:justify-start">
+            <div className="mt-8 flex flex-col items-center gap-2 sm:items-start">
               <a
                 href="/aanvraag"
-                className="rounded-full bg-brand-oranje px-6 py-3 font-medium text-white shadow-sm transition hover:opacity-90"
+                className="rounded-full bg-brand-oranje-donker px-6 py-3 font-medium text-white shadow-sm transition hover:opacity-90"
               >
-                Maak eerst een gratis account aan (1 minuut) →
+                Begin met ontwerpen →
               </a>
+              <p className="text-xs text-neutral-500">Gratis account nodig, duurt 1 minuut</p>
             </div>
           </div>
+          <MediaPlaceholder label="SCREENSHOT OF VIDEO: ontwerptool in actie" />
+        </div>
+      </section>
+
+      <section>
+        <div className="mx-auto max-w-2xl text-center">
+          <h2 className="text-2xl font-semibold text-brand-zwart sm:text-3xl">Zo kan jouw bord eruitzien</h2>
+        </div>
+        <div className="mx-auto mt-10 grid max-w-4xl gap-6 sm:grid-cols-3">
+          {VOORBEELDCATEGORIEEN.map((label) => (
+            <MediaPlaceholder key={label} label={label} aspectClassName="aspect-square" />
+          ))}
         </div>
       </section>
 
@@ -94,10 +116,29 @@ export default function HomePage() {
         </div>
       </section>
 
+      <section>
+        <div className="mx-auto max-w-2xl text-center">
+          <h2 className="text-2xl font-semibold text-brand-zwart sm:text-3xl">Formaten en prijzen</h2>
+        </div>
+        <div className="mx-auto mt-8 grid max-w-4xl gap-4 sm:grid-cols-4">
+          {FORMATEN.map((maat) => (
+            <div key={maat} className="rounded-2xl border border-neutral-200 bg-white p-5 text-center">
+              <p className="font-semibold text-brand-zwart">{maat}</p>
+              <p className="mt-1 text-sm text-neutral-500">[PRIJS VANAF]</p>
+            </div>
+          ))}
+        </div>
+        <div className="mx-auto mt-6 max-w-4xl space-y-1 text-center text-sm text-neutral-600">
+          <p>1- of 2-zijdig bedrukt. Ook mogelijk: je bord in 2 delen.</p>
+          <p>Levertijd ongeveer 3 weken (productie 5 werkdagen).</p>
+          <p>Je krijgt altijd eerst een drukproef om goed te keuren, voordat er iets gedrukt wordt.</p>
+        </div>
+      </section>
+
       <section className="rounded-3xl bg-gradient-to-br from-green-50 via-white to-orange-50 px-6 py-12 sm:px-12">
         <div className="mx-auto grid max-w-4xl gap-8 sm:grid-cols-2 sm:items-center">
           <div>
-            <p className="font-semibold uppercase tracking-wide text-brand-oranje">Tijdsbesparing</p>
+            <p className="font-semibold uppercase tracking-wide text-brand-oranje-donker">Tijdsbesparing</p>
             <h2 className="mt-2 text-2xl font-semibold text-brand-zwart sm:text-3xl">
               Van idee tot drukproef, zonder te wachten
             </h2>
@@ -109,12 +150,12 @@ export default function HomePage() {
           </div>
           <dl className="grid grid-cols-2 gap-4">
             <div className="rounded-2xl bg-white p-5 text-center shadow-sm">
-              <dt className="text-3xl font-semibold text-brand-groen">10 min</dt>
+              <dt className="text-3xl font-semibold text-brand-groen-donker">10 min</dt>
               <dd className="mt-1 text-sm text-neutral-600">om zelf een compleet ontwerp samen te stellen</dd>
             </div>
             <div className="rounded-2xl bg-white p-5 text-center shadow-sm">
-              <dt className="text-3xl font-semibold text-brand-groen">0</dt>
-              <dd className="mt-1 text-sm text-neutral-600">rondes e-mailen voordat je de drukproef ziet</dd>
+              <dt className="text-3xl font-semibold text-brand-groen-donker">[X] werkdagen</dt>
+              <dd className="mt-1 text-sm text-neutral-600">van goedkeuring tot levering</dd>
             </div>
           </dl>
         </div>
@@ -125,7 +166,7 @@ export default function HomePage() {
         <div className="mx-auto mt-10 grid max-w-4xl gap-6 sm:grid-cols-3">
           {STAPPEN.map((stap, index) => (
             <div key={stap.titel} className="rounded-2xl border border-neutral-200 bg-white p-6">
-              <div className="mb-4 flex h-9 w-9 items-center justify-center rounded-full bg-brand-groen text-sm font-semibold text-white">
+              <div className="mb-4 flex h-9 w-9 items-center justify-center rounded-full bg-brand-groen-donker text-sm font-semibold text-white">
                 {index + 1}
               </div>
               <h3 className="font-semibold text-brand-zwart">{stap.titel}</h3>
@@ -133,13 +174,14 @@ export default function HomePage() {
             </div>
           ))}
         </div>
-        <div className="mt-8 flex justify-center">
+        <div className="mt-8 flex flex-col items-center gap-2">
           <a
             href="/aanvraag"
-            className="rounded-full bg-brand-oranje px-6 py-3 font-medium text-white shadow-sm transition hover:opacity-90"
+            className="rounded-full bg-brand-oranje-donker px-6 py-3 font-medium text-white shadow-sm transition hover:opacity-90"
           >
-            Maak eerst een gratis account aan (1 minuut) →
+            Begin met ontwerpen →
           </a>
+          <p className="text-xs text-neutral-500">Gratis account nodig, duurt 1 minuut</p>
         </div>
       </section>
 
@@ -152,7 +194,7 @@ export default function HomePage() {
         <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
           <a
             href="/account-aanmaken"
-            className="rounded-full bg-brand-groen px-5 py-2.5 text-sm font-medium text-white shadow-sm transition hover:opacity-90"
+            className="rounded-full bg-brand-groen-donker px-5 py-2.5 text-sm font-medium text-white shadow-sm transition hover:opacity-90"
           >
             Account aanmaken
           </a>
@@ -165,6 +207,32 @@ export default function HomePage() {
         </div>
       </section>
 
+      {VERTROUWEN.overOnsTekst && (
+        <section className="rounded-2xl border border-neutral-200 bg-white p-6 text-center sm:p-8">
+          <h2 className="text-xl font-semibold text-brand-zwart">Gedrukt door De Mediagraaf in Oudewater</h2>
+          <p className="mx-auto mt-2 max-w-xl text-sm text-neutral-600">{VERTROUWEN.overOnsTekst}</p>
+
+          {VERTROUWEN.klantLogos.length > 0 && (
+            <div className="mx-auto mt-6 flex max-w-xl flex-wrap items-center justify-center gap-6">
+              {VERTROUWEN.klantLogos.map((logo) => (
+                // eslint-disable-next-line @next/next/no-img-element -- klantlogo's zijn losse, extern aangeleverde bestanden, geen vaste breedte/hoogte nodig
+                <img key={logo.naam} src={logo.afbeelding} alt={logo.naam} className="h-10 w-auto grayscale" />
+              ))}
+            </div>
+          )}
+
+          {VERTROUWEN.reviews.length > 0 && (
+            <div className="mx-auto mt-6 grid max-w-xl gap-4 sm:grid-cols-2">
+              {VERTROUWEN.reviews.map((review) => (
+                <div key={review.naam} className="rounded-xl bg-neutral-50 p-4 text-left text-sm">
+                  <p className="text-neutral-700">&ldquo;{review.tekst}&rdquo;</p>
+                  <p className="mt-2 font-medium text-brand-zwart">{review.naam}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+      )}
     </div>
   );
 }

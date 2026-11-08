@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { CONTACTGEGEVENS } from "@/lib/constants/brand";
 
 export const metadata: Metadata = {
   title: "Privacybeleid — reclame-borden.nl",
@@ -15,7 +16,9 @@ export default function PrivacybeleidPagina() {
       <section className="space-y-2">
         <h2 className="font-semibold text-brand-zwart">Wie is verantwoordelijk</h2>
         <p>
-          Schaik Grafimedia B.V. (De Mediagraaf), [ADRES], KvK [KVK-NUMMER]. Vragen? Mail naar{" "}
+          Schaik Grafimedia B.V. (De Mediagraaf)
+          {CONTACTGEGEVENS.adres && <>, {CONTACTGEGEVENS.adres}</>}
+          {CONTACTGEGEVENS.kvkNummer && <>, KvK {CONTACTGEGEVENS.kvkNummer}</>}. Vragen? Mail naar{" "}
           <a href="mailto:info@demediagraaf.nl" className="text-brand-groen underline">
             info@demediagraaf.nl
           </a>

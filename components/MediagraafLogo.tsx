@@ -4,6 +4,7 @@ import Image from "next/image";
 // de ontwerptool (lib/ontwerptool/reclamebord-maker.html) — zie public/mediagraaf-logo.png.
 const HOOGTE = {
   sm: 36,
+  md: 48,
   lg: 128,
 } as const;
 
