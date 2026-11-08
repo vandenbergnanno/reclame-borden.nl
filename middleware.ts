@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { INTERN_SESSIE_COOKIE } from "@/lib/auth/internSessie";
+import { SITE_SESSIE_COOKIE } from "@/lib/auth/siteSessie";
 
 // Expliciete allowlist van routes onder /api/aanvragen/* die een klant zonder /intern-login moet
 // kunnen bereiken: het indienen van een nieuwe aanvraag, en het goedkeuren/afwijzen van een
@@ -62,6 +63,22 @@ async function verversSupabaseSessie(request: NextRequest): Promise<NextResponse
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  // Tijdelijke, site-brede poort (zie lib/auth/siteSessie.ts) -- onafhankelijke, EXTRA laag vóór
+  // alle onderstaande logica. Alles verderop in deze functie blijft ongewijzigd, maar wordt nu pas
+  // bereikt nadat deze poort gepasseerd is. Weer verwijderen zodra de site echt live gaat.
+  if (pathname === "/toegang" || pathname === "/api/toegang/login") {
+    return NextResponse.next();
+  }
+  const siteToegankelijk = request.cookies.get(SITE_SESSIE_COOKIE)?.value === "1";
+  if (!siteToegankelijk) {
+    if (pathname.startsWith("/api/")) {
+      return NextResponse.json({ ok: false, error: "Site is nog niet publiek toegankelijk." }, { status: 401 });
+    }
+    const toegangUrl = new URL("/toegang", request.url);
+    toegangUrl.searchParams.set("van", pathname);
+    return NextResponse.redirect(toegangUrl);
+  }
+
   if (pathname === "/inloggen" || pathname === "/mijn-borden" || pathname === "/mijn-account" || pathname === "/account-aanmaken") {
     return await verversSupabaseSessie(request);
   }
@@ -74,33 +91,32 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  const ingelogd = request.cookies.get(INTERN_SESSIE_COOKIE)?.value === "1";
-  if (!ingelogd) {
-    // Een API-aanroep verwacht JSON terug (die komt vanuit fetch() op een interne pagina), geen
-    // redirect naar een HTML-pagina.
-    if (pathname.startsWith("/api/")) {
-      return NextResponse.json({ ok: false, error: "Niet ingelogd." }, { status: 401 });
-    }
+  // De /intern-poort hoort alleen bij /intern zelf en de niet-publieke /api/aanvragen-routes --
+  // vroeger bakende de matcher dat vanzelf af (die matchte alleen die paden), maar nu de matcher
+  // hieronder de hele site dekt (voor de site-brede poort hierboven) moet dat hier expliciet,
+  // anders zou deze check per ongeluk ELKE pagina achter het /intern-wachtwoord zetten.
+  if (pathname.startsWith("/intern") || pathname.startsWith("/api/aanvragen")) {
+    const ingelogd = request.cookies.get(INTERN_SESSIE_COOKIE)?.value === "1";
+    if (!ingelogd) {
+      // Een API-aanroep verwacht JSON terug (die komt vanuit fetch() op een interne pagina), geen
+      // redirect naar een HTML-pagina.
+      if (pathname.startsWith("/api/")) {
+        return NextResponse.json({ ok: false, error: "Niet ingelogd." }, { status: 401 });
+      }
 
-    const loginUrl = new URL("/intern/login", request.url);
-    loginUrl.searchParams.set("van", pathname);
-    return NextResponse.redirect(loginUrl);
+      const loginUrl = new URL("/intern/login", request.url);
+      loginUrl.searchParams.set("van", pathname);
+      return NextResponse.redirect(loginUrl);
+    }
   }
 
   return NextResponse.next();
 }
 
-// `:path*` matcht hier bewust de hele subtree in één keer (in plaats van elke route apart op te
-// sommen) — zie de uitleg bij isPubliekeAanvragenRoute hierboven voor waarom dat de veiligere
-// default is.
+// Deze matcher dekt bewust de hele site (behalve de routes hieronder, die altijd moeten blijven
+// werken: linkpreviews, favicon, robots.txt) -- nodig voor de site-brede poort hierboven. De
+// afbakening van WIE binnen de functie welke extra poort moet passeren (/intern, /api/aanvragen)
+// gebeurt nu expliciet in de functie zelf, zie de toelichting daar.
 export const config = {
-  matcher: [
-    "/intern/:path*",
-    "/api/aanvragen",
-    "/api/aanvragen/:path*",
-    "/inloggen",
-    "/mijn-borden",
-    "/mijn-account",
-    "/account-aanmaken",
-  ],
+  matcher: ["/((?!_next/static|_next/image|icon|opengraph-image|robots\\.txt).*)"],
 };
