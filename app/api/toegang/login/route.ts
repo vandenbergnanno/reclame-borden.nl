@@ -40,7 +40,7 @@ export async function POST(request: Request) {
   }
 
   const captchaToken = typeof body.cf_turnstile_token === "string" ? body.cf_turnstile_token : "";
-  if (!(await verifieerTurnstile(captchaToken, clientIp(request)))) {
+  if (!(await verifieerTurnstile(captchaToken, clientIp(request), "toegang"))) {
     return NextResponse.json(
       { ok: false, error: "We konden niet controleren of je geen geautomatiseerd script bent. Laad de pagina opnieuw en probeer het nogmaals." },
       { status: 403 }

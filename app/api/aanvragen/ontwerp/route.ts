@@ -85,7 +85,7 @@ export async function POST(request: Request) {
     return Response.json({ ok: true });
   }
 
-  if (!(await verifieerTurnstile(tekst(formData, "cf_turnstile_token"), clientIp(request)))) {
+  if (!(await verifieerTurnstile(tekst(formData, "cf_turnstile_token"), clientIp(request), "ontwerp"))) {
     return fout("We konden niet controleren of je geen geautomatiseerd script bent. Laad de pagina opnieuw en probeer het nogmaals.", 403);
   }
 

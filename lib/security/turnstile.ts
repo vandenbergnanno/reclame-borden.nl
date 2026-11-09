@@ -1,3 +1,5 @@
+import * as Sentry from "@sentry/nextjs";
+
 // Gedeelde Cloudflare Turnstile-verificatie, gebruikt door elk formulier dat een bot-check nodig
 // heeft (ontwerptool-aanvraag, medewerker-login, klant-login). Oorspronkelijk alleen in
 // app/api/aanvragen/ontwerp/route.ts, hierheen verplaatst zodat /api/intern/login en
@@ -15,7 +17,10 @@
 // Is Cloudflare zelf even onbereikbaar (de sleutel is wél ingesteld, maar het verificatieverzoek
 // zelf mislukt), dan laten we het verzoek wel door (fail-open) -- een storing bij Cloudflare mag
 // nooit alle klanten/medewerkers blokkeren.
-export async function verifieerTurnstile(token: string, ip: string): Promise<boolean> {
+// `context`: alleen voor logging/Sentry (bijv. "ontwerp", "klant-login") -- zodat een afwijzing in
+// Sentry meteen laat zien WELK formulier het was én WAAROM (leeg token vs. een concrete
+// Cloudflare-foutcode), in plaats van dat we daar steeds blind naar moeten gokken.
+export async function verifieerTurnstile(token: string, ip: string, context: string): Promise<boolean> {
   const secret = process.env.TURNSTILE_SECRET_KEY;
   if (!secret) {
     if (process.env.NODE_ENV === "production") {
@@ -29,7 +34,13 @@ export async function verifieerTurnstile(token: string, ip: string): Promise<boo
     );
     return true;
   }
-  if (!token) return false;
+  if (!token) {
+    Sentry.captureMessage(`Turnstile [${context}]: geen token meegestuurd door de klant`, {
+      level: "warning",
+      extra: { ip },
+    });
+    return false;
+  }
 
   try {
     const response = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
@@ -37,7 +48,13 @@ export async function verifieerTurnstile(token: string, ip: string): Promise<boo
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body: new URLSearchParams({ secret, response: token, remoteip: ip }),
     });
-    const data = (await response.json()) as { success?: boolean };
+    const data = (await response.json()) as { success?: boolean; "error-codes"?: string[] };
+    if (data.success !== true) {
+      Sentry.captureMessage(`Turnstile [${context}]: Cloudflare wees het token af`, {
+        level: "warning",
+        extra: { ip, errorCodes: data["error-codes"] },
+      });
+    }
     return data.success === true;
   } catch (err) {
     console.warn("Turnstile-verificatie mislukt (Cloudflare onbereikbaar?), verzoek toch doorgelaten:", err);

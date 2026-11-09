@@ -51,7 +51,7 @@ export async function POST(request: Request) {
     return teVeelPogingenResponse(emailRateLimit);
   }
 
-  if (!(await verifieerTurnstile(captchaToken, ip))) {
+  if (!(await verifieerTurnstile(captchaToken, ip, "klant-login"))) {
     return NextResponse.json(
       { ok: false, error: "We konden niet controleren of je geen geautomatiseerd script bent. Laad de pagina opnieuw en probeer het nogmaals." },
       { status: 403 }
