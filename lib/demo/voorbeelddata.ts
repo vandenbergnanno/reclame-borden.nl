@@ -110,6 +110,7 @@ const ONTWERPTOOL_DEFAULTS = {
   compleet_ontwerp: null,
   ontwerp_ontbreekt: false,
   gewijzigd_door_klant_op: null,
+  bordnaam: null,
   drukbestand_pad: null,
   drukbestand_achter_pad: null,
   voorbeeld_pad: null,

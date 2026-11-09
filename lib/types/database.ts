@@ -79,6 +79,7 @@ export interface Database {
           ontwerp_pad: string | null;
           overige_bestanden: OverigBestand[] | null;
           gewijzigd_door_klant_op: string | null;
+          bordnaam: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -115,6 +116,7 @@ export interface Database {
           ontwerp_pad?: string | null;
           overige_bestanden?: OverigBestand[] | null;
           gewijzigd_door_klant_op?: string | null;
+          bordnaam?: string | null;
           created_at?: string;
           updated_at?: string;
         };

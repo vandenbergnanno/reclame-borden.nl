@@ -69,6 +69,7 @@ export async function GET(request: Request) {
           const ontwerp = JSON.parse(await bestand.text());
           bewerkData = {
             ontwerp,
+            bordnaam: aanvraag.bordnaam,
             aantal: aanvraag.aantal,
             bedrukking: aanvraag.bedrukking,
             kromtrekken: aanvraag.kromtrekken,

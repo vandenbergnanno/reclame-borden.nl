@@ -520,6 +520,8 @@
     <fieldset class="blok">
       <legend>Je bord</legend>
       <p class="samenvatting" id="bordSamenvatting"></p>
+      <label>Naam voor dit bord *<input type="text" name="bordnaam" id="fBordnaam" required maxlength="100"></label>
+      <p class="klein-hint" style="margin:2px 0 10px">Handig om je borden uit elkaar te houden op Mijn borden.</p>
       <div class="rij">
         <label>Aantal borden<input type="number" name="aantal" id="fAantal" min="1" max="99" value="1"></label>
         <label>Bedrukking
@@ -1196,6 +1198,7 @@
     if (d.straat) $('fStraat').value = d.straat;
     if (d.postcode) $('fPostcode').value = d.postcode;
     if (d.plaats) $('fPlaats').value = d.plaats;
+    if (d.bordnaam) $('fBordnaam').value = d.bordnaam;
     if (d.opmerking) $('fOpmerking').value = d.opmerking;
     werkLeveringBij();
     melding('Je eerdere ontwerp is geladen. Pas aan wat nodig is en verstuur opnieuw.', 6000);
@@ -4859,6 +4862,7 @@ function maakQrLib(){var t=function(){var t=function(t,r){var e=t,n=g[r],o=null,
   form.addEventListener('submit', async e => {
     e.preventDefault();
     toonFout('');
+    if (!form.bordnaam.value.trim()) return formFout('Geef dit bord een naam.', form.bordnaam);
     if (!form.naam.value.trim()) return formFout('Vul je naam in.', form.naam);
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.value.trim())) return formFout('Vul een geldig e-mailadres in.', form.email);
     if (/["(),;:<>\[\]\\]|[^\x21-\x7E]/.test(form.email.value.trim())) return formFout('Vul je e-mailadres in zonder spaties, aanhalingstekens of letters met accenten (zoals é of ë).', form.email);

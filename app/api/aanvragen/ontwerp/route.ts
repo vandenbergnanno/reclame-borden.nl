@@ -30,6 +30,7 @@ const MAX_LENGTE = {
   straat: 200,
   postcode: 10,
   plaats: 100,
+  bordnaam: 100,
 } as const;
 
 function fout(bericht: string, status = 400) {
@@ -88,6 +89,7 @@ export async function POST(request: Request) {
     return fout("We konden niet controleren of je geen geautomatiseerd script bent. Laad de pagina opnieuw en probeer het nogmaals.", 403);
   }
 
+  const bordnaam = tekst(formData, "bordnaam");
   const naam = tekst(formData, "naam");
   const bedrijf = tekst(formData, "bedrijf");
   const email = tekst(formData, "email");
@@ -110,6 +112,8 @@ export async function POST(request: Request) {
   const compleetOntwerp = tekst(formData, "compleet_ontwerp") || null;
   const aantalRuw = Number(tekst(formData, "aantal") || "1");
 
+  if (!bordnaam) return fout("Geef dit bord een naam.");
+  if (bordnaam.length > MAX_LENGTE.bordnaam) return fout("Naam voor dit bord is te lang.");
   if (!naam) return fout("Vul je naam in.");
   if (naam.length > MAX_LENGTE.naam) return fout("Naam is te lang.");
   if (bedrijf.length > MAX_LENGTE.bedrijf) return fout("Bedrijfsnaam is te lang.");
@@ -213,6 +217,7 @@ export async function POST(request: Request) {
       klant_id: klantId,
       ...(bestellingId ? { bestelling_id: bestellingId } : {}),
       veldtype: null,
+      bordnaam,
       afmeting: formaat,
       bord_aanschaf: bordAanschaf,
       wens: null,

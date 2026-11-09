@@ -54,7 +54,7 @@ export default async function MijnBordenPagina() {
     ? await supabase
         .from("aanvragen")
         .select(
-          "id, afmeting, aantal, status, created_at, voorbeeld_pad, drukbestand_pad, levering, straat, postcode, plaats"
+          "id, bordnaam, afmeting, aantal, status, created_at, voorbeeld_pad, drukbestand_pad, levering, straat, postcode, plaats"
         )
         .eq("klant_id", klant.id)
         .order("created_at", { ascending: false })
@@ -106,7 +106,12 @@ export default async function MijnBordenPagina() {
                     key={aanvraag.id}
                     className="rounded border-2 border-dashed border-brand-groen/50 bg-brand-groen/5 p-4"
                   >
-                    <AanvraagKaart aanvraag={aanvraag} />
+                    <details>
+                      <AanvraagSamenvatting aanvraag={aanvraag} />
+                      <div className="pt-3">
+                        <AanvraagKaart aanvraag={aanvraag} />
+                      </div>
+                    </details>
                     <a
                       href={`/aanvraag?bewerk=${aanvraag.id}`}
                       className="mt-3 inline-block rounded bg-brand-groen-donker px-3 py-1.5 text-sm font-medium text-white hover:opacity-90"
@@ -125,14 +130,19 @@ export default async function MijnBordenPagina() {
               <ul className="space-y-3">
                 {afgemaakt.map((aanvraag) => (
                   <li key={aanvraag.id} className="rounded border border-neutral-200 p-4">
-                    <AanvraagKaart aanvraag={aanvraag} />
-                    <p className="mt-3 text-sm text-neutral-500">
-                      Deze aanvraag is al in productie. Wil je nog iets wijzigen? Mail naar{" "}
-                      <a href="mailto:info@demediagraaf.nl" className="text-brand-groen-donker underline">
-                        info@demediagraaf.nl
-                      </a>
-                      .
-                    </p>
+                    <details>
+                      <AanvraagSamenvatting aanvraag={aanvraag} />
+                      <div className="pt-3">
+                        <AanvraagKaart aanvraag={aanvraag} />
+                        <p className="mt-3 text-sm text-neutral-500">
+                          Deze aanvraag is al in productie. Wil je nog iets wijzigen? Mail naar{" "}
+                          <a href="mailto:info@demediagraaf.nl" className="text-brand-groen-donker underline">
+                            info@demediagraaf.nl
+                          </a>
+                          .
+                        </p>
+                      </div>
+                    </details>
                   </li>
                 ))}
               </ul>
@@ -146,6 +156,7 @@ export default async function MijnBordenPagina() {
 
 interface AanvraagKaartData {
   id: string;
+  bordnaam: string | null;
   afmeting: string;
   aantal: number;
   status: AanvraagStatus;
@@ -158,34 +169,41 @@ interface AanvraagKaartData {
   drukbestandUrl: string | null;
 }
 
+// Komt in de <summary> van de omringende <details> -- dus altijd zichtbaar, ook ingeklapt, zodat
+// je in één oogopslag weet welk bord dit is zonder uit te klappen.
+function AanvraagSamenvatting({ aanvraag }: { aanvraag: AanvraagKaartData }) {
+  return (
+    <summary className="flex cursor-pointer list-none items-center justify-between gap-4">
+      <div>
+        <p className="font-medium text-brand-zwart">
+          {aanvraag.bordnaam || aanvraag.afmeting} · {aanvraag.aantal}×
+        </p>
+        <p className="text-sm text-neutral-500">
+          Aangevraagd op {new Date(aanvraag.created_at).toLocaleDateString("nl-NL")}
+        </p>
+      </div>
+      <span
+        className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium ${AANVRAAG_STATUS_KLEUREN[aanvraag.status]}`}
+      >
+        {AANVRAAG_STATUS_LABELS[aanvraag.status]}
+      </span>
+    </summary>
+  );
+}
+
 function AanvraagKaart({ aanvraag }: { aanvraag: AanvraagKaartData }) {
   return (
     <>
-      <div className="flex items-center justify-between gap-4">
-        <div>
-          <p className="font-medium text-brand-zwart">
-            {aanvraag.afmeting} · {aanvraag.aantal}×
-          </p>
-          <p className="text-sm text-neutral-500">
-            Aangevraagd op {new Date(aanvraag.created_at).toLocaleDateString("nl-NL")}
-          </p>
-          {aanvraag.levering === "Bezorgen" && (aanvraag.straat || aanvraag.plaats) && (
-            <p className="mt-1 text-sm text-neutral-500">
-              Bezorgadres: {[aanvraag.straat, [aanvraag.postcode, aanvraag.plaats].filter(Boolean).join(" ")]
-                .filter(Boolean)
-                .join(", ")}
-            </p>
-          )}
-          {aanvraag.levering === "Zelf ophalen in Oudewater" && (
-            <p className="mt-1 text-sm text-neutral-500">Zelf ophalen in Oudewater</p>
-          )}
-        </div>
-        <span
-          className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium ${AANVRAAG_STATUS_KLEUREN[aanvraag.status]}`}
-        >
-          {AANVRAAG_STATUS_LABELS[aanvraag.status]}
-        </span>
-      </div>
+      {aanvraag.levering === "Bezorgen" && (aanvraag.straat || aanvraag.plaats) && (
+        <p className="text-sm text-neutral-500">
+          Bezorgadres: {[aanvraag.straat, [aanvraag.postcode, aanvraag.plaats].filter(Boolean).join(" ")]
+            .filter(Boolean)
+            .join(", ")}
+        </p>
+      )}
+      {aanvraag.levering === "Zelf ophalen in Oudewater" && (
+        <p className="text-sm text-neutral-500">Zelf ophalen in Oudewater</p>
+      )}
 
       {aanvraag.voorbeeldUrl && (
         // eslint-disable-next-line @next/next/no-img-element -- tijdelijke ondertekende Storage-link, geen vaste breedte/hoogte nodig

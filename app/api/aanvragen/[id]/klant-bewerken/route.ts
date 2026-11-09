@@ -26,6 +26,7 @@ const MAX_TOTAAL_BYTES = 40 * 1024 * 1024;
 const MAX_BESTANDEN = 20;
 
 const MAX_LENGTE = {
+  bordnaam: 100,
   afmeting: 100,
   opmerking: 2000,
   straat: 200,
@@ -106,6 +107,7 @@ export async function PATCH(request: Request, { params }: { params: { id: string
     return fout("Ongeldige formulierdata.");
   }
 
+  const bordnaam = tekst(formData, "bordnaam");
   const opmerking = tekst(formData, "opmerking");
   const formaat = tekst(formData, "formaat");
   const levering = tekst(formData, "levering");
@@ -123,6 +125,7 @@ export async function PATCH(request: Request, { params }: { params: { id: string
   const compleetOntwerp = tekst(formData, "compleet_ontwerp") || null;
   const aantalRuw = Number(tekst(formData, "aantal") || "1");
 
+  if (!bordnaam || bordnaam.length > MAX_LENGTE.bordnaam) return fout("Geef dit bord een naam.");
   if (!formaat || formaat.length > MAX_LENGTE.afmeting) return fout("Ongeldig formaat.");
   if (!Number.isInteger(aantalRuw) || aantalRuw < 1 || aantalRuw > 99) {
     return fout("Vul een aantal borden in tussen 1 en 99.");
@@ -194,6 +197,7 @@ export async function PATCH(request: Request, { params }: { params: { id: string
     .from("aanvragen")
     .update({
       ...paden,
+      bordnaam,
       afmeting: formaat,
       status: "nieuw",
       aantal: aantalRuw,
