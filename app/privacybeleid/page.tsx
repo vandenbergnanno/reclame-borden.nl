@@ -104,7 +104,7 @@ export default function PrivacybeleidPagina({
         <h2 className="font-semibold text-brand-zwart">Jouw rechten</h2>
         <p>
           Heb je een account, dan kun je op{" "}
-          <code className="rounded bg-neutral-100 px-1">/mijn-borden</code> zelf je gegevens
+          <code className="rounded bg-neutral-100 px-1">/mijn-account</code> zelf je gegevens
           downloaden (inzagerecht) of je account verwijderen (recht op vergetelheid). Wil je iets
           laten corrigeren, of heb je een andere vraag over je gegevens, neem dan contact op via{" "}
           <a href="mailto:info@demediagraaf.nl" className="text-brand-groen-donker underline">

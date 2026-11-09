@@ -61,8 +61,9 @@ export function AccountGegevensBewerken({
 
   return (
     <form onSubmit={opslaan} className="grid gap-5 sm:grid-cols-2">
-      <Veld label="Naam">
+      <Veld label="Naam" id="naam">
         <input
+          id="naam"
           type="text"
           required
           value={naam}
@@ -71,8 +72,9 @@ export function AccountGegevensBewerken({
           className="w-full rounded border border-neutral-300 px-2 py-1.5 focus:border-brand-groen focus:outline-none"
         />
       </Veld>
-      <Veld label="Bedrijf / vereniging">
+      <Veld label="Bedrijf / vereniging" id="bedrijf">
         <input
+          id="bedrijf"
           type="text"
           value={bedrijf}
           onChange={(event) => { setBedrijf(event.target.value); setOpgeslagen(false); }}
@@ -83,8 +85,9 @@ export function AccountGegevensBewerken({
       <Veld label="E-mail">
         <p className="text-brand-zwart">{email}</p>
       </Veld>
-      <Veld label="Telefoon">
+      <Veld label="Telefoon" id="telefoon">
         <input
+          id="telefoon"
           type="tel"
           value={telefoon}
           onChange={(event) => { setTelefoon(event.target.value); setOpgeslagen(false); }}
@@ -108,10 +111,15 @@ export function AccountGegevensBewerken({
   );
 }
 
-function Veld({ label, children }: { label: string; children: React.ReactNode }) {
+function Veld({ label, id, children }: { label: string; id?: string; children: React.ReactNode }) {
   return (
     <div>
-      <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-neutral-500">{label}</label>
+      <label
+        htmlFor={id}
+        className="mb-1 block text-xs font-medium uppercase tracking-wide text-neutral-500"
+      >
+        {label}
+      </label>
       {children}
     </div>
   );
