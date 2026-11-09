@@ -106,9 +106,17 @@ export function KlantLoginForm({ vasteModus }: { vasteModus?: Modus } = {}) {
   // Suspense-boundary rond deze client component zou vereisen, puur voor iets wat toch alleen in
   // de browser relevant is.
   const daarnaRef = useRef("/mijn-borden");
+  // Ook voor de "Al een account?"/"Nog geen account?"-link hieronder: zonder dit verliest een
+  // klant die bijv. via ?daarna=/aanvraag hier belandde (zie app/aanvraag/route.ts) die bestemming
+  // zodra hij op die link klikt in plaats van het formulier hier in te vullen.
+  const [daarnaQuery, setDaarnaQuery] = useState("");
   useEffect(() => {
     const daarna = new URLSearchParams(window.location.search).get("daarna");
-    if (daarna) daarnaRef.current = veiligPad(daarna, "/mijn-borden");
+    if (daarna) {
+      const veiligeDaarna = veiligPad(daarna, "/mijn-borden");
+      daarnaRef.current = veiligeDaarna;
+      setDaarnaQuery(`?daarna=${encodeURIComponent(veiligeDaarna)}`);
+    }
   }, []);
 
   // Koppelen aan een klantenrij (zie de uitleg bij schrijfWachtendeSignup) en doorsturen -- gebruikt
@@ -410,7 +418,7 @@ export function KlantLoginForm({ vasteModus }: { vasteModus?: Modus } = {}) {
           {vasteModus === "inloggen" && (
             <p className="mt-4 text-center text-sm text-neutral-600">
               Nog geen account?{" "}
-              <a href="/account-aanmaken" className="font-medium text-brand-groen-donker underline">
+              <a href={`/account-aanmaken${daarnaQuery}`} className="font-medium text-brand-groen-donker underline">
                 Account aanmaken
               </a>
             </p>
@@ -418,7 +426,7 @@ export function KlantLoginForm({ vasteModus }: { vasteModus?: Modus } = {}) {
           {vasteModus === "account_aanmaken" && (
             <p className="mt-4 text-center text-sm text-neutral-600">
               Al een account?{" "}
-              <a href="/inloggen" className="font-medium text-brand-groen-donker underline">
+              <a href={`/inloggen${daarnaQuery}`} className="font-medium text-brand-groen-donker underline">
                 Inloggen
               </a>
             </p>
