@@ -111,6 +111,7 @@ const ONTWERPTOOL_DEFAULTS = {
   ontwerp_ontbreekt: false,
   gewijzigd_door_klant_op: null,
   bordnaam: null,
+  factuurprijs_excl_btw: null,
   drukbestand_pad: null,
   drukbestand_achter_pad: null,
   voorbeeld_pad: null,

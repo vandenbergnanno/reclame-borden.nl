@@ -80,6 +80,7 @@ export interface Database {
           overige_bestanden: OverigBestand[] | null;
           gewijzigd_door_klant_op: string | null;
           bordnaam: string | null;
+          factuurprijs_excl_btw: number | null;
           created_at: string;
           updated_at: string;
         };
@@ -117,6 +118,7 @@ export interface Database {
           overige_bestanden?: OverigBestand[] | null;
           gewijzigd_door_klant_op?: string | null;
           bordnaam?: string | null;
+          factuurprijs_excl_btw?: number | null;
           created_at?: string;
           updated_at?: string;
         };
