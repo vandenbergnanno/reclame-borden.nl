@@ -2,13 +2,7 @@
 
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import Script from "next/script";
 import { veiligPad } from "@/lib/security/veiligPad";
-import { useTurnstile } from "@/lib/security/useTurnstile";
-
-// Zelfde opzet als app/intern/login/InternLoginForm.tsx: een publieke sitekey, mag in de
-// browser. Leeg = CAPTCHA staat (nog) niet aan.
-const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
 
 export function ToegangForm({ terugNaar }: { terugNaar?: string }) {
   const router = useRouter();
@@ -16,25 +10,16 @@ export function ToegangForm({ terugNaar }: { terugNaar?: string }) {
   const [foutmelding, setFoutmelding] = useState<string | null>(null);
   const [bezig, setBezig] = useState(false);
 
-  // "interaction-only": de widget blijft onzichtbaar tenzij Cloudflare een interactieve check
-  // nodig vindt.
-  const { laad, haalToken } = useTurnstile("toegangTurnstile", { theme: "light", appearance: "interaction-only" });
-  function laadTurnstile() {
-    laad(TURNSTILE_SITE_KEY);
-  }
-
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setBezig(true);
     setFoutmelding(null);
 
-    const captchaToken = await haalToken(!!TURNSTILE_SITE_KEY);
-
     try {
       const response = await fetch("/api/toegang/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ wachtwoord, cf_turnstile_token: captchaToken }),
+        body: JSON.stringify({ wachtwoord }),
       });
       let data: { ok?: boolean; error?: string };
       try {
@@ -59,10 +44,6 @@ export function ToegangForm({ terugNaar }: { terugNaar?: string }) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      {TURNSTILE_SITE_KEY && (
-        <Script src="https://challenges.cloudflare.com/turnstile/v0/api.js" strategy="afterInteractive" onLoad={laadTurnstile} />
-      )}
-      <div id="toegangTurnstile" className="flex justify-center empty:hidden" />
       <div>
         <label htmlFor="wachtwoord" className="mb-1 block text-sm font-medium text-brand-zwart">
           Wachtwoord

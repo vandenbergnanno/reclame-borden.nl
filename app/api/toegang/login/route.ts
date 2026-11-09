@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { SITE_SESSIE_COOKIE, SITE_SESSIE_MAX_LEEFTIJD_SECONDEN } from "@/lib/auth/siteSessie";
 import { checkRateLimit, clientIp, teVeelPogingenResponse } from "@/lib/security/rateLimit";
-import { verifieerTurnstile } from "@/lib/security/turnstile";
 
 // Zelfde opzet als app/api/intern/login/route.ts: één gedeeld wachtwoord voor de hele site
 // (tijdelijk, zie lib/auth/siteSessie.ts), dus geen "per e-mailadres"-limiet mogelijk/nodig --
@@ -32,19 +31,11 @@ export async function POST(request: Request) {
     );
   }
 
-  let body: { wachtwoord?: unknown; cf_turnstile_token?: unknown };
+  let body: { wachtwoord?: unknown };
   try {
     body = await request.json();
   } catch {
     return NextResponse.json({ ok: false, error: "Ongeldig verzoek." }, { status: 400 });
-  }
-
-  const captchaToken = typeof body.cf_turnstile_token === "string" ? body.cf_turnstile_token : "";
-  if (!(await verifieerTurnstile(captchaToken, clientIp(request), "toegang"))) {
-    return NextResponse.json(
-      { ok: false, error: "We konden niet controleren of je geen geautomatiseerd script bent. Laad de pagina opnieuw en probeer het nogmaals." },
-      { status: 403 }
-    );
   }
 
   if (typeof body.wachtwoord !== "string" || body.wachtwoord !== verwachtWachtwoord) {

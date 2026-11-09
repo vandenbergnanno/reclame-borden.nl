@@ -2,18 +2,10 @@
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import Script from "next/script";
 import { createBrowserSupabaseClient } from "@/lib/supabase/browserClient";
 import { veiligPad } from "@/lib/security/veiligPad";
-import { useTurnstile } from "@/lib/security/useTurnstile";
 
 type Modus = "inloggen" | "account_aanmaken";
-
-// Site key van Cloudflare Turnstile (zie .env.example) -- een publieke sleutel, mag in de browser.
-// Leeg = CAPTCHA staat (nog) niet aan; dan wordt ook nooit een widget geladen en blijft
-// captchaToken altijd leeg, wat prima is zolang "Enable CAPTCHA protection" in het Supabase-
-// dashboard ook uit staat (zie de uitleg die hierover met de gebruiker is gedeeld).
-const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
 
 // Dit inloggen gaat rechtstreeks vanuit de browser naar Supabase (geen eigen server-route, dus ook
 // geen eigen IP-gebaseerde rate limiting zoals bij /api/intern/login). Deze afremming is daarom
@@ -102,10 +94,7 @@ export function KlantLoginForm({ vasteModus }: { vasteModus?: Modus } = {}) {
   const [bezig, setBezig] = useState(false);
   const [foutmelding, setFoutmelding] = useState<string | null>(null);
   // true zodra signup gelukt is maar er nog op e-mailbevestiging gewacht wordt (zie hieronder) --
-  // vervangt dan de hele formulierweergave door een opgeruimd "check je e-mail"-scherm. Eerder liet
-  // dit alleen een tekstregel BOVEN het volledig ingevulde, nog steeds actieve formulier zien (met
-  // een net-gereset, weer leeg Turnstile-vinkje): dat voelde onaf/verwarrend, alsof er nog iets
-  // moest gebeuren terwijl het account al was aangemaakt.
+  // vervangt dan de hele formulierweergave door een opgeruimd "check je e-mail"-scherm.
   const [wachtOpBevestiging, setWachtOpBevestiging] = useState(false);
   const [geblokkeerdTot, setGeblokkeerdTot] = useState(0);
   const [resterendeSeconden, setResterendeSeconden] = useState(0);
@@ -161,18 +150,6 @@ export function KlantLoginForm({ vasteModus }: { vasteModus?: Modus } = {}) {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- alleen bij het laden van de pagina checken
   }, []);
 
-  // Onzichtbare Turnstile-widget: één keer renderen zodra het script geladen is. Geen `size`
-  // meegeven: "invisible" is geen geldige waarde voor dat veld (de widget-api gooit er anders een
-  // fout op) -- of de widget onzichtbaar is, hangt af van het widget-type (Managed/Non-
-  // Interactive/Invisible) dat bij deze sitekey hoort in het Cloudflare-dashboard.
-  // "interaction-only": de widget blijft onzichtbaar tenzij Cloudflare een interactieve check
-  // nodig vindt -- de managed-modus die het dashboard zelf ook aanbiedt, maar hier expliciet
-  // code-side afgedwongen in plaats van afhankelijk van een dashboard-instelling.
-  const { laad, haalToken } = useTurnstile("klantTurnstile", { theme: "light", appearance: "interaction-only" });
-  function laadTurnstile() {
-    laad(TURNSTILE_SITE_KEY);
-  }
-
   useEffect(() => {
     setGeblokkeerdTot(leesPogingen().geblokkeerdTot);
   }, []);
@@ -197,8 +174,6 @@ export function KlantLoginForm({ vasteModus }: { vasteModus?: Modus } = {}) {
     setBezig(true);
     setFoutmelding(null);
 
-    const captchaToken = await haalToken(!!TURNSTILE_SITE_KEY);
-
     try {
       if (modus === "inloggen") {
         // Gaat via onze eigen route (niet rechtstreeks supabase.auth.signInWithPassword), die er
@@ -208,7 +183,7 @@ export function KlantLoginForm({ vasteModus }: { vasteModus?: Modus } = {}) {
         const inlogResponse = await fetch("/api/klant/login", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, wachtwoord, cf_turnstile_token: captchaToken }),
+          body: JSON.stringify({ email, wachtwoord }),
         });
         const inlogData = await inlogResponse.json();
 
@@ -237,18 +212,16 @@ export function KlantLoginForm({ vasteModus }: { vasteModus?: Modus } = {}) {
 
       // Account aanmaken
       // Gaat, net als inloggen hierboven, via onze eigen route (zie
-      // app/api/klant/registreren/route.ts) in plaats van rechtstreeks supabase.auth.signUp: die
-      // route verifieert het Turnstile-token zelf op de server. emailRedirectTo: zonder dit stuurt
-      // Supabase na het klikken op de bevestigingslink naar de "Site URL" uit de
-      // projectinstellingen, die niet per se (nog) goed staat ingesteld -- hiermee komt de klant
-      // altijd terug op onze eigen inlogpagina, waar hij meteen kan inloggen.
+      // app/api/klant/registreren/route.ts) in plaats van rechtstreeks supabase.auth.signUp.
+      // emailRedirectTo: zonder dit stuurt Supabase na het klikken op de bevestigingslink naar de
+      // "Site URL" uit de projectinstellingen, die niet per se (nog) goed staat ingesteld --
+      // hiermee komt de klant altijd terug op onze eigen inlogpagina, waar hij meteen kan inloggen.
       const registrerenResponse = await fetch("/api/klant/registreren", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           email,
           wachtwoord,
-          cf_turnstile_token: captchaToken,
           emailRedirectTo: `${window.location.origin}/inloggen`,
         }),
       });
@@ -289,10 +262,6 @@ export function KlantLoginForm({ vasteModus }: { vasteModus?: Modus } = {}) {
 
   return (
     <div>
-      {TURNSTILE_SITE_KEY && (
-        <Script src="https://challenges.cloudflare.com/turnstile/v0/api.js" strategy="afterInteractive" onLoad={laadTurnstile} />
-      )}
-
       {wachtOpBevestiging ? (
         <div className="space-y-4">
           <p className="rounded border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-700">
@@ -306,161 +275,155 @@ export function KlantLoginForm({ vasteModus }: { vasteModus?: Modus } = {}) {
           </a>
         </div>
       ) : (
-      <>
-      {!vasteModus && (
-        <div className="mb-4 flex gap-1 rounded-lg bg-neutral-100 p-1 text-sm font-medium">
-          <button
-            type="button"
-            onClick={() => { setModus("inloggen"); setFoutmelding(null); }}
-            className={`flex-1 rounded-md px-3 py-1.5 transition ${modus === "inloggen" ? "bg-white text-brand-zwart shadow-sm" : "text-neutral-500"}`}
-          >
-            Inloggen
-          </button>
-          <button
-            type="button"
-            onClick={() => { setModus("account_aanmaken"); setFoutmelding(null); }}
-            className={`flex-1 rounded-md px-3 py-1.5 transition ${modus === "account_aanmaken" ? "bg-white text-brand-zwart shadow-sm" : "text-neutral-500"}`}
-          >
-            Account aanmaken
-          </button>
-        </div>
-      )}
+        <>
+          {!vasteModus && (
+            <div className="mb-4 flex gap-1 rounded-lg bg-neutral-100 p-1 text-sm font-medium">
+              <button
+                type="button"
+                onClick={() => { setModus("inloggen"); setFoutmelding(null); }}
+                className={`flex-1 rounded-md px-3 py-1.5 transition ${modus === "inloggen" ? "bg-white text-brand-zwart shadow-sm" : "text-neutral-500"}`}
+              >
+                Inloggen
+              </button>
+              <button
+                type="button"
+                onClick={() => { setModus("account_aanmaken"); setFoutmelding(null); }}
+                className={`flex-1 rounded-md px-3 py-1.5 transition ${modus === "account_aanmaken" ? "bg-white text-brand-zwart shadow-sm" : "text-neutral-500"}`}
+              >
+                Account aanmaken
+              </button>
+            </div>
+          )}
 
-      <form onSubmit={handleSubmit} className="space-y-4">
-        {modus === "account_aanmaken" && (
-          <>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {modus === "account_aanmaken" && (
+              <>
+                <div>
+                  <label htmlFor="naam" className="mb-1 block text-sm font-medium text-brand-zwart">
+                    Naam *
+                  </label>
+                  <input
+                    id="naam"
+                    type="text"
+                    required
+                    value={naam}
+                    onChange={(event) => setNaam(event.target.value)}
+                    autoComplete="name"
+                    className="w-full rounded border border-neutral-300 px-3 py-2 focus:border-brand-groen focus:outline-none"
+                  />
+                </div>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div>
+                    <label htmlFor="bedrijf" className="mb-1 block text-sm font-medium text-brand-zwart">
+                      Bedrijf / vereniging
+                    </label>
+                    <input
+                      id="bedrijf"
+                      type="text"
+                      value={bedrijf}
+                      onChange={(event) => setBedrijf(event.target.value)}
+                      autoComplete="organization"
+                      className="w-full rounded border border-neutral-300 px-3 py-2 focus:border-brand-groen focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="telefoon" className="mb-1 block text-sm font-medium text-brand-zwart">
+                      Telefoonnummer
+                    </label>
+                    <input
+                      id="telefoon"
+                      type="tel"
+                      value={telefoon}
+                      onChange={(event) => setTelefoon(event.target.value)}
+                      autoComplete="tel"
+                      className="w-full rounded border border-neutral-300 px-3 py-2 focus:border-brand-groen focus:outline-none"
+                    />
+                  </div>
+                </div>
+              </>
+            )}
+
             <div>
-              <label htmlFor="naam" className="mb-1 block text-sm font-medium text-brand-zwart">
-                Naam *
+              <label htmlFor="email" className="mb-1 block text-sm font-medium text-brand-zwart">
+                E-mailadres *
               </label>
               <input
-                id="naam"
-                type="text"
+                id="email"
+                type="email"
                 required
-                value={naam}
-                onChange={(event) => setNaam(event.target.value)}
-                autoComplete="name"
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+                autoComplete="email"
                 className="w-full rounded border border-neutral-300 px-3 py-2 focus:border-brand-groen focus:outline-none"
               />
             </div>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div>
-                <label htmlFor="bedrijf" className="mb-1 block text-sm font-medium text-brand-zwart">
-                  Bedrijf / vereniging
-                </label>
-                <input
-                  id="bedrijf"
-                  type="text"
-                  value={bedrijf}
-                  onChange={(event) => setBedrijf(event.target.value)}
-                  autoComplete="organization"
-                  className="w-full rounded border border-neutral-300 px-3 py-2 focus:border-brand-groen focus:outline-none"
-                />
-              </div>
-              <div>
-                <label htmlFor="telefoon" className="mb-1 block text-sm font-medium text-brand-zwart">
-                  Telefoonnummer
-                </label>
-                <input
-                  id="telefoon"
-                  type="tel"
-                  value={telefoon}
-                  onChange={(event) => setTelefoon(event.target.value)}
-                  autoComplete="tel"
-                  className="w-full rounded border border-neutral-300 px-3 py-2 focus:border-brand-groen focus:outline-none"
-                />
-              </div>
+
+            <div>
+              <label htmlFor="wachtwoord" className="mb-1 block text-sm font-medium text-brand-zwart">
+                Wachtwoord *
+              </label>
+              <input
+                id="wachtwoord"
+                type="password"
+                required
+                minLength={8}
+                value={wachtwoord}
+                onChange={(event) => setWachtwoord(event.target.value)}
+                autoComplete={modus === "inloggen" ? "current-password" : "new-password"}
+                className="w-full rounded border border-neutral-300 px-3 py-2 focus:border-brand-groen focus:outline-none"
+              />
             </div>
-          </>
-        )}
 
-        <div>
-          <label htmlFor="email" className="mb-1 block text-sm font-medium text-brand-zwart">
-            E-mailadres *
-          </label>
-          <input
-            id="email"
-            type="email"
-            required
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-            autoComplete="email"
-            className="w-full rounded border border-neutral-300 px-3 py-2 focus:border-brand-groen focus:outline-none"
-          />
-        </div>
+            {foutmelding && (
+              <p className="rounded border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700">{foutmelding}</p>
+            )}
+            {modus === "inloggen" && geblokkeerd && (
+              <p className="rounded border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-700">
+                Te veel mislukte pogingen. Probeer het over {resterendeSeconden} seconden opnieuw.
+              </p>
+            )}
 
-        <div>
-          <label htmlFor="wachtwoord" className="mb-1 block text-sm font-medium text-brand-zwart">
-            Wachtwoord *
-          </label>
-          <input
-            id="wachtwoord"
-            type="password"
-            required
-            minLength={8}
-            value={wachtwoord}
-            onChange={(event) => setWachtwoord(event.target.value)}
-            autoComplete={modus === "inloggen" ? "current-password" : "new-password"}
-            className="w-full rounded border border-neutral-300 px-3 py-2 focus:border-brand-groen focus:outline-none"
-          />
-        </div>
-
-        {foutmelding && (
-          <p className="rounded border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700">{foutmelding}</p>
-        )}
-        {modus === "inloggen" && geblokkeerd && (
-          <p className="rounded border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-700">
-            Te veel mislukte pogingen. Probeer het over {resterendeSeconden} seconden opnieuw.
-          </p>
-        )}
-
-        {/* Geen vaste 0x0-afmeting meer: bij widget-mode "Managed" (zie Cloudflare-dashboard) kan
-            Cloudflare hier soms een zichtbare checkbox tonen aan een verdachte bezoeker -- een
-            vast dichtgeknepen vakje zou die dan onbruikbaar maken. Vlak boven de verstuurknop,
-            zodat 'm niemand mist als Cloudflare toch een interactieve check nodig vindt. */}
-        <div id="klantTurnstile" className="flex justify-center empty:hidden" />
-
-        <button
-          type="submit"
-          disabled={bezig || (modus === "inloggen" && geblokkeerd)}
-          className="w-full rounded bg-brand-groen-donker px-4 py-2 font-medium text-white hover:opacity-90 disabled:opacity-50"
-        >
-          {bezig ? "Bezig..." : modus === "inloggen" ? "Inloggen" : "Account aanmaken"}
-        </button>
-
-        {modus === "account_aanmaken" && (
-          <p className="text-center text-xs text-neutral-500">
-            Met een account aanmaken ga je akkoord met ons{" "}
-            <a
-              href="/privacybeleid"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="underline hover:text-brand-groen"
+            <button
+              type="submit"
+              disabled={bezig || (modus === "inloggen" && geblokkeerd)}
+              className="w-full rounded bg-brand-groen-donker px-4 py-2 font-medium text-white hover:opacity-90 disabled:opacity-50"
             >
-              privacybeleid
-            </a>
-            .
-          </p>
-        )}
-      </form>
+              {bezig ? "Bezig..." : modus === "inloggen" ? "Inloggen" : "Account aanmaken"}
+            </button>
 
-      {vasteModus === "inloggen" && (
-        <p className="mt-4 text-center text-sm text-neutral-600">
-          Nog geen account?{" "}
-          <a href="/account-aanmaken" className="font-medium text-brand-groen-donker underline">
-            Account aanmaken
-          </a>
-        </p>
-      )}
-      {vasteModus === "account_aanmaken" && (
-        <p className="mt-4 text-center text-sm text-neutral-600">
-          Al een account?{" "}
-          <a href="/inloggen" className="font-medium text-brand-groen-donker underline">
-            Inloggen
-          </a>
-        </p>
-      )}
-      </>
+            {modus === "account_aanmaken" && (
+              <p className="text-center text-xs text-neutral-500">
+                Met een account aanmaken ga je akkoord met ons{" "}
+                <a
+                  href="/privacybeleid"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline hover:text-brand-groen"
+                >
+                  privacybeleid
+                </a>
+                .
+              </p>
+            )}
+          </form>
+
+          {vasteModus === "inloggen" && (
+            <p className="mt-4 text-center text-sm text-neutral-600">
+              Nog geen account?{" "}
+              <a href="/account-aanmaken" className="font-medium text-brand-groen-donker underline">
+                Account aanmaken
+              </a>
+            </p>
+          )}
+          {vasteModus === "account_aanmaken" && (
+            <p className="mt-4 text-center text-sm text-neutral-600">
+              Al een account?{" "}
+              <a href="/inloggen" className="font-medium text-brand-groen-donker underline">
+                Inloggen
+              </a>
+            </p>
+          )}
+        </>
       )}
     </div>
   );

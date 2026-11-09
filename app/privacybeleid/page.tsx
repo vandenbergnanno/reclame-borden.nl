@@ -75,28 +75,6 @@ export default function PrivacybeleidPagina({
             <strong>Vercel</strong> — host deze website.
           </li>
           <li>
-            <strong>Cloudflare Turnstile</strong> — een korte controle die bots tegenhoudt bij het
-            versturen van formulieren en bij in- en registreren. Zie Cloudflare&apos;s{" "}
-            <a
-              href="https://www.cloudflare.com/turnstile-privacy-policy/"
-              className="text-brand-groen-donker underline"
-              target="_blank"
-              rel="noreferrer"
-            >
-              Turnstile Privacy Addendum
-            </a>{" "}
-            en{" "}
-            <a
-              href="https://www.cloudflare.com/privacypolicy/"
-              className="text-brand-groen-donker underline"
-              target="_blank"
-              rel="noreferrer"
-            >
-              Privacybeleid
-            </a>
-            .
-          </li>
-          <li>
             <strong>Resend</strong> — voor het versturen van e-mails over je aanvraag (bijv. als je
             conceptontwerp klaar is).
           </li>

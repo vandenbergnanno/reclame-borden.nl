@@ -1,7 +1,6 @@
 <!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
 <title>Reclamebord-maker reclame-borden.nl</title>
 <script>
-  window.TURNSTILE_SITE_KEY = "__TURNSTILE_SITE_KEY__";
   // Leeg (lege string) = gewone nieuwe aanvraag. Anders: de klant past een al ingediende, nog
   // "nieuw"-status aanvraag aan (zie app/aanvraag/route.ts en app/api/aanvragen/[id]/klant-
   // bewerken/route.ts) -- BEWERK_DATA is dan het eerder opgeslagen ontwerp + bezorg-/opmerking-
@@ -10,7 +9,6 @@
   window.BEWERK_AANVRAAG_ID = "__BEWERK_AANVRAAG_ID__";
   window.BEWERK_DATA = __BEWERK_DATA_JSON__;
 </script>
-<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" defer></script>
 <style>
   :root{
     --groen:#5FB238; --groen-d:#4b9a2a; --oranje:#E8792A; --oranje-d:#cf6418;
@@ -488,7 +486,6 @@
 
 <dialog class="aanvraag" id="aanvraag">
   <form id="aanvraagForm" novalidate>
-    <div id="turnstileContainer" style="display:flex;justify-content:center;margin-bottom:8px"></div>
     <h2 id="aanvraagTitel">Aanvraag versturen</h2>
     <p class="hint" id="aanvraagIntro">Je ontwerp gaat naar reclame-borden.nl. Je krijgt altijd eerst een drukproef om goed te keuren. Pas daarna maken we je bord.</p>
     <div class="controle" id="controleBlok">
@@ -4604,38 +4601,7 @@ function maakQrLib(){var t=function(){var t=function(t,r){var e=t,n=g[r],o=null,
   // doorOns = de klant wil dat wij het ontwerp maken (ontwerpservice): dan is een leeg bord of een schets ook goed
   let doorOns = false;
   const bordLeeg = () => !achtergrondFoto && !(andereKant && andereKant.achtergrondFoto) && !alleItems().some(i => (i.type !== 'plek' || i.bron) && !(i.type === 'tekst' && !i.tekst.trim()));
-  // Onzichtbare bot-check (Cloudflare Turnstile): we starten 'm zodra het venster opengaat, zodat
-  // er genoeg tijd is voordat de klant op "Versturen" klikt. Zonder site-key (nog niet ingesteld
-  // via TURNSTILE_SITE_KEY in .env) doet dit niets -- de server accepteert dan ook geen/elk token
-  // niet, zie app/api/aanvragen/ontwerp/route.ts.
-  let turnstileToken = '', turnstileWidgetId = null, turnstilePogingen = 0;
-  function laadTurnstile(){
-    if (!window.TURNSTILE_SITE_KEY || turnstileWidgetId !== null) return;
-    if (!window.turnstile){
-      if (turnstilePogingen++ < 20) setTimeout(laadTurnstile, 250);   // script nog aan het laden
-      return;
-    }
-    turnstileWidgetId = window.turnstile.render('#turnstileContainer', {
-      sitekey: window.TURNSTILE_SITE_KEY,
-      // Geen `size` meegeven: "invisible" is geen geldige waarde voor dat veld (de widget-api
-      // gooit er anders een fout op) -- of de widget onzichtbaar is, hangt af van het widget-type
-      // (Managed/Non-Interactive/Invisible) dat bij deze sitekey hoort in het Cloudflare-dashboard.
-      callback: t => { turnstileToken = t; },
-      'error-callback': () => { turnstileToken = ''; },
-      'expired-callback': () => { turnstileToken = ''; if (turnstileWidgetId !== null) window.turnstile.reset(turnstileWidgetId); }
-    });
-  }
-  // Lost op dat de EERSTE verstuurpoging anders altijd afgewezen kon worden: zonder dit wachten
-  // werd turnstileToken synchroon gelezen op het moment van versturen, en was die bij een snelle
-  // klik nog leeg (Cloudflare genereert 'm pas een fractie later, asynchroon via de callback
-  // hierboven). Alleen als het token nog leeg is wachten we hier tot 4s in stapjes van 100ms.
-  async function wachtOpTurnstileToken(){
-    if (!window.TURNSTILE_SITE_KEY) return '';
-    for (let i = 0; i < 40 && !turnstileToken; i++) await new Promise(r => setTimeout(r, 100));
-    return turnstileToken;
-  }
   function openAanvraag(metService){
-    laadTurnstile();
     doorOns = !!metService;
     $('aanvraagTitel').textContent = doorOns ? 'Laat ons het ontwerp maken' : 'Aanvraag versturen';
     $('aanvraagIntro').textContent = doorOns
@@ -4938,7 +4904,6 @@ function maakQrLib(){var t=function(){var t=function(t,r){var e=t,n=g[r],o=null,
       fd.set('hergebruik', $('fHergebruik').checked ? 'ja' : 'nee');
       if (!$('fBezorgen').checked){ fd.delete('straat'); fd.delete('postcode'); fd.delete('plaats'); }
       fd.append('formaat', (Math.round(enkelB())/10) + ' x ' + (Math.round(bord.h)/10) + ' cm');     // de maat van één bord
-      fd.append('cf_turnstile_token', await wachtOpTurnstileToken());   // leeg als Turnstile ook na het wachten niet klaar is; de server beslist wat daarmee gebeurt
       if (bordDelen === 2) fd.append('delen', '2');
       if (andereKant){ fd.set('bedrukking', 'Dubbelzijdig'); fd.append('achterkant', 'ja'); }   // (de keuzelijst staat dan vast, en telt dan niet mee)
       fd.append('lege_logoplek', opBeideKanten(legePlekken).length ? 'ja' : 'nee');

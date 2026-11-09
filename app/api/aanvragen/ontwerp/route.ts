@@ -2,7 +2,6 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { analyzeRequest } from "@/lib/ai/analyzeRequest";
 import { controleerAfmetingBeschikbaarheid } from "@/lib/ai/controleerAfmetingBeschikbaarheid";
 import { checkRateLimit, clientIp } from "@/lib/security/rateLimit";
-import { verifieerTurnstile } from "@/lib/security/turnstile";
 import { logServerFout, GENERIEKE_SERVERFOUT } from "@/lib/security/serverFout";
 import type { BordAanschaf, OverigBestand } from "@/lib/types/domain";
 
@@ -83,10 +82,6 @@ export async function POST(request: Request) {
   // het script niet dat de honeypot is gevonden.
   if (tekst(formData, "website") !== "") {
     return Response.json({ ok: true });
-  }
-
-  if (!(await verifieerTurnstile(tekst(formData, "cf_turnstile_token"), clientIp(request), "ontwerp"))) {
-    return fout("We konden niet controleren of je geen geautomatiseerd script bent. Laad de pagina opnieuw en probeer het nogmaals.", 403);
   }
 
   const bordnaam = tekst(formData, "bordnaam");

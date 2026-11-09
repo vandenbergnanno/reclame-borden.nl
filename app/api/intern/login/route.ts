@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { INTERN_SESSIE_COOKIE, INTERN_SESSIE_MAX_LEEFTIJD_SECONDEN } from "@/lib/auth/internSessie";
 import { checkRateLimit, clientIp, teVeelPogingenResponse } from "@/lib/security/rateLimit";
-import { verifieerTurnstile } from "@/lib/security/turnstile";
 
 // Het wachtwoord is gedeeld en dus een vast doelwit voor brute-force — maximaal 5 pogingen per
 // 15 minuten per IP, los van of het wachtwoord klopte.
@@ -38,19 +37,11 @@ export async function POST(request: Request) {
     );
   }
 
-  let body: { wachtwoord?: unknown; cf_turnstile_token?: unknown };
+  let body: { wachtwoord?: unknown };
   try {
     body = await request.json();
   } catch {
     return NextResponse.json({ ok: false, error: "Ongeldig verzoek." }, { status: 400 });
-  }
-
-  const captchaToken = typeof body.cf_turnstile_token === "string" ? body.cf_turnstile_token : "";
-  if (!(await verifieerTurnstile(captchaToken, clientIp(request), "intern-login"))) {
-    return NextResponse.json(
-      { ok: false, error: "We konden niet controleren of je geen geautomatiseerd script bent. Laad de pagina opnieuw en probeer het nogmaals." },
-      { status: 403 }
-    );
   }
 
   if (typeof body.wachtwoord !== "string" || body.wachtwoord !== verwachtWachtwoord) {

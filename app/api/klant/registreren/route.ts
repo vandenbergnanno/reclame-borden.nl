@@ -1,13 +1,11 @@
 import { NextResponse } from "next/server";
 import { createServerAuthClient } from "@/lib/supabase/serverAuth";
 import { checkRateLimit, clientIp, teVeelPogingenResponse } from "@/lib/security/rateLimit";
-import { verifieerTurnstile } from "@/lib/security/turnstile";
 
 // Account aanmaken ging voorheen rechtstreeks vanuit de browser naar Supabase
 // (`supabase.auth.signUp`, zie app/inloggen/KlantLoginForm.tsx) net als klant-inloggen dat deed --
-// zelfde reden om deze route ertussen te zetten, zie app/api/klant/login/route.ts. Nu /api/klant/
-// login zelf Turnstile verifieert (en dus Supabase's eigen "Enable Captcha protection"-instelling
-// UIT moet staan, zie daar), zou signUp zonder deze route helemaal geen bot-check meer hebben.
+// zelfde reden om deze route ertussen te zetten, zie app/api/klant/login/route.ts (eigen rate
+// limiting, geen Turnstile meer).
 const MAX_POGINGEN = 5;
 const VENSTER_MS = 15 * 60 * 1000;
 
@@ -18,7 +16,7 @@ export async function POST(request: Request) {
     return teVeelPogingenResponse(ipRateLimit);
   }
 
-  let body: { email?: unknown; wachtwoord?: unknown; cf_turnstile_token?: unknown; emailRedirectTo?: unknown };
+  let body: { email?: unknown; wachtwoord?: unknown; emailRedirectTo?: unknown };
   try {
     body = await request.json();
   } catch {
@@ -39,14 +37,6 @@ export async function POST(request: Request) {
   );
   if (!emailRateLimit.toegestaan) {
     return teVeelPogingenResponse(emailRateLimit);
-  }
-
-  const captchaToken = typeof body.cf_turnstile_token === "string" ? body.cf_turnstile_token : "";
-  if (!(await verifieerTurnstile(captchaToken, ip, "klant-registreren"))) {
-    return NextResponse.json(
-      { ok: false, error: "We konden niet controleren of je geen geautomatiseerd script bent. Laad de pagina opnieuw en probeer het nogmaals." },
-      { status: 403 }
-    );
   }
 
   let supabase: ReturnType<typeof createServerAuthClient>;

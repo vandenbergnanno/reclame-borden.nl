@@ -12,12 +12,6 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 // AANVRAAG_URL staat in het bestand zelf op "/api/aanvragen/ontwerp" -- de tool stuurt een
 // aanvraag dus echt naar die route (geen testmodus meer).
 //
-// De enige server-kant bemoeienis hier is het invullen van de publieke Turnstile-sitekey (zie
-// NEXT_PUBLIC_TURNSTILE_SITE_KEY in .env.example): die staat in het HTML-bestand zelf als
-// placeholder, omdat het bestand verder letterlijk/statisch wordt geserveerd en dus geen eigen
-// manier heeft om env-variabelen te lezen. Zonder ingevulde sitekey blijft de placeholder leeg,
-// en doet de Turnstile-widget in de tool niets (zie laadTurnstile() daar) -- de server-kant
-// check in /api/aanvragen/ontwerp accepteert dan ook alles, zolang TURNSTILE_SECRET_KEY óók leeg is.
 // De ontwerptool is alleen voor klanten met een account: zonder dat zou iemand een bord kunnen
 // ontwerpen en versturen zonder dat wij weten van wie het is, en zonder dat de klant het later op
 // /mijn-borden kan terugzien. Geen sessie? Dan naar /account-aanmaken (niet /inloggen) -- wie hier
@@ -89,7 +83,6 @@ export async function GET(request: Request) {
 
   const html = await readFile(path.join(process.cwd(), "lib/ontwerptool/reclamebord-maker.html"), "utf-8");
   const metGegevens = html
-    .replace("__TURNSTILE_SITE_KEY__", process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? "")
     .replace("__KLANT_NAAM__", escapeHtmlAttribuut(klant?.naam ?? ""))
     .replace("__KLANT_BEDRIJF__", escapeHtmlAttribuut(klant?.bedrijf ?? ""))
     .replace("__KLANT_EMAIL__", escapeHtmlAttribuut(data.user.email ?? ""))
