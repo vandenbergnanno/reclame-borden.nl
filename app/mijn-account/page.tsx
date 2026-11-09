@@ -47,14 +47,19 @@ export default async function MijnAccountPagina() {
     <div className="space-y-6">
       <h1 className="text-2xl font-semibold text-brand-zwart">Mijn account</h1>
 
-      <dl className="divide-y divide-neutral-200 rounded-xl border border-neutral-200 bg-white">
-        <Rij label="Naam" waarde={klant?.naam} />
-        <Rij label="Bedrijf / vereniging" waarde={klant?.bedrijf} />
-        <Rij label="E-mail" waarde={user.email} />
-        <Rij label="Telefoon" waarde={klant?.telefoon} />
-      </dl>
+      <div className="rounded-2xl border border-neutral-200 bg-white p-6">
+        <div className="grid gap-5 sm:grid-cols-2">
+          <Veld label="Naam" waarde={klant?.naam} />
+          <Veld label="Bedrijf / vereniging" waarde={klant?.bedrijf} />
+          <Veld label="E-mail" waarde={user.email} />
+          <Veld label="Telefoon" waarde={klant?.telefoon} />
+        </div>
+      </div>
 
-      <a href="/mijn-borden" className="inline-block text-sm font-medium text-brand-groen-donker hover:underline">
+      <a
+        href="/mijn-borden"
+        className="inline-block rounded-full bg-brand-groen-donker px-5 py-2.5 text-sm font-medium text-white shadow-sm transition hover:opacity-90"
+      >
         Bekijk mijn bestelde borden →
       </a>
 
@@ -65,11 +70,11 @@ export default async function MijnAccountPagina() {
   );
 }
 
-function Rij({ label, waarde }: { label: string; waarde?: string | null }) {
+function Veld({ label, waarde }: { label: string; waarde?: string | null }) {
   return (
-    <div className="flex items-center justify-between gap-4 px-5 py-3 text-sm">
-      <dt className="text-neutral-500">{label}</dt>
-      <dd className="text-brand-zwart">{waarde || "—"}</dd>
+    <div>
+      <dt className="text-xs font-medium uppercase tracking-wide text-neutral-500">{label}</dt>
+      <dd className="mt-1 text-brand-zwart">{waarde || "—"}</dd>
     </div>
   );
 }

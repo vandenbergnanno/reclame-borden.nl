@@ -1,6 +1,14 @@
 import type { ReactNode } from "react";
+import { redirect } from "next/navigation";
 import { MediaPlaceholder } from "@/components/MediaPlaceholder";
+import { createServerAuthClient } from "@/lib/supabase/serverAuth";
+import { isSupabaseAuthGeconfigureerd } from "@/lib/supabase/server";
 import { VERTROUWEN, HOMEPAGE_MEDIA, PRIJZEN, LEVERTIJD } from "@/lib/constants/brand";
+
+// Leest de sessie via cookies() (zie lib/supabase/serverAuth.ts) -- zonder dit zou Next.js deze
+// pagina bij het bouwen kunnen proberen te prerenderen, wat die aanroep nooit zou bereiken.
+// Hetzelfde patroon als app/mijn-borden/page.tsx.
+export const dynamic = "force-dynamic";
 
 const STAPPEN = [
   {
@@ -52,11 +60,21 @@ const FORMATEN = [
   { naam: "244 × 61 cm", breedte: 244, hoogte: 61 },
 ];
 
-export default function HomePage({
+export default async function HomePage({
   searchParams,
 }: {
   searchParams: { [key: string]: string | string[] | undefined };
 }) {
+  // Een ingelogde klant hoort hier nooit te komen -- rechtstreeks naar zijn eigen borden, zo kan
+  // de header op deze pagina altijd gewoon de uitgelogde variant blijven tonen (zie SiteHeader.tsx).
+  if (isSupabaseAuthGeconfigureerd()) {
+    const supabase = createServerAuthClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (user) redirect("/mijn-borden");
+  }
+
   // Placeholders ("[FOTO: ...]", "[PRIJS VANAF]", enz.) horen nooit op de live site te staan --
   // alleen in development, of met ?preview=1 erbij, zodat je zelf kunt zien waar ontbrekende
   // content straks komt te staan zonder dat een willekeurige bezoeker een kaal "[...]" ziet.

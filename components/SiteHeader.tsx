@@ -68,11 +68,11 @@ export function SiteHeader() {
         </a>
         {!opToegangspagina && (
           <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-brand-zwart sm:gap-4 sm:text-sm">
-            <a href="/aanvraag" className="whitespace-nowrap hover:text-brand-groen">
-              Nieuwe aanvraag
-            </a>
             {ingelogd ? (
               <>
+                <a href="/aanvraag" className="whitespace-nowrap hover:text-brand-groen">
+                  Nieuwe aanvraag
+                </a>
                 <a href="/mijn-borden" className="whitespace-nowrap hover:text-brand-groen">
                   Mijn borden
                 </a>
@@ -85,9 +85,14 @@ export function SiteHeader() {
                 </button>
               </>
             ) : (
-              <a href="/inloggen" className="whitespace-nowrap hover:text-brand-groen">
-                Inloggen
-              </a>
+              <>
+                <a href="/inloggen" className="whitespace-nowrap hover:text-brand-groen">
+                  Inloggen
+                </a>
+                <a href="/account-aanmaken" className="whitespace-nowrap hover:text-brand-groen">
+                  Account aanmaken
+                </a>
+              </>
             )}
           </div>
         )}
