@@ -17,6 +17,9 @@ export function SiteHeader() {
   const [email, setEmail] = useState<string | null>(null);
   const ingelogd = email !== null;
 
+  // Eén keer abonneren op sessiewijzigingen (inloggen/uitloggen terwijl deze header gemonteerd
+  // blijft -- die blijft namelijk bestaan over client-side navigaties heen, dat is nu juist het nut
+  // van een layout-component).
   useEffect(() => {
     let actief = true;
     let supabase: ReturnType<typeof createBrowserSupabaseClient>;
@@ -25,9 +28,6 @@ export function SiteHeader() {
     } catch {
       return; // Supabase nog niet geconfigureerd (zie .env.example) -- dan blijft het gewoon "Inloggen"
     }
-    supabase.auth.getSession().then(({ data }) => {
-      if (actief) setEmail(data.session?.user.email ?? null);
-    });
     const { data: subscriptie } = supabase.auth.onAuthStateChange((_event, session) => {
       if (actief) setEmail(session?.user.email ?? null);
     });
@@ -36,6 +36,29 @@ export function SiteHeader() {
       subscriptie.subscription.unsubscribe();
     };
   }, []);
+
+  // Extra, op de pathname: na het bevestigen van een e-mailadres (via de link in de mail) komt de
+  // sessie soms net iets later tot stand dan dit moment van mounten -- de onAuthStateChange-events
+  // hierboven worden dan uitgezonden vlak vóór deze header zich abonneert, en worden dus gemist (een
+  // eenmalig event, niet opnieuw afgespeeld voor late abonnees). Zonder dit bleef de header na zo'n
+  // automatische login-redirect naar /mijn-borden "Inloggen"/"Account aanmaken" tonen, terwijl de
+  // pagina zelf (die de sessie server-side, vers per request, controleert) wél al "ingelogd" liet
+  // zien. Een expliciete her-check bij elke routewisseling corrigeert dat vanzelf.
+  useEffect(() => {
+    let actief = true;
+    let supabase: ReturnType<typeof createBrowserSupabaseClient>;
+    try {
+      supabase = createBrowserSupabaseClient();
+    } catch {
+      return;
+    }
+    supabase.auth.getSession().then(({ data }) => {
+      if (actief) setEmail(data.session?.user.email ?? null);
+    });
+    return () => {
+      actief = false;
+    };
+  }, [pathname]);
 
   async function uitloggen() {
     try {

@@ -101,7 +101,12 @@ export function KlantLoginForm({ vasteModus }: { vasteModus?: Modus } = {}) {
   const [wachtwoord, setWachtwoord] = useState("");
   const [bezig, setBezig] = useState(false);
   const [foutmelding, setFoutmelding] = useState<string | null>(null);
-  const [melding, setMelding] = useState<string | null>(null);
+  // true zodra signup gelukt is maar er nog op e-mailbevestiging gewacht wordt (zie hieronder) --
+  // vervangt dan de hele formulierweergave door een opgeruimd "check je e-mail"-scherm. Eerder liet
+  // dit alleen een tekstregel BOVEN het volledig ingevulde, nog steeds actieve formulier zien (met
+  // een net-gereset, weer leeg Turnstile-vinkje): dat voelde onaf/verwarrend, alsof er nog iets
+  // moest gebeuren terwijl het account al was aangemaakt.
+  const [wachtOpBevestiging, setWachtOpBevestiging] = useState(false);
   const [geblokkeerdTot, setGeblokkeerdTot] = useState(0);
   const [resterendeSeconden, setResterendeSeconden] = useState(0);
 
@@ -191,7 +196,6 @@ export function KlantLoginForm({ vasteModus }: { vasteModus?: Modus } = {}) {
 
     setBezig(true);
     setFoutmelding(null);
-    setMelding(null);
 
     const captchaToken = await haalToken(!!TURNSTILE_SITE_KEY);
 
@@ -260,7 +264,7 @@ export function KlantLoginForm({ vasteModus }: { vasteModus?: Modus } = {}) {
         // inloggen-tak hierboven). Bewaar naam/bedrijf/telefoon vast, zodat die eerste koppeling
         // dan nog steeds een klantenrij kan aanmaken in plaats van op een lege naam te stranden.
         schrijfWachtendeSignup(email, naam, bedrijf, telefoon);
-        setMelding("Check je e-mail om je account te bevestigen. Daarna kun je hier inloggen.");
+        setWachtOpBevestiging(true);
         setBezig(false);
         return;
       }
@@ -288,18 +292,33 @@ export function KlantLoginForm({ vasteModus }: { vasteModus?: Modus } = {}) {
       {TURNSTILE_SITE_KEY && (
         <Script src="https://challenges.cloudflare.com/turnstile/v0/api.js" strategy="afterInteractive" onLoad={laadTurnstile} />
       )}
+
+      {wachtOpBevestiging ? (
+        <div className="space-y-4">
+          <p className="rounded border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-700">
+            Check je e-mail om je account te bevestigen. Daarna kun je hier inloggen.
+          </p>
+          <a
+            href="/inloggen"
+            className="inline-block rounded bg-brand-groen-donker px-4 py-2 text-sm font-medium text-white hover:opacity-90"
+          >
+            Naar inloggen
+          </a>
+        </div>
+      ) : (
+      <>
       {!vasteModus && (
         <div className="mb-4 flex gap-1 rounded-lg bg-neutral-100 p-1 text-sm font-medium">
           <button
             type="button"
-            onClick={() => { setModus("inloggen"); setFoutmelding(null); setMelding(null); }}
+            onClick={() => { setModus("inloggen"); setFoutmelding(null); }}
             className={`flex-1 rounded-md px-3 py-1.5 transition ${modus === "inloggen" ? "bg-white text-brand-zwart shadow-sm" : "text-neutral-500"}`}
           >
             Inloggen
           </button>
           <button
             type="button"
-            onClick={() => { setModus("account_aanmaken"); setFoutmelding(null); setMelding(null); }}
+            onClick={() => { setModus("account_aanmaken"); setFoutmelding(null); }}
             className={`flex-1 rounded-md px-3 py-1.5 transition ${modus === "account_aanmaken" ? "bg-white text-brand-zwart shadow-sm" : "text-neutral-500"}`}
           >
             Account aanmaken
@@ -386,9 +405,6 @@ export function KlantLoginForm({ vasteModus }: { vasteModus?: Modus } = {}) {
           />
         </div>
 
-        {melding && (
-          <p className="rounded border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-700">{melding}</p>
-        )}
         {foutmelding && (
           <p className="rounded border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700">{foutmelding}</p>
         )}
@@ -443,6 +459,8 @@ export function KlantLoginForm({ vasteModus }: { vasteModus?: Modus } = {}) {
             Inloggen
           </a>
         </p>
+      )}
+      </>
       )}
     </div>
   );
