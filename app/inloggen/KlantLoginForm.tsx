@@ -5,15 +5,7 @@ import { useRouter } from "next/navigation";
 import Script from "next/script";
 import { createBrowserSupabaseClient } from "@/lib/supabase/browserClient";
 import { veiligPad } from "@/lib/security/veiligPad";
-
-declare global {
-  interface Window {
-    turnstile?: {
-      render: (container: string | Element, options: Record<string, unknown>) => string;
-      reset: (widgetId: string) => void;
-    };
-  }
-}
+import { useTurnstile } from "@/lib/security/useTurnstile";
 
 type Modus = "inloggen" | "account_aanmaken";
 
@@ -164,30 +156,16 @@ export function KlantLoginForm({ vasteModus }: { vasteModus?: Modus } = {}) {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- alleen bij het laden van de pagina checken
   }, []);
 
-  // Onzichtbare Turnstile-widget: één keer renderen zodra het script geladen is, en na elke
-  // poging resetten (een Supabase-captchaToken is maar één keer bruikbaar) zodat er voor de
-  // volgende poging weer een vers token klaarstaat.
-  const turnstileWidgetId = useRef<string | null>(null);
-  const turnstileToken = useRef("");
+  // Onzichtbare Turnstile-widget: één keer renderen zodra het script geladen is. Geen `size`
+  // meegeven: "invisible" is geen geldige waarde voor dat veld (de widget-api gooit er anders een
+  // fout op) -- of de widget onzichtbaar is, hangt af van het widget-type (Managed/Non-
+  // Interactive/Invisible) dat bij deze sitekey hoort in het Cloudflare-dashboard.
+  // "interaction-only": de widget blijft onzichtbaar tenzij Cloudflare een interactieve check
+  // nodig vindt -- de managed-modus die het dashboard zelf ook aanbiedt, maar hier expliciet
+  // code-side afgedwongen in plaats van afhankelijk van een dashboard-instelling.
+  const { laad, haalToken } = useTurnstile("klantTurnstile", { theme: "light", appearance: "interaction-only" });
   function laadTurnstile() {
-    if (!TURNSTILE_SITE_KEY || turnstileWidgetId.current !== null || !window.turnstile) return;
-    turnstileWidgetId.current = window.turnstile.render("#klantTurnstile", {
-      sitekey: TURNSTILE_SITE_KEY,
-      // Geen `size` meegeven: "invisible" is geen geldige waarde voor dat veld (de widget-api
-      // gooit er anders een fout op) -- of de widget onzichtbaar is, hangt af van het widget-type
-      // (Managed/Non-Interactive/Invisible) dat bij deze sitekey hoort in het Cloudflare-dashboard.
-      theme: "light",
-      // "interaction-only": de widget blijft onzichtbaar tenzij Cloudflare een interactieve check
-      // nodig vindt -- de managed-modus die het dashboard zelf ook aanbiedt, maar hier expliciet
-      // code-side afgedwongen in plaats van afhankelijk van een dashboard-instelling.
-      appearance: "interaction-only",
-      callback: (token: string) => { turnstileToken.current = token; },
-      "error-callback": () => { turnstileToken.current = ""; },
-      "expired-callback": () => {
-        turnstileToken.current = "";
-        if (turnstileWidgetId.current !== null) window.turnstile?.reset(turnstileWidgetId.current);
-      },
-    });
+    laad(TURNSTILE_SITE_KEY);
   }
 
   useEffect(() => {
@@ -215,12 +193,7 @@ export function KlantLoginForm({ vasteModus }: { vasteModus?: Modus } = {}) {
     setFoutmelding(null);
     setMelding(null);
 
-    // Elk token is maar één keer bruikbaar bij Supabase -- na deze poging (ongeacht de uitkomst)
-    // alvast resetten, zodat er een vers token klaarstaat tegen de tijd dat de klant opnieuw
-    // probeert. Zonder site key is widgetId nooit gezet en doet dit niets.
-    const captchaToken = turnstileToken.current || undefined;
-    if (turnstileWidgetId.current !== null) window.turnstile?.reset(turnstileWidgetId.current);
-    turnstileToken.current = "";
+    const captchaToken = await haalToken(!!TURNSTILE_SITE_KEY);
 
     try {
       if (modus === "inloggen") {

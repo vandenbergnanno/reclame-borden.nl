@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { createServerAuthClient } from "@/lib/supabase/serverAuth";
 import { isSupabaseAuthGeconfigureerd } from "@/lib/supabase/server";
 import { AccountActies } from "./AccountActies";
+import { AccountGegevensBewerken } from "./AccountGegevensBewerken";
 
 export const metadata: Metadata = {
   title: "Mijn account — reclame-borden.nl",
@@ -48,12 +49,12 @@ export default async function MijnAccountPagina() {
       <h1 className="text-2xl font-semibold text-brand-zwart">Mijn account</h1>
 
       <div className="rounded-2xl border border-neutral-200 bg-white p-6">
-        <div className="grid gap-5 sm:grid-cols-2">
-          <Veld label="Naam" waarde={klant?.naam} />
-          <Veld label="Bedrijf / vereniging" waarde={klant?.bedrijf} />
-          <Veld label="E-mail" waarde={user.email} />
-          <Veld label="Telefoon" waarde={klant?.telefoon} />
-        </div>
+        <AccountGegevensBewerken
+          naam={klant?.naam ?? ""}
+          bedrijf={klant?.bedrijf ?? null}
+          telefoon={klant?.telefoon ?? null}
+          email={user.email ?? ""}
+        />
       </div>
 
       <a
@@ -66,15 +67,6 @@ export default async function MijnAccountPagina() {
       <div className="border-t border-neutral-100 pt-4">
         <AccountActies />
       </div>
-    </div>
-  );
-}
-
-function Veld({ label, waarde }: { label: string; waarde?: string | null }) {
-  return (
-    <div>
-      <dt className="text-xs font-medium uppercase tracking-wide text-neutral-500">{label}</dt>
-      <dd className="mt-1 text-brand-zwart">{waarde || "—"}</dd>
     </div>
   );
 }

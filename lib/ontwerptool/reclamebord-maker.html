@@ -4627,6 +4627,15 @@ function maakQrLib(){var t=function(){var t=function(t,r){var e=t,n=g[r],o=null,
       'expired-callback': () => { turnstileToken = ''; if (turnstileWidgetId !== null) window.turnstile.reset(turnstileWidgetId); }
     });
   }
+  // Lost op dat de EERSTE verstuurpoging anders altijd afgewezen kon worden: zonder dit wachten
+  // werd turnstileToken synchroon gelezen op het moment van versturen, en was die bij een snelle
+  // klik nog leeg (Cloudflare genereert 'm pas een fractie later, asynchroon via de callback
+  // hierboven). Alleen als het token nog leeg is wachten we hier tot 4s in stapjes van 100ms.
+  async function wachtOpTurnstileToken(){
+    if (!window.TURNSTILE_SITE_KEY) return '';
+    for (let i = 0; i < 40 && !turnstileToken; i++) await new Promise(r => setTimeout(r, 100));
+    return turnstileToken;
+  }
   function openAanvraag(metService){
     laadTurnstile();
     doorOns = !!metService;
@@ -4931,7 +4940,7 @@ function maakQrLib(){var t=function(){var t=function(t,r){var e=t,n=g[r],o=null,
       fd.set('hergebruik', $('fHergebruik').checked ? 'ja' : 'nee');
       if (!$('fBezorgen').checked){ fd.delete('straat'); fd.delete('postcode'); fd.delete('plaats'); }
       fd.append('formaat', (Math.round(enkelB())/10) + ' x ' + (Math.round(bord.h)/10) + ' cm');     // de maat van één bord
-      fd.append('cf_turnstile_token', turnstileToken);   // leeg als Turnstile niet (meer) klaar is; de server beslist wat daarmee gebeurt
+      fd.append('cf_turnstile_token', await wachtOpTurnstileToken());   // leeg als Turnstile ook na het wachten niet klaar is; de server beslist wat daarmee gebeurt
       if (bordDelen === 2) fd.append('delen', '2');
       if (andereKant){ fd.set('bedrukking', 'Dubbelzijdig'); fd.append('achterkant', 'ja'); }   // (de keuzelijst staat dan vast, en telt dan niet mee)
       fd.append('lege_logoplek', opBeideKanten(legePlekken).length ? 'ja' : 'nee');

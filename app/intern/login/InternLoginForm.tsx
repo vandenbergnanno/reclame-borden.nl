@@ -1,18 +1,10 @@
 "use client";
 
-import { useRef, useState, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import Script from "next/script";
 import { veiligPad } from "@/lib/security/veiligPad";
-
-declare global {
-  interface Window {
-    turnstile?: {
-      render: (container: string | Element, options: Record<string, unknown>) => string;
-      reset: (widgetId: string) => void;
-    };
-  }
-}
+import { useTurnstile } from "@/lib/security/useTurnstile";
 
 // Zelfde opzet als app/inloggen/KlantLoginForm.tsx: een publieke sitekey, mag in de browser.
 // Leeg = CAPTCHA staat (nog) niet aan.
@@ -24,19 +16,9 @@ export function InternLoginForm({ terugNaar }: { terugNaar?: string }) {
   const [foutmelding, setFoutmelding] = useState<string | null>(null);
   const [bezig, setBezig] = useState(false);
 
-  const turnstileWidgetId = useRef<string | null>(null);
-  const turnstileToken = useRef("");
+  const { laad, haalToken } = useTurnstile("internTurnstile");
   function laadTurnstile() {
-    if (!TURNSTILE_SITE_KEY || turnstileWidgetId.current !== null || !window.turnstile) return;
-    turnstileWidgetId.current = window.turnstile.render("#internTurnstile", {
-      sitekey: TURNSTILE_SITE_KEY,
-      callback: (token: string) => { turnstileToken.current = token; },
-      "error-callback": () => { turnstileToken.current = ""; },
-      "expired-callback": () => {
-        turnstileToken.current = "";
-        if (turnstileWidgetId.current !== null) window.turnstile?.reset(turnstileWidgetId.current);
-      },
-    });
+    laad(TURNSTILE_SITE_KEY);
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -44,9 +26,7 @@ export function InternLoginForm({ terugNaar }: { terugNaar?: string }) {
     setBezig(true);
     setFoutmelding(null);
 
-    const captchaToken = turnstileToken.current || undefined;
-    if (turnstileWidgetId.current !== null) window.turnstile?.reset(turnstileWidgetId.current);
-    turnstileToken.current = "";
+    const captchaToken = await haalToken(!!TURNSTILE_SITE_KEY);
 
     try {
       const response = await fetch("/api/intern/login", {
