@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { createServerAuthClient } from "@/lib/supabase/serverAuth";
 import { checkRateLimit, clientIp, teVeelPogingenResponse } from "@/lib/security/rateLimit";
+import { logServerFout } from "@/lib/security/serverFout";
+import { vertaalLoginFout } from "@/lib/security/authFout";
 
 // Klant-inloggen ging voorheen rechtstreeks vanuit de browser naar Supabase
 // (`supabase.auth.signInWithPassword`, zie app/inloggen/KlantLoginForm.tsx) -- dat betekende dat
@@ -61,9 +63,14 @@ export async function POST(request: Request) {
     password: body.wachtwoord,
   });
   if (error) {
+    const { bericht, loggen, nietBevestigd, kanBevestigingOpnieuw } = vertaalLoginFout(error);
+    if (loggen) logServerFout("klant/login: signInWithPassword", error);
+    // 403 (niet 401) voor "nog niet bevestigd": dat is geen fout wachtwoord, en moet dus niet
+    // meetellen voor de client-side pogingen-afremming in KlantLoginForm.tsx (die telt alleen bij
+    // status 401).
     return NextResponse.json(
-      { ok: false, error: error.message === "Invalid login credentials" ? "Onjuist e-mailadres of wachtwoord." : error.message },
-      { status: 401 }
+      { ok: false, error: bericht, kanBevestigingOpnieuw },
+      { status: nietBevestigd ? 403 : 401 }
     );
   }
 

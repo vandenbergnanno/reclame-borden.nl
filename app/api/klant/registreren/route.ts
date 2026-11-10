@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { createServerAuthClient } from "@/lib/supabase/serverAuth";
 import { checkRateLimit, clientIp, teVeelPogingenResponse } from "@/lib/security/rateLimit";
+import { logServerFout } from "@/lib/security/serverFout";
+import { vertaalSignupFout } from "@/lib/security/authFout";
 
 // Account aanmaken ging voorheen rechtstreeks vanuit de browser naar Supabase
 // (`supabase.auth.signUp`, zie app/inloggen/KlantLoginForm.tsx) net als klant-inloggen dat deed --
@@ -55,7 +57,9 @@ export async function POST(request: Request) {
     options: { emailRedirectTo: body.emailRedirectTo },
   });
   if (error) {
-    return NextResponse.json({ ok: false, error: error.message }, { status: 400 });
+    const { bericht, loggen, kanBevestigingOpnieuw } = vertaalSignupFout(error);
+    if (loggen) logServerFout("klant/registreren: signup", error);
+    return NextResponse.json({ ok: false, error: bericht, kanBevestigingOpnieuw }, { status: 400 });
   }
 
   return NextResponse.json({ ok: true, heeftSessie: !!data.session });

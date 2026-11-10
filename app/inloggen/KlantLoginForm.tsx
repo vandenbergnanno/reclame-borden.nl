@@ -93,6 +93,12 @@ export function KlantLoginForm({ vasteModus }: { vasteModus?: Modus } = {}) {
   const [wachtwoord, setWachtwoord] = useState("");
   const [bezig, setBezig] = useState(false);
   const [foutmelding, setFoutmelding] = useState<string | null>(null);
+  // true als de server bij de laatste fout liet weten dat een nieuwe bevestigingsmail zou kunnen
+  // helpen (account bestaat al maar is nog niet bevestigd, of de vorige bevestigingsmail is nooit
+  // aangekomen) -- zie lib/security/authFout.ts.
+  const [kanBevestigingOpnieuw, setKanBevestigingOpnieuw] = useState(false);
+  const [bevestigingBezig, setBevestigingBezig] = useState(false);
+  const [bevestigingVerstuurd, setBevestigingVerstuurd] = useState(false);
   // true zodra signup gelukt is maar er nog op e-mailbevestiging gewacht wordt (zie hieronder) --
   // vervangt dan de hele formulierweergave door een opgeruimd "check je e-mail"-scherm.
   const [wachtOpBevestiging, setWachtOpBevestiging] = useState(false);
@@ -140,6 +146,27 @@ export function KlantLoginForm({ vasteModus }: { vasteModus?: Modus } = {}) {
     router.refresh();
   }
 
+  // Voor zowel "account bestaat al (nog niet bevestigd)" als "mijn bevestigingsmail is nooit
+  // aangekomen" -- zie app/api/klant/bevestiging-opnieuw/route.ts. Geeft altijd dezelfde, neutrale
+  // melding terug, ongeacht of het adres echt bestaat (geen e-mailadressen laten raden).
+  async function stuurBevestigingOpnieuw() {
+    setBevestigingBezig(true);
+    setBevestigingVerstuurd(false);
+    try {
+      await fetch("/api/klant/bevestiging-opnieuw", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+    } catch {
+      // Een mislukte aanroep hier mag niet storender zijn dan gewoon niks laten gebeuren --
+      // de melding hieronder blijft dan simpelweg uit.
+    } finally {
+      setBevestigingBezig(false);
+      setBevestigingVerstuurd(true);
+    }
+  }
+
   // Automatisch verdergaan als er al een sessie is bij het laden van deze pagina -- dat is het
   // geval vlak na het klikken op de bevestigingslink in de e-mail (emailRedirectTo wijst hierheen,
   // zie de signup-tak hieronder): Supabase zet de sessie dan al vanuit de link zelf, dus zonder dit
@@ -181,6 +208,8 @@ export function KlantLoginForm({ vasteModus }: { vasteModus?: Modus } = {}) {
 
     setBezig(true);
     setFoutmelding(null);
+    setKanBevestigingOpnieuw(false);
+    setBevestigingVerstuurd(false);
 
     try {
       if (modus === "inloggen") {
@@ -210,6 +239,7 @@ export function KlantLoginForm({ vasteModus }: { vasteModus?: Modus } = {}) {
               schrijfPogingen(nieuwAantal, 0);
             }
           }
+          setKanBevestigingOpnieuw(!!inlogData.kanBevestigingOpnieuw);
           throw new Error(inlogData.error ?? "Inloggen is mislukt.");
         }
         schrijfPogingen(0, 0);
@@ -235,6 +265,7 @@ export function KlantLoginForm({ vasteModus }: { vasteModus?: Modus } = {}) {
       });
       const registrerenData = await registrerenResponse.json();
       if (!registrerenResponse.ok || !registrerenData.ok) {
+        setKanBevestigingOpnieuw(!!registrerenData.kanBevestigingOpnieuw);
         throw new Error(registrerenData.error ?? "Account aanmaken is mislukt.");
       }
 
@@ -281,6 +312,20 @@ export function KlantLoginForm({ vasteModus }: { vasteModus?: Modus } = {}) {
           >
             Naar inloggen
           </a>
+          <p className="text-sm text-neutral-600">
+            Mail niet ontvangen?{" "}
+            <button
+              type="button"
+              onClick={stuurBevestigingOpnieuw}
+              disabled={bevestigingBezig}
+              className="font-medium text-brand-groen-donker underline disabled:opacity-50"
+            >
+              {bevestigingBezig ? "Bezig..." : "Stuur bevestigingsmail opnieuw"}
+            </button>
+            {bevestigingVerstuurd && !bevestigingBezig && (
+              <span className="ml-2 text-brand-groen-donker">Verstuurd, check je e-mail.</span>
+            )}
+          </p>
         </div>
       ) : (
         <>
@@ -383,7 +428,24 @@ export function KlantLoginForm({ vasteModus }: { vasteModus?: Modus } = {}) {
             </div>
 
             {foutmelding && (
-              <p className="rounded border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700">{foutmelding}</p>
+              <div className="rounded border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700">
+                <p>{foutmelding}</p>
+                {kanBevestigingOpnieuw && (
+                  <p className="mt-2">
+                    <button
+                      type="button"
+                      onClick={stuurBevestigingOpnieuw}
+                      disabled={bevestigingBezig || !email}
+                      className="font-medium underline disabled:opacity-50"
+                    >
+                      {bevestigingBezig ? "Bezig..." : "Stuur bevestigingsmail opnieuw"}
+                    </button>
+                    {bevestigingVerstuurd && !bevestigingBezig && (
+                      <span className="ml-2 text-brand-groen-donker">Verstuurd, check je e-mail.</span>
+                    )}
+                  </p>
+                )}
+              </div>
             )}
             {modus === "inloggen" && geblokkeerd && (
               <p className="rounded border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-700">
