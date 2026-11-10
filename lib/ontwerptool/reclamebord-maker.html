@@ -5008,7 +5008,19 @@ function maakQrLib(){var t=function(){var t=function(t,r){var e=t,n=g[r],o=null,
       x.open(window.BEWERK_AANVRAAG_ID ? 'PATCH' : 'POST', AANVRAAG_URL);
       x.timeout = 10 * 60 * 1000;
       if (x.upload) x.upload.onprogress = e => { if (e.lengthComputable && e.total) voortgang(e.loaded / e.total); };
-      x.onload = () => { let j = {}; try{ j = JSON.parse(x.responseText) || {}; } catch(e){} klaar({ status: x.status, j }); };
+      x.onload = () => {
+        let j = {};
+        try{ j = JSON.parse(x.responseText) || {}; }
+        catch(e){
+          // Geen (geldige) JSON terug -- bijv. Vercel's eigen platformfout als het verzoek te groot
+          // was (413) voordat onze server-code 'm ooit te zien kreeg. Zonder dit bleef de klant dan
+          // zitten met "er ging iets mis" zonder enige reden.
+          j = { fout: x.status === 413
+            ? 'Het bestand is te groot om te versturen. Verklein het logo of de afbeelding en probeer het opnieuw.'
+            : 'Er ging iets mis bij het versturen (foutcode ' + x.status + '). Probeer het opnieuw of bel ons.' };
+        }
+        klaar({ status: x.status, j });
+      };
       x.onerror = () => klaar({ status: 0, j: {} });
       x.ontimeout = () => klaar({ status: 0, j: {}, traag: true });
       x.send(fd);

@@ -21,6 +21,10 @@ export const runtime = "nodejs";
 // - de vorige versie wordt bewaard in aanvraag_versies, en status/gewijzigd_door_klant_op worden
 //   bijgewerkt zodat /intern ziet dat er iets veranderd is.
 const MAX_AANVRAGEN_PER_UUR = 10;
+// LET OP: zie dezelfde toelichting in app/api/aanvragen/ontwerp/route.ts -- Vercel's eigen
+// serverless functies accepteren sowieso nooit meer dan ~4,5 MB aan request-body, ongeacht deze
+// instelling. Deze limiet omlaag zetten lost dat niet op; de echte fix is rechtstreeks naar
+// Supabase Storage uploaden vanuit de browser.
 const MAX_BESTAND_BYTES = 20 * 1024 * 1024;
 const MAX_TOTAAL_BYTES = 40 * 1024 * 1024;
 const MAX_BESTANDEN = 20;

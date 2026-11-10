@@ -15,6 +15,14 @@ export const runtime = "nodejs";
 // Dit endpoint volgt dat contract bewust exact, in plaats van de tool's JS aan te passen.
 
 const MAX_AANVRAGEN_PER_UUR = 10;
+// LET OP: Vercel's eigen Node.js serverless functies accepteren sowieso nooit meer dan ~4,5 MB aan
+// request-body, ongeacht deze instelling -- een kant-en-klaar drukbestand boven die grens wordt nu
+// door Vercel zelf afgewezen vóórdat deze route 'm ooit ziet (geen JSON-antwoord, dus de klant
+// krijgt een onduidelijke foutmelding -- zie stuurNaarServer() in reclamebord-maker.html). Deze
+// limiet omlaag zetten lost dat niet op, het maakt alleen zichtbaar dat upload boven ~4,5 MB kapot
+// is -- de echte fix is bestanden rechtstreeks vanuit de browser naar Supabase Storage uploaden, zodat
+// ze deze route nooit als request-body passeren. Tot die fix er is, blijft dit probleem bestaan voor
+// elk bestand boven ~4,5 MB.
 const MAX_BESTAND_BYTES = 20 * 1024 * 1024;
 const MAX_TOTAAL_BYTES = 40 * 1024 * 1024;
 const MAX_BESTANDEN = 20;
