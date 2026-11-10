@@ -875,6 +875,32 @@
   function regels(i){ return (i.tekst || '').split('\n'); }
   function uniform(i){ return i.type === 'logo' || i.type === 'tekst' || i.type === 'figuur' || i.type === 'qr'; }
 
+  // Echte inkt-grenzen van tekst (niet de vaste regelhoogte/het em-vak van het lettertype) --
+  // actualBoundingBox* van measureText() geeft de afstand tot de zichtbare pixels van de letters
+  // zelf, dus zonder de extra witruimte die de meeste lettertypes boven/onder de tekst laten. Zo kan
+  // tekst straks precies tot de rand (snijlijn) uitgelijnd/gesnapt worden (zie marge()), in plaats
+  // van tot een vaste, voor elk lettertype net iets andere marge. ascent0 (afstand van de eerste
+  // regel z'n basislijn tot de bovenkant van de inkt) heeft tekenItem() ook nodig om de regels op
+  // precies dezelfde plek te tekenen als waar deze meting vanuit gaat -- vandaar dat afmeting()
+  // 'm meegeeft, al gebruiken de meeste aanroepers alleen w/h.
+  function tekstInktMaten(i){
+    meet.font = fontString(i, 100);
+    meet.textAlign = 'left';
+    meet.textBaseline = 'middle';
+    const schaal = i.maat / 100;
+    const lijnen = regels(i).map(r => meet.measureText(r || ' '));
+    // meet wordt ook door capVerhouding() (hierbeneden) en grenzen() gebruikt, die allebei op de
+    // standaard textAlign/textBaseline ('start'/'alphabetic') rekenen -- die hier dus weer
+    // terugzetten, anders klopt bijv. de hoofdletterhoogte (voor de leesafstand-waarschuwing) niet
+    // meer zodra deze functie één keer is aangeroepen.
+    meet.textAlign = 'start';
+    meet.textBaseline = 'alphabetic';
+    const w = Math.max(1, Math.max(...lijnen.map(mt => (mt.actualBoundingBoxLeft + mt.actualBoundingBoxRight) * schaal)));
+    const ascent0 = lijnen[0].actualBoundingBoxAscent * schaal;
+    const descentN = lijnen[lijnen.length - 1].actualBoundingBoxDescent * schaal;
+    const h = Math.max(1, ascent0 + (lijnen.length - 1) * i.maat * REGEL + descentN);
+    return { w, h, ascent0 };
+  }
   function afmeting(i){
     // Een compleet ontwerp mag losgemaakt worden van zijn eigen beeldverhouding (zie heelSlot in het
     // eigenschappenpaneel) -- rekH is dan een extra rekfactor bovenop i.verh. Voor een gewoon logo/
@@ -882,10 +908,7 @@
     if (i.type === 'logo' || i.type === 'figuur') return { w:i.maat, h:i.maat * i.verh * (heelOntwerp(i) ? (i.rekH || 1) : 1) };
     if (i.type === 'qr') return { w:i.maat, h:i.maat };
     if (i.type === 'vorm' || i.type === 'plek') return { w:i.b, h:i.h };
-    meet.font = fontString(i, 100);
-    const rs = regels(i);
-    const w = Math.max(...rs.map(r => meet.measureText(r || ' ').width)) / 100 * i.maat;
-    return { w: Math.max(w, i.maat*0.3), h: i.maat * (0.9 + (rs.length - 1) * REGEL) };
+    return tekstInktMaten(i);
   }
   // Hoe breed (mm) een logo maximaal mag worden zonder wazig te worden.
   // Heeft de klant gevraagd of wij het scherp maken (vraagScherpmaken), dan geldt die grens niet meer:
@@ -907,7 +930,10 @@
     return { min: Math.min(i.type === 'qr' ? 100 : 30, max), max };     // een QR-code kleiner dan 10 cm heeft op een bord geen zin
   }
   // Vormen en figuren mogen tot de rand, logo's en tekst houden afstand (een compleet ontwerp vult het hele bord)
-  function marge(i){ return (i.type === 'vorm' || heelOntwerp(i) || (i.type === 'figuur' && !(FIGUREN[i.figuur] && FIGUREN[i.figuur].ikoon))) ? 0 : VEILIG; }
+  // Tekst mag nu ook tot de rand (snijlijn): afmeting() geeft voor tekst de echte inkt-grenzen
+  // terug (zie tekstInktMaten()), dus "tot de rand" betekent hier ook echt tot de zichtbare
+  // letters, niet tot een onzichtbaar, voor elk lettertype verschillend em-vak.
+  function marge(i){ return (i.type === 'vorm' || i.type === 'tekst' || heelOntwerp(i) || (i.type === 'figuur' && !(FIGUREN[i.figuur] && FIGUREN[i.figuur].ikoon))) ? 0 : VEILIG; }
   // Houd een onderdeel helemaal binnen het bord (eerst maat begrenzen, dan plaats)
   function binnenBord(i){
     const v = marge(i);
@@ -2164,7 +2190,10 @@ function maakQrLib(){var t=function(){var t=function(t,r){var e=t,n=g[r],o=null,
       const randKleur = i.rand ? (isDonker(KLEURCODE.test(i.kleur) ? i.kleur : '#111111') ? '#ffffff' : '#1a1a1a') : null;   // (een tekst uit een vreemd ontwerpbestand kan geen kleur hebben)
       c.lineJoin = 'round'; c.miterLimit = 2;
       regels(i).forEach((r, n) => {
-        const xx = x*k, yy = (boven + i.maat*0.45 + n*i.maat*REGEL)*k;
+        // m.ascent0 komt uit dezelfde meting als afmeting() gebruikt (tekstInktMaten()) -- zo staat
+        // de bovenkant van de inkt van de eerste regel precies op de bovenkant van m, niet op een
+        // vaste (voor elk lettertype andere) afstand vanaf de basislijn.
+        const xx = x*k, yy = (boven + m.ascent0 + n*i.maat*REGEL)*k;
         if (i.schaduw){
           c.save();
           c.shadowColor = 'rgba(0,0,0,.4)'; c.shadowBlur = px*0.12; c.shadowOffsetX = px*0.04; c.shadowOffsetY = px*0.06;
@@ -4640,6 +4669,12 @@ function maakQrLib(){var t=function(){var t=function(t,r){var e=t,n=g[r],o=null,
         ? 'De tekst ' + kort(i) + ' is slecht leesbaar, de kleur lijkt te veel op de achtergrond.'
         : 'De tekst ' + kort(i) + ' heeft kleine letters (' + cm(hoofdletter(i)) + ' hoog). Die zijn maar tot ongeveer ' + leesAfstand(i) + ' meter te lezen.', i]));
       if (!i.voorbeeld) tikfoutjes(i.tekst).forEach(f => punten.push([f, i]));
+      // Tekst mag nu tot de snijlijn (zie marge()), maar zo dicht tegen de rand kan bij het snijden
+      // net een stukje van een letter wegvallen -- geen blokkade, alleen een seintje (net als de
+      // andere controles hier), de klant mag 'm negeren en toch zo versturen.
+      const m = afmeting(i);
+      const afstandTotRand = Math.min(i.x - m.w/2, bord.b - (i.x + m.w/2), i.y - m.h/2, bord.h - (i.y + m.h/2));
+      if (afstandTotRand < 10) punten.push(['Tekst ' + kort(i) + ' staat zo dicht bij de rand dat er bij het snijden een stukje kan wegvallen.', i]);
     });
     items.filter(i => i.type === 'logo' && !heelOntwerp(i)).forEach(i => { if (logoWegval(i) > LOGO_WEG) punten.push(['Je logo valt (voor een deel) weg tegen de achtergrond. Bijvoorbeeld een donkere naam op een donkere achtergrond.', i]); });
     items.filter(heelOntwerp).forEach(i => {
@@ -4757,26 +4792,6 @@ function maakQrLib(){var t=function(){var t=function(t,r){var e=t,n=g[r],o=null,
   // (1 cm op het scherm = ongeveer 37,8 css-pixels; dat verschilt iets per scherm, daarom "ongeveer".)
   const afstandDlg = $('afstandDlg');
   let afstandMeter = 10;
-  // Een eenvoudig poppetje (silhouet) van ongeveer 1,75 m, als maatstok naast het bord
-  function tekenPersoon(g, cx, voetY, h){
-    g.save();
-    g.fillStyle = 'rgba(52,58,66,.82)';
-    const hoofdR = h * 0.085, hoofdY = voetY - h + hoofdR;
-    g.beginPath(); g.arc(cx, hoofdY, hoofdR, 0, Math.PI * 2); g.fill();            // hoofd
-    const schouderY = hoofdY + hoofdR * 1.1, kruisY = voetY - h * 0.42, bw = h * 0.22, r = h * 0.05;
-    g.beginPath();                                                                 // romp
-    g.moveTo(cx - bw/2, kruisY);
-    g.lineTo(cx - bw/2, schouderY + r);
-    g.quadraticCurveTo(cx - bw/2, schouderY, cx - bw/2 + r, schouderY);
-    g.lineTo(cx + bw/2 - r, schouderY);
-    g.quadraticCurveTo(cx + bw/2, schouderY, cx + bw/2, schouderY + r);
-    g.lineTo(cx + bw/2, kruisY);
-    g.closePath(); g.fill();
-    const beenB = h * 0.085, tussen = h * 0.03;                                    // benen
-    g.fillRect(cx - tussen/2 - beenB, kruisY - h*0.01, beenB, voetY - kruisY);
-    g.fillRect(cx + tussen/2, kruisY - h*0.01, beenB, voetY - kruisY);
-    g.restore();
-  }
   function tekenAfstand(){
     const veld = $('afstandVeld'), c = $('afstandDoek');
     const breedte = Math.max(260, veld.clientWidth), hoogte = Math.round(Math.min(340, Math.max(220, breedte * 0.36)));
@@ -4803,18 +4818,6 @@ function maakQrLib(){var t=function(){var t=function(t,r){var e=t,n=g[r],o=null,
     g.imageSmoothingEnabled = true; g.imageSmoothingQuality = 'high';
     g.drawImage(tijdelijk, x, y, bordB, bordH);
     tijdelijk.width = 0;
-    // Een poppetje van ongeveer 1,75 m erbij (op dezelfde grond als het bord), zodat je meteen ziet hoe groot het bord echt is
-    if (past){
-      const perCm = bordB / (bord.b / 10), persH = 175 * perCm, voetY = y + bordH, gap = Math.max(10, perCm * 40);
-      let cx = x + bordB + gap + persH * 0.16;
-      if (cx + persH * 0.18 > breedte - 4) cx = x - gap - persH * 0.16;            // geen plek rechts? dan links van het bord
-      if (persH > 24 && voetY - persH > 2 && cx - persH*0.18 > 2 && cx + persH*0.18 < breedte - 2){
-        tekenPersoon(g, cx, voetY, persH);
-        g.fillStyle = '#44484f'; g.font = Math.max(10, Math.round(persH * 0.12)) + 'px system-ui, Arial, sans-serif';
-        g.textAlign = 'center'; g.textBaseline = 'top';
-        g.fillText('± 1,75 m', cx, Math.min(voetY + 3, hoogte - 14));
-      }
-    }
     $('afstandNoot').textContent = past
       ? 'Tip: wat je hier niet goed kunt lezen, is op ' + afstandMeter + ' meter ook in het echt lastig te lezen. Maak die tekst dan groter, of laat hem weg.'
       : 'Je bord is op ' + afstandMeter + ' meter nog groter dan dit scherm. Kies een grotere afstand om het echte effect te zien.';
