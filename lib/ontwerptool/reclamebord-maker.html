@@ -8,6 +8,10 @@
   // .reclamebord-bestand).
   window.BEWERK_AANVRAAG_ID = "__BEWERK_AANVRAAG_ID__";
   window.BEWERK_DATA = __BEWERK_DATA_JSON__;
+  // Publieke anon-key, nodig voor de directe PUT naar een signed Storage-upload-URL (zie
+  // laadUploadUrl()/uploadBestandDirect() hieronder) -- dezelfde sleutel als lib/supabase/
+  // browserClient.ts, mag gewoon in de browser staan.
+  window.SUPABASE_ANON_KEY = "__SUPABASE_ANON_KEY__";
 </script>
 <style>
   :root{
@@ -650,6 +654,11 @@
   const AANVRAAG_URL = window.BEWERK_AANVRAAG_ID
     ? '/api/aanvragen/' + window.BEWERK_AANVRAAG_ID + '/klant-bewerken'
     : '/api/aanvragen/ontwerp';
+  // Bij een bewerking bestaat de aanvraag al (BEWERK_AANVRAAG_ID); bij een nieuwe aanvraag
+  // genereren we het id hier zelf, vóórdat er iets geüpload wordt -- de server gebruikt dit
+  // straks als het echte rij-id (zie app/api/aanvragen/ontwerp/route.ts), en elke upload naar
+  // Storage (zie uploadBestandDirect() verderop) gaat al naar een pad dat met dit id begint.
+  const HUIDIGE_AANVRAAG_ID = window.BEWERK_AANVRAAG_ID || crypto.randomUUID();
   const KOPIE_TOESTAAN = false; // mag de klant het drukbestand ook zelf downloaden? (false = alleen versturen)
   const ONTWERPSERVICE = true;  // knop "Laat ons het ontwerp maken" tonen? (false = klanten maken altijd zelf het ontwerp)
   const SNIJ_AFSTAND = 12;      // mm tussen snijlijn en begin van een snijteken
@@ -4556,14 +4565,17 @@ function maakQrLib(){var t=function(){var t=function(t,r){var e=t,n=g[r],o=null,
   }
 
   const dlg = $('aanvraag'), form = $('aanvraagForm');
-  // Hoe groot een aanvraag samen mag zijn. Een mail wordt ongeveer 1,35 keer zo groot en veel mailboxen nemen tot 25 MB aan.
-  // Bij het openen van het venster vragen we de server wat daar de grens is (dat verschilt per server).
-  // Ook het aantal bestanden per keer is begrensd (bij PHP standaard 20); wat erboven zit, valt stilletjes weg.
-  let maxVersturen = 17 * 1024 * 1024, maxPerBestand = 17 * 1024 * 1024, maxBestanden = 20;
+  // Hoe groot een aanvraag samen mag zijn. Bestanden gaan rechtstreeks naar Supabase Storage (zie
+  // uploadBestandDirect() verderop), niet meer als request-body naar deze server -- de grens is
+  // dus niet langer Vercel's ~4,5 MB-limiet of een mailbijlage-aanname, maar de echte, door de
+  // server toegestane grens (zie MAX_BESTAND_BYTES/MAX_TOTAAL_BYTES in app/api/aanvragen/
+  // ontwerp/route.ts). Bij het openen van het venster vragen we de server wat die grens precies is.
+  // Ook het aantal bestanden per keer is begrensd; wat erboven zit, valt stilletjes weg.
+  let maxVersturen = 40 * 1024 * 1024, maxPerBestand = 20 * 1024 * 1024, maxBestanden = 20;
   function vraagLimietOp(){
     if (!AANVRAAG_URL) return;
     fetch(AANVRAAG_URL + '?limiet=1', { cache: 'no-store' }).then(r => r.json()).then(j => {
-      if (j && j.ok && j.max > 1048576){ maxVersturen = Math.min(17 * 1024 * 1024, j.max); maxPerBestand = Math.min(maxVersturen, j.perBestand || maxVersturen); }
+      if (j && j.ok && j.max > 1048576){ maxVersturen = j.max; maxPerBestand = j.perBestand || maxVersturen; }
       if (j && j.ok && Number(j.bestanden) >= 4) maxBestanden = Math.min(100, Math.floor(Number(j.bestanden)));
     }).catch(() => {});
   }
@@ -4990,16 +5002,94 @@ function maakQrLib(){var t=function(){var t=function(t,r){var e=t,n=g[r],o=null,
         (meegestuurd.has(heelDeel.bron) ? '' : (ontwerpMee ? ' (niet los meegestuurd, het zit in het ontwerpbestand)' : ' (niet meegestuurd, vraag het op bij de klant)')));
       fd.append('bestanden', String(nBestanden));     // zo kan de server zien of er onderweg bestanden zijn weggevallen
       if (!ontwerpMee) fd.append('ontwerp_ontbreekt', 'ja');   // dan weet het team waarom het ontwerpbestand er niet bij zit
-      laatsteVerzoek = fd;
-      await verstuurVerzoek(fd, knop);
+      const teVersturenFd = await uploadBestandenEnVervangPaden(fd, knop);
+      laatsteVerzoek = teVersturenFd;
+      await verstuurVerzoek(teVersturenFd, knop);
     } catch(err){
       console.error(err);
-      toonFout('Er ging iets mis bij het maken van het drukbestand. Probeer het nog eens, of gebruik een computer.');
+      // uploadBestandDirect() geeft al een duidelijke, specifieke Nederlandse foutmelding mee
+      // (welk bestand, en waarom) -- die is nuttiger dan de generieke tekst hieronder, die over
+      // het maken van het drukbestand gaat en een mislukte upload niet goed zou dekken.
+      toonFout(err instanceof Error && /^Uploaden van/.test(err.message)
+        ? err.message
+        : 'Er ging iets mis bij het maken van het drukbestand. Probeer het nog eens, of gebruik een computer.');
     } finally {
       bezigMetVersturen = false; $('annuleer').disabled = false;
       knop.disabled = false; knop.textContent = 'Versturen';
     }
   });
+
+  // Rechtstreeks naar Supabase Storage uploaden via een signed upload-URL (zie /api/aanvragen/
+  // upload-url/route.ts), buiten deze server om: zo geldt Vercel's eigen ~4,5 MB-grens op de
+  // request-body niet meer voor bestanden, ongeacht hoe groot een drukbestand is. `voortgang`
+  // krijgt het aantal al verstuurde bytes van dit ene bestand (niet een fractie), zodat de
+  // aanroeper de voortgang van alle bestanden samen kan optellen.
+  async function uploadBestandDirect(veld, blob, naam, voortgang){
+    const r = await fetch('/api/aanvragen/upload-url', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ aanvraagId: HUIDIGE_AANVRAAG_ID, veld, bestandsnaam: naam, grootte: blob.size }),
+    });
+    let j = {};
+    try{ j = await r.json(); } catch(e){}
+    if (!r.ok || !j.ok) throw new Error('Uploaden van "' + naam + '" mislukt: ' + ((j && j.error) || ('foutcode ' + r.status)) + '.');
+    await new Promise((klaar, mislukt) => {
+      const x = new XMLHttpRequest();
+      x.open('PUT', j.signedUrl);
+      // Publieke anon-key: dezelfde die de rest van de site al client-side gebruikt (zie
+      // lib/supabase/browserClient.ts). De signed URL zelf (met token) bepaalt al naar welk pad
+      // dit mag, dus deze sleutel geeft op zichzelf geen extra toegang.
+      x.setRequestHeader('apikey', window.SUPABASE_ANON_KEY);
+      x.setRequestHeader('Authorization', 'Bearer ' + window.SUPABASE_ANON_KEY);
+      x.setRequestHeader('x-upsert', 'true');
+      x.setRequestHeader('Content-Type', blob.type || 'application/octet-stream');
+      if (x.upload) x.upload.onprogress = e => { if (e.lengthComputable && voortgang) voortgang(e.loaded); };
+      x.onload = () => { (x.status >= 200 && x.status < 300) ? klaar() : mislukt(new Error('Uploaden van "' + naam + '" mislukt (foutcode ' + x.status + ').')); };
+      x.onerror = () => mislukt(new Error('Uploaden van "' + naam + '" mislukt. Controleer je internetverbinding.'));
+      x.send(blob);
+    });
+    return j.path;
+  }
+
+  // De tekst- en bestandvelden zitten door elkaar in fd (zie bestandErbij() hierboven) -- dat
+  // blijft precies zo, maar vóór het versturen vervangen we hier elk bestand door het pad waarnaar
+  // het al rechtstreeks is geüpload. Alleen deze vijf velden krijgen op de server een eigen kolom
+  // (zie app/api/aanvragen/ontwerp/route.ts); alle andere bestandsvelden (extra[], logo[],
+  // drukbestand_deel2, drukbestand_achter_deel2) gaan generiek mee als overig_pad[]/overig_naam[]
+  // -- zelfde indeling als de server al toepaste vóórdat bestanden rechtstreeks naar Storage gingen.
+  const BEKENDE_ENKELVOUDIGE_VELDEN = ['drukbestand', 'drukbestand_achter', 'voorbeeld', 'voorbeeld_achter', 'ontwerp'];
+  async function uploadBestandenEnVervangPaden(fd, knop){
+    fd.set('aanvraag_id', HUIDIGE_AANVRAAG_ID);
+    const nieuw = new FormData();
+    const bestanden = [];
+    for (const [veld, waarde] of fd.entries()){
+      if (waarde instanceof Blob) bestanden.push({ veld, blob: waarde, naam: waarde.name || 'bestand' });
+      else nieuw.append(veld, waarde);
+    }
+    if (!bestanden.length) return nieuw;
+
+    const totaalBytes = bestanden.reduce((s, b) => s + b.blob.size, 0) || 1;
+    const perBestandGeladen = new Array(bestanden.length).fill(0);
+    const toonVoortgang = () => {
+      if (!knop) return;
+      const deel = perBestandGeladen.reduce((s, n) => s + n, 0) / totaalBytes;
+      knop.textContent = 'Uploaden... ' + Math.round(Math.min(deel, 1) * 100) + '%';
+    };
+
+    for (const [n, { veld, blob, naam }] of bestanden.entries()){
+      // "logo[]"/"extra[]" (en bijv. "drukbestand_deel2") kunnen meerdere keren voorkomen in één
+      // aanvraag -- de vierkante haken mag Supabase Storage niet in een pad hebben ("InvalidKey"),
+      // en zonder volgnummer zouden twee bestanden met dezelfde oorspronkelijke naam elkaar
+      // overschrijven (upsert:true). Voor de vijf bekende, maximaal-één-keer-per-aanvraag-velden
+      // blijft de padnaam ongewijzigd (nodig bij klant-bewerken: hetzelfde pad vervangt het vorige
+      // bestand van dat veld).
+      const uploadVeld = BEKENDE_ENKELVOUDIGE_VELDEN.includes(veld) ? veld : veld.replace(/\[\]$/, '') + '-' + n;
+      const pad = await uploadBestandDirect(uploadVeld, blob, naam, geladen => { perBestandGeladen[n] = geladen; toonVoortgang(); });
+      if (BEKENDE_ENKELVOUDIGE_VELDEN.includes(veld)) nieuw.set(veld, pad);
+      else { nieuw.append('overig_pad[]', pad); nieuw.append('overig_naam[]', naam); }
+    }
+    return nieuw;
+  }
 
   // Versturen met een voortgang in procenten (bij een trage verbinding kan dat even duren)
   function stuurNaarServer(fd, voortgang){

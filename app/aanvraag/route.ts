@@ -83,6 +83,11 @@ export async function GET(request: Request) {
 
   const html = await readFile(path.join(process.cwd(), "lib/ontwerptool/reclamebord-maker.html"), "utf-8");
   const metGegevens = html
+    // Publieke anon-key (mag in de browser, zelfde sleutel als lib/supabase/browserClient.ts) --
+    // nodig voor de directe upload naar Supabase Storage (zie laadUploadToken() in het bestand
+    // hieronder). De signed URL die /api/aanvragen/upload-url teruggeeft bevat zelf al het
+    // bucket+pad, dus de ontwerptool heeft verder geen Supabase-SDK of projectURL nodig.
+    .replace("__SUPABASE_ANON_KEY__", process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "")
     .replace("__KLANT_NAAM__", escapeHtmlAttribuut(klant?.naam ?? ""))
     .replace("__KLANT_BEDRIJF__", escapeHtmlAttribuut(klant?.bedrijf ?? ""))
     .replace("__KLANT_EMAIL__", escapeHtmlAttribuut(data.user.email ?? ""))

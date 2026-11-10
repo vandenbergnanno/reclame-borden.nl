@@ -20,12 +20,13 @@ export const runtime = "nodejs";
 //   productie en gaat hij op slot, bevestigd met de gebruiker),
 // - de vorige versie wordt bewaard in aanvraag_versies, en status/gewijzigd_door_klant_op worden
 //   bijgewerkt zodat /intern ziet dat er iets veranderd is.
+// Bestanden komen hier als al-geüploade Storage-paden binnen (zie app/api/aanvragen/upload-
+// url/route.ts) i.p.v. als request-body -- zelfde reden en aanpak als app/api/aanvragen/
+// ontwerp/route.ts: Vercel's serverless functies accepteren sowieso nooit meer dan ~4,5 MB aan
+// request-body. Per-bestand is al bij het aanvragen van elke losse upload-url gecontroleerd; het
+// TOTAAL (inclusief bestanden van vóór deze bewerking die niet opnieuw zijn geüpload) checken we
+// hieronder via storage.list().
 const MAX_AANVRAGEN_PER_UUR = 10;
-// LET OP: zie dezelfde toelichting in app/api/aanvragen/ontwerp/route.ts -- Vercel's eigen
-// serverless functies accepteren sowieso nooit meer dan ~4,5 MB aan request-body, ongeacht deze
-// instelling. Deze limiet omlaag zetten lost dat niet op; de echte fix is rechtstreeks naar
-// Supabase Storage uploaden vanuit de browser.
-const MAX_BESTAND_BYTES = 20 * 1024 * 1024;
 const MAX_TOTAAL_BYTES = 40 * 1024 * 1024;
 const MAX_BESTANDEN = 20;
 
@@ -148,21 +149,37 @@ export async function PATCH(request: Request, { params }: { params: { id: string
   }
   if (opmerking.length > MAX_LENGTE.opmerking) return fout(`Opmerking mag maximaal ${MAX_LENGTE.opmerking} tekens zijn.`);
 
-  const bestandVelden: { veld: string; file: File }[] = [];
+  const BEKENDE_ENKELVOUDIGE_VELDEN = ["drukbestand", "drukbestand_achter", "voorbeeld", "voorbeeld_achter", "ontwerp"];
+  const geuploadePaden: { veld: string; pad: string }[] = [];
   for (const [veld, waarde] of formData.entries()) {
-    if (waarde instanceof File && waarde.size > 0) bestandVelden.push({ veld, file: waarde });
+    if (veld !== "overig_pad[]" && !BEKENDE_ENKELVOUDIGE_VELDEN.includes(veld)) continue;
+    if (typeof waarde !== "string" || !waarde) continue;
+    // Zelfde controle als app/api/aanvragen/ontwerp/route.ts: een pad dat niet bij deze aanvraag
+    // hoort, mag hier nooit geclaimd worden.
+    if (!waarde.startsWith(`${params.id}/`)) {
+      return fout("Ongeldig bestandspad.");
+    }
+    geuploadePaden.push({ veld, pad: waarde });
   }
-  if (bestandVelden.length > MAX_BESTANDEN) {
+  const overigeNamen = formData.getAll("overig_naam[]").filter((w): w is string => typeof w === "string");
+
+  if (geuploadePaden.length > MAX_BESTANDEN) {
     return fout("Te veel bestanden tegelijk. Verstuur je aanvraag met minder bijlagen.");
   }
-  let totaalBytes = 0;
-  for (const { file } of bestandVelden) {
-    if (file.size > MAX_BESTAND_BYTES) {
-      return fout(`"${file.name}" is te groot (max. ${Math.round(MAX_BESTAND_BYTES / 1048576)} MB per bestand).`);
-    }
-    totaalBytes += file.size;
-  }
+
+  const bucket = process.env.SUPABASE_STORAGE_BUCKET ?? "aanvraag-bijlagen";
+
+  // Totaal van ALLE bestanden onder deze aanvraag (ook de niet-opnieuw-geüploade van vóór deze
+  // bewerking), want upsert:true bij /api/aanvragen/upload-url vervangt alleen bestanden met
+  // exact hetzelfde pad -- een extra bijlage die er nu bijkomt, telt gewoon mee bij het totaal.
+  const { data: bestandenInMap } = await supabase.storage.from(bucket).list(params.id, { limit: 100 });
+  const totaalBytes = (bestandenInMap ?? []).reduce((som, bestand) => som + (bestand.metadata?.size ?? 0), 0);
+
   if (totaalBytes > MAX_TOTAAL_BYTES) {
+    // Alleen de in DIT verzoek net-geüploade bestanden weer verwijderen -- de rest hoorde al bij
+    // de eerder goedgekeurde aanvraag en blijft dus gewoon staan.
+    const nieuwePaden = geuploadePaden.map((p) => p.pad);
+    if (nieuwePaden.length) await supabase.storage.from(bucket).remove(nieuwePaden);
     return fout(`Alle bestanden samen zijn te groot (max. ${Math.round(MAX_TOTAAL_BYTES / 1048576)} MB).`);
   }
 
@@ -170,32 +187,18 @@ export async function PATCH(request: Request, { params }: { params: { id: string
   // supabase/migrations/0008_klant_bewerken.sql.
   await supabase.from("aanvraag_versies").insert({ aanvraag_id: huidigeAanvraag.id, data: huidigeAanvraag });
 
-  const bucket = process.env.SUPABASE_STORAGE_BUCKET ?? "aanvraag-bijlagen";
-  const overigeBestanden: OverigBestand[] = [];
   const paden: Record<string, string> = {};
-
-  async function uploadBestand(veld: string, file: File): Promise<string | null> {
-    const pad = `${params.id}/${veld}-${file.name}`;
-    // upsert: true (anders dan /api/aanvragen/ontwerp) -- bij een bewerking is het juist de
-    // bedoeling dat hetzelfde pad (aanvraagId + veld + bestandsnaam) het vorige bestand vervangt.
-    const { error: uploadFout } = await supabase.storage.from(bucket).upload(pad, file, {
-      contentType: file.type || undefined,
-      upsert: true,
-    });
-    return uploadFout ? null : pad;
-  }
-
-  for (const { veld, file } of bestandVelden) {
-    const pad = await uploadBestand(veld, file);
-    if (!pad) continue;
-
+  for (const { veld, pad } of geuploadePaden) {
     if (veld === "drukbestand") paden.drukbestand_pad = pad;
     else if (veld === "drukbestand_achter") paden.drukbestand_achter_pad = pad;
     else if (veld === "voorbeeld") paden.voorbeeld_pad = pad;
     else if (veld === "voorbeeld_achter") paden.voorbeeld_achter_pad = pad;
     else if (veld === "ontwerp") paden.ontwerp_pad = pad;
-    else overigeBestanden.push({ naam: file.name, pad });
   }
+
+  const overigeBestanden: OverigBestand[] = geuploadePaden
+    .filter((p) => p.veld === "overig_pad[]")
+    .map((p, i) => ({ naam: overigeNamen[i] || p.pad.split("/").pop() || "bestand", pad: p.pad }));
 
   const { error: updateFout } = await supabase
     .from("aanvragen")

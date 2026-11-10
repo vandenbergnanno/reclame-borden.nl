@@ -3,6 +3,7 @@ import { analyzeRequest } from "@/lib/ai/analyzeRequest";
 import { controleerAfmetingBeschikbaarheid } from "@/lib/ai/controleerAfmetingBeschikbaarheid";
 import { checkRateLimit, clientIp } from "@/lib/security/rateLimit";
 import { logServerFout, GENERIEKE_SERVERFOUT } from "@/lib/security/serverFout";
+import { isGeldigeUuid } from "@/lib/validatie/uuid";
 import type { BordAanschaf, OverigBestand } from "@/lib/types/domain";
 
 // Bestandsuploads vragen om de Node.js-runtime (niet de edge-runtime).
@@ -142,30 +143,40 @@ export async function POST(request: Request) {
   }
   if (opmerking.length > MAX_LENGTE.opmerking) return fout(`Opmerking mag maximaal ${MAX_LENGTE.opmerking} tekens zijn.`);
 
-  const drukbestand = formData.get("drukbestand");
-  if (!ontwerpDoorOns && !(drukbestand instanceof File && drukbestand.size > 0)) {
-    return fout("Drukbestand ontbreekt.");
+  // Bestanden komen hier als al-geüploade Storage-PADEN binnen, niet als bestand-bytes: de
+  // ontwerptool uploadt rechtstreeks naar Supabase Storage via /api/aanvragen/upload-url (zie
+  // de toelichting bij MAX_BESTAND_BYTES hierboven) en genereert daarvoor vooraf dit aanvraag-id.
+  const aanvraagId = tekst(formData, "aanvraag_id");
+  if (!aanvraagId || !isGeldigeUuid(aanvraagId)) {
+    return fout("Ongeldig verzoek.");
   }
+  const bucket = process.env.SUPABASE_STORAGE_BUCKET ?? "aanvraag-bijlagen";
 
-  // Alle meegestuurde bestanden in één keer verzamelen en op grootte controleren, vóórdat we iets
-  // naar Supabase Storage sturen — zo hoeven we bij een te grote aanvraag niets weer terug te
-  // draaien.
-  const bestandVelden: { veld: string; file: File }[] = [];
+  // Alleen deze vijf velden krijgen een eigen kolom; alles andere (extra bijlagen, meegestuurde
+  // logo-originelen, het tweede drukbestand bij een bord in 2 delen) komt generiek binnen als
+  // overig_pad[]/overig_naam[] en gaat naar overige_bestanden -- zelfde indeling als voorheen,
+  // toen dat de "else" van een if/else-keten op het bestandveld was.
+  const BEKENDE_ENKELVOUDIGE_VELDEN = ["drukbestand", "drukbestand_achter", "voorbeeld", "voorbeeld_achter", "ontwerp"];
+  const geuploadePaden: { veld: string; pad: string }[] = [];
   for (const [veld, waarde] of formData.entries()) {
-    if (waarde instanceof File && waarde.size > 0) bestandVelden.push({ veld, file: waarde });
+    if (veld !== "overig_pad[]" && !BEKENDE_ENKELVOUDIGE_VELDEN.includes(veld)) continue;
+    if (typeof waarde !== "string" || !waarde) continue;
+    // Een pad dat niet met dit aanvraag-id begint, hoort hier niet -- zou betekenen dat iemand een
+    // pad van een andere (mogelijk andermans) upload probeert te claimen.
+    if (!waarde.startsWith(`${aanvraagId}/`)) {
+      return fout("Ongeldig bestandspad.");
+    }
+    geuploadePaden.push({ veld, pad: waarde });
   }
-  if (bestandVelden.length > MAX_BESTANDEN) {
+  const overigeNamen = formData.getAll("overig_naam[]").filter((w): w is string => typeof w === "string");
+
+  if (geuploadePaden.length > MAX_BESTANDEN) {
     return fout("Te veel bestanden tegelijk. Verstuur je aanvraag met minder bijlagen.");
   }
-  let totaalBytes = 0;
-  for (const { file } of bestandVelden) {
-    if (file.size > MAX_BESTAND_BYTES) {
-      return fout(`"${file.name}" is te groot (max. ${Math.round(MAX_BESTAND_BYTES / 1048576)} MB per bestand).`);
-    }
-    totaalBytes += file.size;
-  }
-  if (totaalBytes > MAX_TOTAAL_BYTES) {
-    return fout(`Alle bestanden samen zijn te groot (max. ${Math.round(MAX_TOTAAL_BYTES / 1048576)} MB).`);
+
+  const drukbestandPad = geuploadePaden.find((p) => p.veld === "drukbestand")?.pad;
+  if (!ontwerpDoorOns && !drukbestandPad) {
+    return fout("Drukbestand ontbreekt.");
   }
 
   const bordAanschaf: BordAanschaf = hergebruik ? "hergebruiken" : "nieuw";
@@ -217,6 +228,11 @@ export async function POST(request: Request) {
   const { data: aanvraag, error: aanvraagInsertFout } = await supabase
     .from("aanvragen")
     .insert({
+      // Vooraf door de ontwerptool gegenereerd (crypto.randomUUID()) zodat de klant al vóór dit
+      // verzoek bestanden kon uploaden naar Storage-paden die met dit id beginnen (zie
+      // app/api/aanvragen/upload-url/route.ts) -- anders zou dit insert een nieuw id genereren
+      // dat niet bij de net-geüploade paden past.
+      id: aanvraagId,
       klant_id: klantId,
       ...(bestellingId ? { bestelling_id: bestellingId } : {}),
       veldtype: null,
@@ -250,42 +266,37 @@ export async function POST(request: Request) {
     return fout(GENERIEKE_SERVERFOUT, 500);
   }
 
-  // Bestanden uploaden. Eén los mislukt bestand mag de rest van de (al opgeslagen) aanvraag niet
-  // blokkeren — net als bij overige_bestanden hieronder noteren we eventuele mislukkingen in
-  // plaats van de hele aanvraag te laten falen; de klant heeft dan al een bevestigingspagina
-  // gezien en kan niet opnieuw op "Versturen" klikken.
-  const bucket = process.env.SUPABASE_STORAGE_BUCKET ?? "aanvraag-bijlagen";
-  const overigeBestanden: OverigBestand[] = [];
-  const paden: Record<string, string> = {};
-  // Losse, niet-opnieuw-toe te wijzen binding: TS narrowt de `!aanvraag`-check hierboven niet door
-  // de function-declaration-closure van uploadBestand heen.
-  const aanvraagId: string = aanvraag.id;
+  // Bestanden zijn al rechtstreeks naar Storage geüpload (zie app/api/aanvragen/upload-url/
+  // route.ts), vóór dit verzoek -- hier alleen de paden aan de aanvraagrij koppelen, en het
+  // werkelijke TOTAAL optellen. Per-bestand is al bij het aanvragen van elke losse upload-url
+  // gecontroleerd; het totaal van meerdere losse uploads samen kan alleen hier, achteraf.
+  const { data: bestandenInMap } = await supabase.storage.from(bucket).list(aanvraagId, { limit: 100 });
+  const totaalBytes = (bestandenInMap ?? []).reduce((som, bestand) => som + (bestand.metadata?.size ?? 0), 0);
 
-  async function uploadBestand(veld: string, file: File): Promise<string | null> {
-    const pad = `${aanvraagId}/${veld}-${file.name}`;
-    const { error: uploadFout } = await supabase.storage.from(bucket).upload(pad, file, {
-      contentType: file.type || undefined,
-      upsert: false,
-    });
-    return uploadFout ? null : pad;
+  if (totaalBytes > MAX_TOTAAL_BYTES) {
+    const paden = (bestandenInMap ?? []).map((bestand) => `${aanvraagId}/${bestand.name}`);
+    if (paden.length) await supabase.storage.from(bucket).remove(paden);
+    await supabase.from("aanvragen").delete().eq("id", aanvraagId);
+    return fout(`Alle bestanden samen zijn te groot (max. ${Math.round(MAX_TOTAAL_BYTES / 1048576)} MB).`);
   }
 
-  for (const { veld, file } of bestandVelden) {
-    const pad = await uploadBestand(veld, file);
-    if (!pad) continue;
-
+  const paden: Record<string, string> = {};
+  for (const { veld, pad } of geuploadePaden) {
     if (veld === "drukbestand") paden.drukbestand_pad = pad;
     else if (veld === "drukbestand_achter") paden.drukbestand_achter_pad = pad;
     else if (veld === "voorbeeld") paden.voorbeeld_pad = pad;
     else if (veld === "voorbeeld_achter") paden.voorbeeld_achter_pad = pad;
     else if (veld === "ontwerp") paden.ontwerp_pad = pad;
-    else overigeBestanden.push({ naam: file.name, pad });
   }
+
+  const overigeBestanden: OverigBestand[] = geuploadePaden
+    .filter((p) => p.veld === "overig_pad[]")
+    .map((p, i) => ({ naam: overigeNamen[i] || p.pad.split("/").pop() || "bestand", pad: p.pad }));
 
   await supabase
     .from("aanvragen")
     .update({ ...paden, overige_bestanden: overigeBestanden.length ? overigeBestanden : null })
-    .eq("id", aanvraag.id);
+    .eq("id", aanvraagId);
 
   const teControlerenTekst = [opmerking, teksten].filter(Boolean).join("\n");
   const checkResultaten = teControlerenTekst ? analyzeRequest(teControlerenTekst) : [];

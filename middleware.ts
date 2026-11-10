@@ -19,6 +19,10 @@ function isPubliekeAanvragenRoute(method: string, pathname: string): boolean {
   // (POST) en vraagt daarvoor eerst de uploadgrenzen van de server op (GET ?limiet=1) — zie
   // vraagLimietOp() in lib/ontwerptool/reclamebord-maker.html.
   if (pathname === "/api/aanvragen/ontwerp") return method === "POST" || method === "GET";
+  // Rechtstreekse upload naar Supabase Storage (zie app/api/aanvragen/upload-url/route.ts) --
+  // dezelfde ingelogde klant die straks op "Versturen" klikt, dus net als hierboven geen
+  // /intern-wachtwoord. De route doet zijn EIGEN klant-sessie-/eigenaarschapscontrole.
+  if (pathname === "/api/aanvragen/upload-url") return method === "POST";
   // Een klant past zijn eigen, nog "nieuw"-status-aanvraag aan (zie app/api/aanvragen/[id]/klant-
   // bewerken/route.ts) -- die route doet zijn EIGEN klant-sessie-/eigenaarschap-/statuscontrole,
   // dit laat 'm alleen voorbij de medewerkers-wachtwoordpoort hieronder.
