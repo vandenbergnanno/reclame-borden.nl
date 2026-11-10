@@ -407,7 +407,7 @@
             <span class="logo-kleuren" id="logoKleurenItem" hidden><span class="lbl">uit je logo:</span></span>
           </div>
           <div class="groep" data-voor="logo tekst figuur qr">
-            <span class="lbl" id="maatLabel">Grootte</span>
+            <label class="lbl"><span id="maatLabel">Grootte</span><input type="number" id="maatVeld" step="0.5" min="0.5"> cm</label>
             <button class="ikoon" id="kleiner" title="Kleiner" aria-label="Kleiner">&minus;</button>
             <input type="range" id="maat" aria-label="Grootte">
             <button class="ikoon" id="groter" title="Groter" aria-label="Groter">+</button>
@@ -3952,7 +3952,9 @@ function maakQrLib(){var t=function(){var t=function(t,r){var e=t,n=g[r],o=null,
     if (uniform(gekozen)){
       const g = grenzen(gekozen), s = $('maat');
       s.min = g.min; s.max = g.max; s.step = 1; s.value = Math.round(gekozen.maat);
-      $('maatLabel').textContent = (t === 'tekst' ? 'Letterhoogte ' : 'Breedte ') + cm(t === 'tekst' ? hoofdletter(gekozen) : afmeting(gekozen).w);
+      $('maatLabel').textContent = t === 'tekst' ? 'Letterhoogte' : 'Breedte';
+      const weergaveMm = t === 'tekst' ? hoofdletter(gekozen) : afmeting(gekozen).w;
+      if (document.activeElement !== $('maatVeld')) $('maatVeld').value = Math.round(weergaveMm / 5) / 2;
     } else {
       if (document.activeElement !== $('vormB')) $('vormB').value = Math.round(gekozen.b) / 10;
       if (document.activeElement !== $('vormH')) $('vormH').value = Math.round(gekozen.h) / 10;
@@ -3999,6 +4001,19 @@ function maakQrLib(){var t=function(){var t=function(t,r){var e=t,n=g[r],o=null,
   $('maat').addEventListener('input', e => { if (!gekozen) return; bewaar('maat' + gekozen.id); zetMaat(Number(e.target.value)); });
   $('kleiner').addEventListener('click', () => { if (!gekozen) return; bewaar('maat' + gekozen.id); zetMaat(gekozen.maat / 1.1); });
   $('groter').addEventListener('click', () => { if (!gekozen) return; bewaar('maat' + gekozen.id); zetMaat(gekozen.maat * 1.1); });
+  // Hetzelfde getal intypen in plaats van alleen slepen/klikken -- voor tekst toont het veld de
+  // letterhoogte (hoofdletter(i)), niet i.maat zelf (dat is het iets grotere em-vak); omrekenen naar
+  // i.maat gebeurt hier met dezelfde capVerhouding() als de weergave gebruikt.
+  function zetMaatVeld(){
+    if (!gekozen || !uniform(gekozen)) return;
+    const cmWaarde = Number($('maatVeld').value);
+    if (!(cmWaarde > 0)) return;
+    bewaar('maat' + gekozen.id);
+    const mm = cmWaarde * 10;
+    zetMaat(gekozen.type === 'tekst' ? mm / capVerhouding(gekozen) : mm);
+  }
+  $('maatVeld').addEventListener('input', zetMaatVeld);
+  $('maatVeld').addEventListener('blur', () => setTimeout(werkBalkBij, 0));
 
   function omschrijving(i){
     if (i.type === 'tekst'){ const r = regels(i)[0]; return 'De tekst "' + r.slice(0, 30) + (r.length > 30 ? '...' : '') + '"'; }

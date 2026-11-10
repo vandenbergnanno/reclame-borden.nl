@@ -3,46 +3,29 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-function formatEuro(bedrag: number): string {
-  return bedrag.toLocaleString("nl-NL", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-}
-
-// Medewerker vult het bedrag excl. btw in (zelfde conventie als de richtprijs in de ontwerptool en
-// het omzet-dashboard, beide al "excl. btw") -- de btw (21%) en het totaal worden hier berekend,
-// zodat de klant een volledige factuurregel krijgt in plaats van één kaal bedrag.
+// Deze mail is bewust alleen een akkoordvraag bij het drukklare bestand -- geen factuur/prijs. Die
+// komt pas later, in een apart (nog te bouwen) moment na goedkeuring. Het bedrag excl. btw dat de
+// medewerker hieronder kan invullen is dus puur een interne notitie (zie BevestigingsmailKopieren),
+// niet iets wat in deze tekst terechtkomt.
 function bouwTekst({
   klantNaam,
   bordnaam,
   afmeting,
   aantal,
-  prijsExclBtw,
 }: {
   klantNaam: string;
   bordnaam: string | null;
   afmeting: string;
   aantal: number;
-  prijsExclBtw: number | null;
 }): string {
   const bordLabel = bordnaam || afmeting;
-  const bedragregels =
-    prijsExclBtw === null
-      ? ["Bedrag excl. btw: nog in te vullen"]
-      : [
-          `Bedrag excl. btw: €${formatEuro(prijsExclBtw)}`,
-          `Btw (21%): €${formatEuro(Math.round(prijsExclBtw * 21) / 100)}`,
-          `Totaalbedrag: €${formatEuro(Math.round(prijsExclBtw * 121) / 100)}`,
-        ];
 
   return [
     `Beste ${klantNaam || "klant"},`,
     "",
     `Hierbij het ontwerp van uw bord: ${bordLabel}${aantal > 1 ? ` (${aantal}x)` : ""}.`,
     "",
-    "Kunt u bevestigen dat dit ontwerp naar wens is, zodat we het in productie kunnen nemen?",
-    "",
-    "Hieronder de factuur. Wilt u deze goedkeuren door te reageren op deze e-mail?",
-    "",
-    ...bedragregels,
+    "Het drukklare bestand vindt u in de bijlage. Gaat u akkoord met dit ontwerp, zodat we het in productie kunnen nemen?",
     "",
     "Met vriendelijke groet,",
     "reclame-borden.nl",
@@ -75,13 +58,7 @@ export function BevestigingsmailKopieren({
   const huidigeOpgeslagenWaarde = factuurprijsExclBtw !== null ? String(factuurprijsExclBtw) : "";
   const prijsGewijzigd = prijsInput.trim() !== huidigeOpgeslagenWaarde.trim();
 
-  const tekst = bouwTekst({
-    klantNaam,
-    bordnaam,
-    afmeting,
-    aantal,
-    prijsExclBtw: prijsGeldig ? prijsGetal : null,
-  });
+  const tekst = bouwTekst({ klantNaam, bordnaam, afmeting, aantal });
 
   async function prijsOpslaan() {
     if (!prijsGeldig) return;
@@ -120,12 +97,12 @@ export function BevestigingsmailKopieren({
 
   return (
     <div className="space-y-3">
-      <h2 className="font-semibold text-brand-zwart">Goedkeuringsmail (ontwerp + factuur)</h2>
+      <h2 className="font-semibold text-brand-zwart">Goedkeuringsmail (ontwerp)</h2>
 
       <div className="flex flex-wrap items-end gap-3">
         <label className="text-sm">
           <span className="mb-1 block text-xs font-medium uppercase tracking-wide text-neutral-500">
-            Bedrag excl. btw
+            Interne notitie: bedrag excl. btw (gaat niet mee in de mail)
           </span>
           <span className="flex items-center gap-1">
             <span>€</span>
@@ -155,7 +132,6 @@ export function BevestigingsmailKopieren({
         <button
           type="button"
           onClick={kopieer}
-          disabled={!prijsGeldig || prijsGetal === null}
           className="rounded bg-brand-groen-donker px-3 py-1.5 text-xs font-medium text-white hover:opacity-90 disabled:opacity-50"
         >
           {gekopieerd ? "Gekopieerd!" : "Kopieer tekst"}
