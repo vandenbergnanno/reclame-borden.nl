@@ -549,8 +549,13 @@ function Bestandsvoorbeeld({ label, pad, afbeelding = false }: { label: string; 
         // eslint-disable-next-line @next/next/no-img-element -- extern/placeholder pad
         <img src={pad} alt={label} className="h-32 w-full rounded border border-neutral-200 object-contain bg-neutral-50" />
       ) : isEchteUrl ? (
-        <a href={pad} target="_blank" rel="noopener noreferrer" className="text-sm text-brand-groen-donker hover:underline">
-          {pad}
+        <a
+          href={pad}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-block rounded border border-brand-groen-donker px-3 py-1.5 text-sm font-medium text-brand-groen-donker hover:bg-brand-groen-donker hover:text-white"
+        >
+          Download
         </a>
       ) : (
         <p className="text-sm text-neutral-500">
