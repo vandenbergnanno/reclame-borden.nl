@@ -671,7 +671,16 @@
   // genereren we het id hier zelf, vóórdat er iets geüpload wordt -- de server gebruikt dit
   // straks als het echte rij-id (zie app/api/aanvragen/ontwerp/route.ts), en elke upload naar
   // Storage (zie uploadBestandDirect() verderop) gaat al naar een pad dat met dit id begint.
-  const HUIDIGE_AANVRAAG_ID = window.BEWERK_AANVRAAG_ID || crypto.randomUUID();
+  // crypto.randomUUID() bestaat pas vanaf Safari 15.4 -- deze tool ondersteunt bewust ook oudere iPads
+  // (zie het <dialog>-vangnet hierboven), dus zonder reserve zou de hele tool daar niet eens starten.
+  const nieuweUuid = () => {
+    if (window.crypto && typeof window.crypto.randomUUID === 'function') return window.crypto.randomUUID();
+    const b = window.crypto.getRandomValues(new Uint8Array(16));
+    b[6] = (b[6] & 0x0f) | 0x40; b[8] = (b[8] & 0x3f) | 0x80;
+    const h = [...b].map(x => x.toString(16).padStart(2, '0')).join('');
+    return h.slice(0, 8) + '-' + h.slice(8, 12) + '-' + h.slice(12, 16) + '-' + h.slice(16, 20) + '-' + h.slice(20);
+  };
+  let huidigeAanvraagId = window.BEWERK_AANVRAAG_ID || nieuweUuid();
   const KOPIE_TOESTAAN = false; // mag de klant het drukbestand ook zelf downloaden? (false = alleen versturen)
   const ONTWERPSERVICE = true;  // knop "Laat ons het ontwerp maken" tonen? (false = klanten maken altijd zelf het ontwerp)
   const SNIJ_AFSTAND = 12;      // mm tussen snijlijn en begin van een snijteken
@@ -1198,7 +1207,7 @@
   // Eén kant van het bord (voor- of achterkant): achtergrond, foto en onderdelen
   function schoonKant(data){
     const uit = {};
-    uit.achtergrond = KLEURCODE.test(data.achtergrond) ? data.achtergrond : '#ffffff';
+    uit.achtergrond = (KLEURCODE.test(data.achtergrond) || ontledAchtergrond(data.achtergrond)) ? data.achtergrond : '#ffffff';
     const af = data.achtergrondFoto;
     uit.achtergrondFoto = (af && typeof af === 'object' && typeof af.src === 'string' && /^data:image\/(jpeg|png|webp);base64,/.test(af.src) && af.src.length < 20e6)
       ? { src: af.src, breedtePx: getal(af.breedtePx, 1, 20000, 1) } : null;
@@ -5278,7 +5287,7 @@ function maakQrLib(){var t=function(){var t=function(t,r){var e=t,n=g[r],o=null,
     const r = await fetch('/api/aanvragen/upload-url', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ aanvraagId: HUIDIGE_AANVRAAG_ID, veld, bestandsnaam: naam, grootte: blob.size }),
+      body: JSON.stringify({ aanvraagId: huidigeAanvraagId, veld, bestandsnaam: naam, grootte: blob.size }),
     });
     let j = {};
     try{ j = await r.json(); } catch(e){}
@@ -5309,7 +5318,7 @@ function maakQrLib(){var t=function(){var t=function(t,r){var e=t,n=g[r],o=null,
   // -- zelfde indeling als de server al toepaste vóórdat bestanden rechtstreeks naar Storage gingen.
   const BEKENDE_ENKELVOUDIGE_VELDEN = ['drukbestand', 'drukbestand_achter', 'voorbeeld', 'voorbeeld_achter', 'ontwerp'];
   async function uploadBestandenEnVervangPaden(fd, knop){
-    fd.set('aanvraag_id', HUIDIGE_AANVRAAG_ID);
+    fd.set('aanvraag_id', huidigeAanvraagId);
     const nieuw = new FormData();
     const bestanden = [];
     for (const [veld, waarde] of fd.entries()){
@@ -5387,6 +5396,9 @@ function maakQrLib(){var t=function(){var t=function(t,r){var e=t,n=g[r],o=null,
       $('klaarDownload').hidden = true;
     } else if (ok){
       verstuurd = true;
+      // Een volgende verzending (zonder de pagina te herladen) is een NIEUWE aanvraag: met hetzelfde id
+      // zou de server een dubbele sleutel zien en de bestanden van de eerste aanvraag overschrijven.
+      if (!window.BEWERK_AANVRAAG_ID) huidigeAanvraagId = nieuweUuid();
       dbWeg('laatste').catch(() => {});
       $('klaarTitel').textContent = 'Bedankt, je aanvraag is verstuurd!';
       let t = doorOns

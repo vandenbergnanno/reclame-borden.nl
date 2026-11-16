@@ -1,4 +1,5 @@
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { createServerAuthClient } from "@/lib/supabase/serverAuth";
 import { analyzeRequest } from "@/lib/ai/analyzeRequest";
 import { controleerAfmetingBeschikbaarheid } from "@/lib/ai/controleerAfmetingBeschikbaarheid";
 import { checkRateLimit, clientIp } from "@/lib/security/rateLimit";
@@ -91,6 +92,23 @@ export async function POST(request: Request) {
   // het script niet dat de honeypot is gevonden.
   if (tekst(formData, "website") !== "") {
     return Response.json({ ok: true });
+  }
+
+  // De ontwerptool (/aanvraag) is al alleen voor ingelogde klanten, maar dit endpoint was zelf publiek:
+  // zo kon iedereen (zonder bestanden, bijv. via "Laat ons het ontwerp maken") rechtstreeks aanvragen
+  // plaatsen onder een willekeurig e-mailadres. Nu moet er een geldige klantsessie zijn, net als bij
+  // /api/aanvragen/upload-url en klant-bewerken.
+  let authClient: ReturnType<typeof createServerAuthClient>;
+  try {
+    authClient = createServerAuthClient();
+  } catch (error) {
+    return fout(error instanceof Error ? error.message : "Supabase is niet geconfigureerd.", 500);
+  }
+  const {
+    data: { user },
+  } = await authClient.auth.getUser();
+  if (!user) {
+    return fout("Je moet ingelogd zijn om een aanvraag te versturen. Log opnieuw in en probeer het nog eens.", 401);
   }
 
   const bordnaam = tekst(formData, "bordnaam");
@@ -189,41 +207,76 @@ export async function POST(request: Request) {
     return fout(error instanceof Error ? error.message : "Supabase is niet geconfigureerd.", 500);
   }
 
-  // Klant hergebruiken op basis van e-mailadres, anders nieuwe klant aanmaken — zelfde aanpak als
-  // /api/aanvragen. De ontwerptool vraagt geen provincie, dus die blijft leeg.
-  const { data: bestaandeKlant, error: klantZoekFout } = await supabase
+  // De klant is degene die ingelogd is -- niet wie er in het e-mailveld van het formulier staat. Anders
+  // belandt een aanvraag onder een andere klant als iemand daar een ander adres intypt, en zie je 'm
+  // niet terug op /mijn-borden. Heeft dit account nog geen klantrij (bijv. de koppeling na het
+  // bevestigen van het e-mailadres is niet gelukt), dan hergebruiken/maken we er een op e-mailadres.
+  const { data: eigenKlant, error: eigenKlantFout } = await supabase
     .from("klanten")
     .select("id")
-    .eq("email", email)
+    .eq("auth_user_id", user.id)
     .maybeSingle();
 
-  if (klantZoekFout) {
-    logServerFout("ontwerp: klant opzoeken", klantZoekFout);
+  if (eigenKlantFout) {
+    logServerFout("ontwerp: klant opzoeken (account)", eigenKlantFout);
     return fout(GENERIEKE_SERVERFOUT, 500);
   }
 
-  let klantId = bestaandeKlant?.id;
+  let klantId = eigenKlant?.id;
 
   if (!klantId) {
-    const { data: nieuweKlant, error: klantInsertFout } = await supabase
+    const { data: bestaandeKlant, error: klantZoekFout } = await supabase
       .from("klanten")
-      .insert({
-        naam,
-        bedrijf: bedrijf || null,
-        email,
-        telefoon: telefoon || null,
-        provincie: null,
-      })
-      .select("id")
-      .single();
+      .select("id, auth_user_id")
+      .eq("email", email)
+      .maybeSingle();
 
-    if (klantInsertFout || !nieuweKlant) {
-      logServerFout("ontwerp: klant aanmaken", klantInsertFout ?? new Error("Geen klant teruggekregen na insert"));
+    if (klantZoekFout) {
+      logServerFout("ontwerp: klant opzoeken", klantZoekFout);
       return fout(GENERIEKE_SERVERFOUT, 500);
     }
 
-    klantId = nieuweKlant.id;
+    if (bestaandeKlant) {
+      if (bestaandeKlant.auth_user_id && bestaandeKlant.auth_user_id !== user.id) {
+        return fout("Dit e-mailadres hoort bij een ander account. Gebruik het e-mailadres van je eigen account.", 403);
+      }
+      klantId = bestaandeKlant.id;
+    } else {
+      const { data: nieuweKlant, error: klantInsertFout } = await supabase
+        .from("klanten")
+        .insert({
+          naam,
+          bedrijf: bedrijf || null,
+          email,
+          telefoon: telefoon || null,
+          provincie: null,
+          auth_user_id: user.id,
+        })
+        .select("id")
+        .single();
+
+      if (klantInsertFout || !nieuweKlant) {
+        logServerFout("ontwerp: klant aanmaken", klantInsertFout ?? new Error("Geen klant teruggekregen na insert"));
+        return fout(GENERIEKE_SERVERFOUT, 500);
+      }
+
+      klantId = nieuweKlant.id;
+    }
   }
+
+  // Dezelfde aanvraag nog eens binnen (bijv. het antwoord ging verloren en de klant klikte op "Opnieuw
+  // proberen")? Dan is dat geen fout: de aanvraag staat er al. Een id dat bij een ánder hoort, is dat wel.
+  const { data: bestaandeAanvraag } = await supabase.from("aanvragen").select("id, klant_id").eq("id", aanvraagId).maybeSingle();
+  if (bestaandeAanvraag) {
+    return bestaandeAanvraag.klant_id === klantId ? Response.json({ ok: true }) : fout("Ongeldig verzoek.", 409);
+  }
+
+  // Wijkt het e-mailadres in het formulier af van dat van het account, dan blijft de aanvraag gewoon bij
+  // het account, maar het team ziet wel waar de klant op bereikbaar wil zijn.
+  const afwijkendEmail = !!user.email && email.toLowerCase() !== user.email.toLowerCase();
+  const opmerkingVoorTeam = afwijkendEmail
+    ? [opmerking, `Contact-e-mailadres uit het formulier: ${email}`].filter(Boolean).join("\n\n")
+    : opmerking;
 
   const { data: aanvraag, error: aanvraagInsertFout } = await supabase
     .from("aanvragen")
@@ -249,7 +302,7 @@ export async function POST(request: Request) {
       straat: levering === "Bezorgen" ? straat : null,
       postcode: levering === "Bezorgen" ? postcode : null,
       plaats: levering === "Bezorgen" ? plaats : null,
-      opmerking: opmerking || null,
+      opmerking: opmerkingVoorTeam || null,
       ontwerp_door_ons: ontwerpDoorOns,
       qr_codes: qrCodes,
       teksten,
