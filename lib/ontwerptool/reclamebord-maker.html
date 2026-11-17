@@ -90,6 +90,14 @@
   .qr-label input{width:min(320px,60vw);margin-left:6px}
   #qrDlg label{display:block;margin-top:10px;font-weight:600}
   #qrDlg input{margin-top:4px}
+  #helpDlg label{display:block;margin-top:10px;font-weight:600}
+  #helpDlg input{margin-top:4px}
+  .help-keuzes{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+  .help-keuzes button{padding:12px 10px;border:2px solid var(--groen);border-radius:8px;background:#fff;color:var(--groen-tekst);font-size:16px;font-weight:600;cursor:pointer}
+  .help-keuzes button:hover{background:#f3faef}
+  .help-stap{font-size:14px;color:var(--grijs);margin:0 0 4px}
+  .help-start{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:10px 0 14px;padding:12px 14px;border:2px dashed var(--groen);border-radius:10px;background:#f3faef}
+  .help-start p{margin:0;flex:1 1 220px}
   /* Alle teksten als invulvelden (typen zonder eerst op het bord te hoeven klikken) */
   .tekst-paneel{margin-top:12px;padding:12px;border:1px solid var(--lijn);border-radius:8px;background:#fafafa}
   .tekst-paneel h3{margin:0 0 2px;font-size:15.5px}
@@ -492,6 +500,10 @@
     <section class="kaart indelingen">
       <h2>Kies een indeling</h2>
       <p class="hint">Een snelle start. Daarna kun je alles nog verplaatsen, aanpassen of weghalen.</p>
+      <div class="help-start">
+        <p><b>Weet je niet waar je moet beginnen?</b> Beantwoord een paar korte vragen, dan zetten wij een bord voor je klaar.</p>
+        <button type="button" class="knop secundair" id="helpKnop">Help mij ontwerpen</button>
+      </div>
       <div class="sjablonen" id="sjablonen"></div>
       <div class="eigen-ontwerp">
         <p><b>Heb je al een kant-en-klaar ontwerp?</b> Bijvoorbeeld van je ontwerper, of van een bord dat al ergens anders hangt. Upload het bestand, dan vult het je hele bord.</p>
@@ -600,6 +612,20 @@
   </div>
 </dialog>
 
+<dialog class="aanvraag" id="helpDlg">
+  <form class="klaar" id="helpForm" novalidate>
+    <p class="help-stap" id="helpStap"></p>
+    <h2 id="helpVraag"></h2>
+    <p id="helpUitleg" class="klein-hint"></p>
+    <div class="help-keuzes" id="helpKeuzes" hidden></div>
+    <label id="helpVeldLabel"><input type="text" id="helpVeld" autocomplete="off" spellcheck="false"></label>
+    <p class="fout" id="helpFout" hidden></p>
+    <div class="knoppen">
+      <button type="button" class="knop licht" id="helpTerug">Annuleren</button>
+      <button type="submit" class="knop primair" id="helpVerder">Verder</button>
+    </div>
+  </form>
+</dialog>
 <dialog class="aanvraag" id="qrDlg">
   <form class="klaar" id="qrForm" novalidate>
     <h2>QR-code maken</h2>
@@ -3789,6 +3815,98 @@ function maakQrLib(){var t=function(){var t=function(t,r){var e=t,n=g[r],o=null,
       $('qrDlg').showModal(); $('qrAdres').focus();
     });
     $('pictogrammen').appendChild(b);
+  }
+  /* ===== Ontwerp-assistent: een vaste vragenlijst (geen AI, dus gratis) die een indeling kiest en invult ===== */
+  const HULP_BRANCHES = [
+    { naam:'Slager of bakker', stijl:3 }, { naam:'Horeca', stijl:4 },
+    { naam:'Kapper of schoonheid', stijl:5 }, { naam:'Bouw of techniek', stijl:1 },
+    { naam:'Winkel', stijl:0 }, { naam:'Sportclub of vereniging', stijl:2 },
+    { naam:'Iets anders', stijl:0 }
+  ];
+  const HULP_STAPPEN = [
+    { sleutel:'branche', vraag:'Wat voor bedrijf of club heb je?', uitleg:'Op basis hiervan kiezen we passende kleuren.' },
+    { sleutel:'naam', vraag:'Hoe heet je bedrijf?', uitleg:'Dit komt groot op het bord.', veld:true, verplicht:true, plaats:'bijvoorbeeld Slagerij Jansen' },
+    { sleutel:'slogan', vraag:'Heb je een slogan of een korte omschrijving?', uitleg:'Bijvoorbeeld "Vers van eigen bodem". Laat leeg als je dit niet wilt.', veld:true, plaats:'bijvoorbeeld Vers van eigen bodem' },
+    { sleutel:'tel', vraag:'Wat is je telefoonnummer?', uitleg:'Laat leeg als het nummer niet op het bord moet.', veld:true, plaats:'bijvoorbeeld 0187 12 34 56' },
+    { sleutel:'web', vraag:'Wat is je website?', uitleg:'Laat leeg als je geen website hebt of die niet op het bord wilt.', veld:true, plaats:'bijvoorbeeld www.jansen.nl' }
+  ];
+  let hulpStap = 0, hulpAntw = {};
+  function toonHulpStap(){
+    const s = HULP_STAPPEN[hulpStap];
+    $('helpStap').textContent = 'Vraag ' + (hulpStap + 1) + ' van ' + HULP_STAPPEN.length;
+    $('helpVraag').textContent = s.vraag;
+    $('helpUitleg').textContent = s.uitleg;
+    $('helpFout').hidden = true;
+    const keuzes = $('helpKeuzes');
+    keuzes.hidden = !!s.veld;
+    $('helpVeldLabel').hidden = !s.veld;
+    $('helpVerder').hidden = !s.veld;
+    $('helpTerug').textContent = hulpStap === 0 ? 'Annuleren' : 'Terug';
+    $('helpVerder').textContent = hulpStap === HULP_STAPPEN.length - 1 ? 'Zet mijn bord klaar' : 'Verder';
+    if (s.veld){
+      const v = $('helpVeld'); v.value = hulpAntw[s.sleutel] || ''; v.placeholder = s.plaats; v.focus();
+      v.inputMode = s.sleutel === 'tel' ? 'tel' : s.sleutel === 'web' ? 'url' : 'text';
+    } else {
+      keuzes.textContent = '';
+      HULP_BRANCHES.forEach(b => {
+        const k = document.createElement('button');
+        k.type = 'button'; k.textContent = b.naam;
+        k.addEventListener('click', () => { hulpAntw.branche = b; hulpStap++; toonHulpStap(); });
+        keuzes.appendChild(k);
+      });
+    }
+  }
+  $('helpKnop').addEventListener('click', () => { sluitBewerken(); hulpStap = 0; hulpAntw = {}; toonHulpStap(); $('helpDlg').showModal(); });
+  $('helpTerug').addEventListener('click', () => {
+    if (hulpStap === 0) $('helpDlg').close(); else { hulpStap--; toonHulpStap(); }
+  });
+  $('helpForm').addEventListener('submit', e => {
+    e.preventDefault();
+    const s = HULP_STAPPEN[hulpStap];
+    if (!s.veld) return;
+    const t = $('helpVeld').value.trim();
+    if (s.verplicht && !t){ $('helpFout').textContent = 'Vul hier iets in om verder te gaan.'; $('helpFout').hidden = false; $('helpVeld').focus(); return; }
+    hulpAntw[s.sleutel] = t;
+    if (hulpStap < HULP_STAPPEN.length - 1){ hulpStap++; toonHulpStap(); return; }
+    $('helpDlg').close();
+    hulpToepassen(hulpAntw);
+  });
+  function hulpToepassen(a){
+    const heeftContact = !!(a.tel || a.web);
+    const sjabloon = SJABLONEN.find(s => s.naam === (heeftContact ? 'Logo, telefoon en website' : 'Tekst links, logo rechts'));
+    kiesSjabloon(sjabloon);
+    const zoek = re => items.filter(i => i.type === 'tekst' && i.voorbeeld && re.test(i.voorbeeldTekst || ''));
+    const vul = (re, tekst, figuurNaam) => {
+      zoek(re).forEach(d => {
+        if (tekst){
+          metAnker(d, () => { d.tekst = tekst; d.voorbeeld = false; });
+          const ruimte = bord.b - VEILIG - (d.x - afmeting(d).w / 2);
+          if (d.uitlijn === 'left' && afmeting(d).w > ruimte) metAnker(d, () => passend(d, ruimte));
+        } else {
+          items = items.filter(i => i !== d && !(figuurNaam && i.type === 'figuur' && i.figuur === figuurNaam && Math.abs(i.y - d.y) < bord.h * 0.05));
+        }
+      });
+    };
+    vul(/BEDRIJFSNAAM/, a.naam);
+    vul(/slogan/i, a.slogan);
+    vul(/^06/, a.tel, 'telefoon');
+    // Deze indeling heeft geen sloganregel: staat er geen website, dan nemen we die regel (links uitgelijnd met de naam)
+    if (a.slogan && heeftContact){
+      const web = zoek(/^www\./)[0], naamItem = items.find(i => i.type === 'tekst' && i.tekst === a.naam);
+      if (!a.web && web && naamItem){
+        items = items.filter(i => !(i.type === 'figuur' && i.figuur === 'website' && Math.abs(i.y - web.y) < bord.h * 0.05));
+        const links = naamItem.x - afmeting(naamItem).w / 2;
+        web.tekst = a.slogan; web.voorbeeld = false; web.vet = false; web.maat *= 1.1;
+        web.uitlijn = 'left'; web.x = links + afmeting(web).w / 2;
+        const ruimte = bord.b - VEILIG - links;
+        if (afmeting(web).w > ruimte) { passend(web, ruimte); web.x = links + afmeting(web).w / 2; }
+        binnenBord(web);
+      } else voegTekstToe(a.slogan);
+    }
+    vul(/^www\./, a.web, 'website');
+    toepassenKleurstijl(KLEURSTIJLEN[a.branche ? a.branche.stijl : 0]);
+    gekozen = null; werkBalkBij(); teken(); tekenSjablonen(true);
+    melding('Je bord staat klaar. Upload nu je logo (dubbelklik op de logoplek). Wil je iets anders? Klik op een onderdeel, of op "Ongedaan".', 9000);
   }
   $('qrAnnuleer').addEventListener('click', () => $('qrDlg').close());
   let qrToch = '';      // tweede keer op "maken" met een ongewone extensie = de klant weet het zeker
