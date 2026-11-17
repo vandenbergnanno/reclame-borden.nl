@@ -34,7 +34,10 @@ export function ToegangForm({ terugNaar }: { terugNaar?: string }) {
 
       // Nooit blind naar een extern adres doorsturen dat via de querystring is meegegeven.
       const bestemming = veiligPad(terugNaar);
-      router.push(bestemming);
+      // Het deel achter de # (bijv. de eenmalige code uit een "wachtwoord vergeten"-link) blijft
+      // bij het doorsturen naar deze pagina in de adresbalk staan -- neem het mee, anders komt
+      // zo'n klant na het toegangswachtwoord op een lege "link verlopen"-pagina uit.
+      router.push(bestemming + window.location.hash);
       router.refresh();
     } catch (error) {
       setFoutmelding(error instanceof Error ? error.message : "Onbekende fout.");

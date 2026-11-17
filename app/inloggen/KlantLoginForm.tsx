@@ -425,6 +425,13 @@ export function KlantLoginForm({ vasteModus }: { vasteModus?: Modus } = {}) {
                 autoComplete={modus === "inloggen" ? "current-password" : "new-password"}
                 className="w-full rounded border border-neutral-300 px-3 py-2 focus:border-brand-groen focus:outline-none"
               />
+              {modus === "inloggen" && (
+                <p className="mt-1.5 text-right text-sm">
+                  <a href="/wachtwoord-vergeten" className="text-neutral-600 underline hover:text-brand-groen-donker">
+                    Wachtwoord vergeten?
+                  </a>
+                </p>
+              )}
             </div>
 
             {foutmelding && (
