@@ -1307,6 +1307,11 @@
       achtergrondFoto: data.achterkant.achtergrondFoto ? await fotoVanBron(data.achterkant.achtergrondFoto.src) : null } : null;
     gekozen = null;
     toonZijden(); toonFormaatKeuze(); toonAchtergrondKeuze(); toonFotoKeuze(); werkInfoBij(); pasCanvasAan(); werkBalkBij();
+    // Gebruikt het geopende ontwerp een van de losse-bestand-lettertypes? Die laden normaal pas als het
+    // keuzemenu opengaat; zonder dit stond zo'n tekst na "verder werken" in een reservelettertype
+    // (en kwam hij zo ook in het drukbestand).
+    const losLettertype = i => i.type === 'tekst' && LETTERTYPES[i.font] && LETTERTYPES[i.font].b400.indexOf('data:') !== 0;
+    if (items.some(losLettertype) || (andereKant && andereKant.items.some(losLettertype))) await laadExtraLettertypes();
   }
   let opslaanTimer = null, opslagWerkt = false, opslagKapot = false, nietOpgeslagen = false;
   // Felle groene, blauwe en paarse schermkleuren kan een drukker niet precies maken (CMYK): die vallen doffer uit.

@@ -29,21 +29,30 @@ export const BEWAARTERMIJN = "";
 // De hele sectie rendert alleen als overOnsTekst niet leeg is -- zo staat er nooit een leeg blok
 // live. klantLogos/reviews zijn optioneel en schuiven er vanzelf bij zodra ze gevuld zijn.
 export const VERTROUWEN = {
-  overOnsTekst: "",
+  overOnsTekst:
+    "reclame-borden.nl is een site van De Mediagraaf, drukkerij in Oudewater. Je ontwerp komt bij ons binnen, je krijgt een drukproef en pas na jouw akkoord gaat het bord in productie.",
   klantLogos: [] as { naam: string; afbeelding: string }[],
   reviews: [] as { tekst: string; naam: string }[],
 };
 
-// Homepage-content die nog ontbreekt (app/page.tsx) -- allemaal leeg totdat de gebruiker 'm invult.
-// In productie laat een lege waarde hier het bijbehorende onderdeel (of de hele sectie) gewoon weg
-// in plaats van een kale placeholdertekst te tonen; alleen in development, of met ?preview=1 in de
-// URL, laat de pagina zien WAAR die content straks komt (zie `toonPlaceholders` in app/page.tsx).
+// Beeld op de homepage (app/page.tsx). De schermafbeelding is van de ontwerptool zelf; de
+// voorbeeldborden zijn in diezelfde tool gemaakt (dus precies wat een klant ook kan maken) en de
+// bedrijven erop zijn verzonnen -- dat staat er op de pagina ook bij. Een bord vervangen of
+// toevoegen: zet het plaatje in public/home/ en vul hier de echte breedte/hoogte in pixels in.
 export const HOMEPAGE_MEDIA = {
-  heroAfbeelding: "",
-  voorbeeldFotos: [
-    { label: "FOTO: reclamebord bij sportveld", afbeelding: "" },
-    { label: "FOTO: reclamebord bij bedrijfspand", afbeelding: "" },
-    { label: "FOTO: reclamebord bij bouwproject", afbeelding: "" },
+  hero: {
+    afbeelding: "/home/ontwerptool.webp",
+    breedte: 2880,
+    hoogte: 1496,
+    alt: "De ontwerptool: een reclamebord van een bakkerij waarvan de naam wordt aangepast",
+  },
+  voorbeeldBorden: [
+    { soort: "Bakkerij", formaat: "300 × 80 cm", afbeelding: "/home/bord-bakkerij.webp", breedte: 1800, hoogte: 480 },
+    { soort: "Autobedrijf", formaat: "300 × 80 cm", afbeelding: "/home/bord-autobedrijf.webp", breedte: 1800, hoogte: 480 },
+    { soort: "Hovenier", formaat: "320 × 80 cm", afbeelding: "/home/bord-hovenier.webp", breedte: 1800, hoogte: 450 },
+    { soort: "Timmerbedrijf", formaat: "300 × 70 cm", afbeelding: "/home/bord-timmerbedrijf.webp", breedte: 1800, hoogte: 420 },
+    { soort: "Cafetaria, sponsorbord", formaat: "300 × 80 cm", afbeelding: "/home/bord-cafetaria.webp", breedte: 1800, hoogte: 480 },
+    { soort: "Kapsalon", formaat: "244 × 61 cm", afbeelding: "/home/bord-kapsalon.webp", breedte: 1800, hoogte: 450 },
   ],
 };
 

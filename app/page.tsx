@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
+import Image from "next/image";
 import { redirect } from "next/navigation";
-import { MediaPlaceholder } from "@/components/MediaPlaceholder";
 import { createServerAuthClient } from "@/lib/supabase/serverAuth";
 import { isSupabaseAuthGeconfigureerd } from "@/lib/supabase/server";
 import { VERTROUWEN, HOMEPAGE_MEDIA, PRIJZEN, LEVERTIJD } from "@/lib/constants/brand";
@@ -35,7 +35,8 @@ const VOORDELEN = [
   },
   {
     titel: "Kant-en-klare sjablonen",
-    omschrijving: "Geen zin om vanaf nul te beginnen? Kies een van de twintig indelingen als startpunt.",
+    omschrijving:
+      "Geen zin om vanaf nul te beginnen? Kies een van de twintig indelingen, of beantwoord een paar vragen en laat de tool een eerste opzet maken.",
     icoon: <IconRaster />,
   },
   {
@@ -75,58 +76,79 @@ export default async function HomePage({
     if (user) redirect("/mijn-borden");
   }
 
-  // Placeholders ("[FOTO: ...]", "[PRIJS VANAF]", enz.) horen nooit op de live site te staan --
+  // Placeholders ("[PRIJS VANAF]", "[LEVERTIJD]", enz.) horen nooit op de live site te staan --
   // alleen in development, of met ?preview=1 erbij, zodat je zelf kunt zien waar ontbrekende
   // content straks komt te staan zonder dat een willekeurige bezoeker een kaal "[...]" ziet.
   const toonPlaceholders = process.env.NODE_ENV !== "production" || searchParams?.preview === "1";
 
-  const toonHeroBeeld = !!HOMEPAGE_MEDIA.heroAfbeelding || toonPlaceholders;
-  const voorbeeldFotos = toonPlaceholders
-    ? HOMEPAGE_MEDIA.voorbeeldFotos
-    : HOMEPAGE_MEDIA.voorbeeldFotos.filter((foto) => foto.afbeelding);
+  const { hero, voorbeeldBorden } = HOMEPAGE_MEDIA;
+  const heeftPrijzen = Object.values(PRIJZEN).some(Boolean) || toonPlaceholders;
   const toonLevertijdStat = !!LEVERTIJD || toonPlaceholders;
   const toonVertrouwen = !!VERTROUWEN.overOnsTekst || toonPlaceholders;
 
   return (
     <div className="space-y-16">
-      <section className="overflow-hidden rounded-3xl border border-neutral-200 bg-white px-6 py-14 sm:px-12 sm:py-20">
-        <div
-          className={`mx-auto grid items-center gap-10 ${toonHeroBeeld ? "max-w-4xl sm:grid-cols-[3fr_2fr]" : "max-w-2xl"}`}
-        >
-          <div className={toonHeroBeeld ? "text-center sm:text-left" : "text-center"}>
-            <p className="font-semibold uppercase tracking-wide text-brand-groen-donker">Gratis ontwerptool</p>
-            <h1 className="mt-3 text-3xl font-semibold leading-tight text-brand-zwart sm:text-4xl">
-              Jouw reclamebord, in ongeveer 10 minuten ontworpen
-            </h1>
-            <p className="mt-5 text-lg text-neutral-600">
-              Stel zelf je bord samen met je eigen logo, tekst en kleuren — en zie meteen het resultaat.
-            </p>
-            <div className={`mt-8 flex flex-col items-center gap-2 ${toonHeroBeeld ? "sm:items-start" : ""}`}>
-              <a
-                href="/aanvraag"
-                className="rounded-full bg-brand-oranje-donker px-6 py-3 font-medium text-white shadow-sm transition hover:opacity-90"
-              >
-                Begin met ontwerpen →
-              </a>
-              <p className="text-xs text-neutral-500">Gratis account nodig, duurt 1 minuut</p>
-            </div>
+      <section className="overflow-hidden rounded-3xl border border-neutral-200 bg-white">
+        <div className="mx-auto max-w-2xl px-6 pt-14 text-center sm:px-12 sm:pt-16">
+          <p className="font-semibold uppercase tracking-wide text-brand-groen-donker">Gratis ontwerptool</p>
+          <h1 className="mt-3 text-3xl font-semibold leading-tight text-brand-zwart [text-wrap:balance] sm:text-4xl">
+            Jouw reclamebord, in ongeveer 10 minuten ontworpen
+          </h1>
+          <p className="mt-5 text-lg text-neutral-600 [text-wrap:balance]">
+            Zet je logo en tekst op het bord, kies je kleuren en zie meteen hoe het wordt. Wij drukken het voor je.
+          </p>
+          <div className="mt-8 flex flex-col items-center gap-2">
+            <a
+              href="/aanvraag"
+              className="rounded-full bg-brand-oranje-donker px-6 py-3 font-medium text-white shadow-sm transition hover:opacity-90"
+            >
+              Begin met ontwerpen →
+            </a>
+            <p className="text-xs text-neutral-500">Gratis account nodig, duurt 1 minuut</p>
           </div>
-          {toonHeroBeeld && <MediaPlaceholder label="SCREENSHOT OF VIDEO: ontwerptool in actie" />}
+        </div>
+        {/* Schermafbeelding van de tool zelf; loopt door tot de onderrand van het blok. */}
+        <div className="mt-10 px-4 sm:mt-12 sm:px-10">
+          <div className="overflow-hidden rounded-t-xl border border-b-0 border-neutral-200 shadow-[0_-2px_24px_rgba(0,0,0,0.07)]">
+            <Image
+              src={hero.afbeelding}
+              alt={hero.alt}
+              width={hero.breedte}
+              height={hero.hoogte}
+              sizes="(min-width: 896px) 770px, 92vw"
+              priority
+              className="block h-auto w-full"
+            />
+          </div>
         </div>
       </section>
 
-      {voorbeeldFotos.length > 0 && (
-        <section>
-          <div className="mx-auto max-w-2xl text-center">
-            <h2 className="text-2xl font-semibold text-brand-zwart sm:text-3xl">Zo kan jouw bord eruitzien</h2>
-          </div>
-          <div className="mx-auto mt-10 grid max-w-4xl gap-6 sm:grid-cols-3">
-            {voorbeeldFotos.map((foto) => (
-              <MediaPlaceholder key={foto.label} label={foto.label} aspectClassName="aspect-square" />
-            ))}
-          </div>
-        </section>
-      )}
+      <section>
+        <div className="mx-auto max-w-2xl text-center">
+          <h2 className="text-2xl font-semibold text-brand-zwart sm:text-3xl">Zo kan jouw bord eruitzien</h2>
+          <p className="mt-2 text-neutral-600">
+            Allemaal gemaakt met de ontwerptool. De bedrijven zijn verzonnen.
+          </p>
+        </div>
+        <div className="mx-auto mt-10 grid max-w-4xl gap-5 sm:grid-cols-2">
+          {voorbeeldBorden.map((voorbeeld) => (
+            <figure key={voorbeeld.afbeelding} className="rounded-2xl bg-neutral-200/60 p-5 sm:p-6">
+              <Image
+                src={voorbeeld.afbeelding}
+                alt={`Voorbeeld van een reclamebord voor een ${voorbeeld.soort.toLowerCase()}`}
+                width={voorbeeld.breedte}
+                height={voorbeeld.hoogte}
+                sizes="(min-width: 640px) 380px, 86vw"
+                className="block h-auto w-full rounded-[2px] shadow-[0_1px_2px_rgba(0,0,0,0.25),0_8px_18px_rgba(0,0,0,0.16)]"
+              />
+              <figcaption className="mt-4 flex items-baseline justify-between gap-3 text-sm">
+                <span className="font-medium text-brand-zwart">{voorbeeld.soort}</span>
+                <span className="text-neutral-500">{voorbeeld.formaat}</span>
+              </figcaption>
+            </figure>
+          ))}
+        </div>
+      </section>
 
       <section>
         <div className="mx-auto max-w-2xl text-center">
@@ -153,7 +175,9 @@ export default async function HomePage({
 
       <section>
         <div className="mx-auto max-w-2xl text-center">
-          <h2 className="text-2xl font-semibold text-brand-zwart sm:text-3xl">Formaten en prijzen</h2>
+          <h2 className="text-2xl font-semibold text-brand-zwart sm:text-3xl">
+            {heeftPrijzen ? "Formaten en prijzen" : "Formaten"}
+          </h2>
         </div>
         <div className="mx-auto mt-8 grid max-w-4xl grid-cols-2 gap-4 sm:grid-cols-4">
           {FORMATEN.map((maat) => {
