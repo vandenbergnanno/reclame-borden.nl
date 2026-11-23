@@ -313,6 +313,14 @@ export function KlantLoginForm({ vasteModus }: { vasteModus?: Modus } = {}) {
             Naar inloggen
           </a>
           <p className="text-sm text-neutral-600">
+            Had je met dit e-mailadres al een account? Dan sturen we geen nieuwe mail. Log dan gewoon in,
+            of kies{" "}
+            <a href="/wachtwoord-vergeten" className="font-medium text-brand-groen-donker underline">
+              wachtwoord vergeten
+            </a>
+            .
+          </p>
+          <p className="text-sm text-neutral-600">
             Mail niet ontvangen?{" "}
             <button
               type="button"
