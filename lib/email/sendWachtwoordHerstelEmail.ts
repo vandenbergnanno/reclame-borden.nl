@@ -10,11 +10,20 @@ export interface WachtwoordHerstelEmailResultaat {
 
 function bouwEmail(herstelUrl: string): { onderwerp: string; html: string; text: string } {
   const onderwerp = "Nieuw wachtwoord kiezen voor reclame-borden.nl";
+  // Het tijdstip maakt elke mail anders. Zonder dit zet Gmail een tweede, identieke mail in
+  // hetzelfde gesprek en verbergt de inhoud als "herhaalde tekst" (alleen een •••-knopje).
+  const tijdstip = new Intl.DateTimeFormat("nl-NL", {
+    timeZone: "Europe/Amsterdam",
+    day: "numeric",
+    month: "long",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(new Date());
 
   const text = [
     "Hoi,",
     "",
-    "Je hebt gevraagd om een nieuw wachtwoord voor je account bij reclame-borden.nl.",
+    `Je hebt op ${tijdstip} gevraagd om een nieuw wachtwoord voor je account bij reclame-borden.nl.`,
     "Via deze link kies je een nieuw wachtwoord:",
     "",
     herstelUrl,
@@ -46,7 +55,7 @@ function bouwEmail(herstelUrl: string): { onderwerp: string; html: string; text:
               <td style="padding:24px;">
                 <p style="font-size:16px;margin:0 0 12px;">Hoi,</p>
                 <p style="font-size:14px;line-height:1.5;margin:0 0 20px;">
-                  Je hebt gevraagd om een nieuw wachtwoord voor je account bij reclame-borden.nl.
+                  Je hebt op ${tijdstip} gevraagd om een nieuw wachtwoord voor je account bij reclame-borden.nl.
                   Klik op de knop om een nieuw wachtwoord te kiezen.
                 </p>
                 <table role="presentation" cellpadding="0" cellspacing="0">
