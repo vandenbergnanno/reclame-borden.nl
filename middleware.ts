@@ -68,12 +68,18 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Tijdelijke, site-brede poort (zie lib/auth/siteSessie.ts) -- onafhankelijke, EXTRA laag vóór
-  // alle onderstaande logica. Alles verderop in deze functie blijft ongewijzigd, maar wordt nu pas
-  // bereikt nadat deze poort gepasseerd is. Weer verwijderen zodra de site echt live gaat.
+  // alle onderstaande logica. Alleen actief zolang SITE_WACHTWOORD is ingesteld: haal je die
+  // omgevingsvariabele weg (in Vercel, gevolgd door een redeploy), dan is de site open voor
+  // iedereen; zet je hem terug, dan zit de poort er weer voor. /intern blijft altijd achter zijn
+  // eigen wachtwoord (INTERN_WACHTWOORD), ook als deze poort uit staat.
+  const poortActief = !!process.env.SITE_WACHTWOORD;
+  if (!poortActief && pathname === "/toegang") {
+    return NextResponse.redirect(new URL("/", request.url));
+  }
   if (pathname === "/toegang" || pathname === "/api/toegang/login") {
     return NextResponse.next();
   }
-  const siteToegankelijk = request.cookies.get(SITE_SESSIE_COOKIE)?.value === "1";
+  const siteToegankelijk = !poortActief || request.cookies.get(SITE_SESSIE_COOKIE)?.value === "1";
   if (!siteToegankelijk) {
     if (pathname.startsWith("/api/")) {
       return NextResponse.json({ ok: false, error: "Site is nog niet publiek toegankelijk." }, { status: 401 });
