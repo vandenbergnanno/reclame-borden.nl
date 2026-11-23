@@ -99,7 +99,6 @@ export function SiteHeader() {
                 <a href="/mijn-borden" className="whitespace-nowrap hover:text-brand-groen">
                   Mijn borden
                 </a>
-                <span className="hidden whitespace-nowrap text-neutral-500 sm:inline">{email}</span>
                 <a href="/mijn-account" className="whitespace-nowrap hover:text-brand-groen">
                   Mijn account
                 </a>
