@@ -3906,6 +3906,18 @@ function maakQrLib(){var t=function(){var t=function(t,r){var e=t,n=g[r],o=null,
         const ruimte = bord.b - VEILIG - links;
         if (afmeting(web).w > ruimte) { passend(web, ruimte); web.x = links + afmeting(web).w / 2; }
         binnenBord(web);
+      } else if (naamItem){
+        // Telefoon én website: alles iets opschuiven, zodat de slogan onder de naam past
+        const H = bord.h, omlaag = H * 0.05;
+        naamItem.y -= H * 0.04;
+        items.filter(i => (i.type === 'tekst' && i !== naamItem) || (i.type === 'figuur' && (i.figuur === 'telefoon' || i.figuur === 'website')))
+          .forEach(i => { i.y += omlaag; });
+        const links = naamItem.x - afmeting(naamItem).w / 2;
+        const slogan = maakTekst(a.slogan, { vet:false, kleur: naamItem.kleur, uitlijn:'left', maat: H * 0.085, y: H * 0.43, font: naamItem.font });
+        passend(slogan, bord.b - VEILIG - links);
+        slogan.x = links + afmeting(slogan).w / 2;
+        items.push(slogan);
+        items.forEach(binnenBord);
       } else voegTekstToe(a.slogan);
     }
     vul(/^www\./, a.web, 'website');
