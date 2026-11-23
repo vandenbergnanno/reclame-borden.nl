@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { checkRateLimit, clientIp, teVeelPogingenResponse } from "@/lib/security/rateLimit";
 import { logServerFout } from "@/lib/security/serverFout";
+import { siteAdres } from "@/lib/siteAdres";
 import { sendWachtwoordHerstelEmail } from "@/lib/email/sendWachtwoordHerstelEmail";
 
 // "Wachtwoord vergeten": maakt een eenmalige herstelcode aan (Supabase Auth, type "recovery") en
@@ -65,7 +66,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: true });
   }
 
-  const herstelUrl = `${new URL(request.url).origin}/wachtwoord-instellen#token=${data.properties.hashed_token}`;
+  const herstelUrl = `${siteAdres(request)}/wachtwoord-instellen#token=${data.properties.hashed_token}`;
   const resultaat = await sendWachtwoordHerstelEmail(email, herstelUrl);
 
   // Lukt het versturen niet, dan zeggen we dat eerlijk: anders wacht de klant op een mail die

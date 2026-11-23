@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createServerAuthClient } from "@/lib/supabase/serverAuth";
 import { checkRateLimit, clientIp, teVeelPogingenResponse } from "@/lib/security/rateLimit";
 import { logServerFout } from "@/lib/security/serverFout";
+import { siteAdres } from "@/lib/siteAdres";
 
 // Als de bevestigingsmail bij het aanmaken mislukte (bijv. een storing bij de mailserver), of de
 // klant 'm gewoon niet meer kan vinden, bestaat het account al (Supabase maakt de rij aan vóórdat
@@ -50,7 +51,7 @@ export async function POST(request: Request) {
   const { error } = await supabase.auth.resend({
     type: "signup",
     email: body.email,
-    options: { emailRedirectTo: `${new URL(request.url).origin}/inloggen` },
+    options: { emailRedirectTo: `${siteAdres(request)}/inloggen` },
   });
 
   // Nooit laten blijken of dit e-mailadres wel/niet bestaat of al bevestigd is -- altijd ok:true,
